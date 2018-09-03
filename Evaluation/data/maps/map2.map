@@ -1,0 +1,390 @@
+width: 800 height: 640
+
+navigation_points: 288
+id: 0 x: 5 y: 5
+id: 1 x: 5 y: 45
+id: 2 x: 335 y: 5
+id: 3 x: 335 y: 45
+id: 4 x: 310 y: 5
+id: 5 x: 310 y: 45
+id: 6 x: 600 y: 5
+id: 7 x: 600 y: 45
+id: 8 x: 575 y: 5
+id: 9 x: 575 y: 45
+id: 10 x: 955 y: 5
+id: 11 x: 955 y: 45
+id: 12 x: 310 y: 195
+id: 13 x: 310 y: 235
+id: 14 x: 380 y: 195
+id: 15 x: 380 y: 235
+id: 16 x: 420 y: 195
+id: 17 x: 420 y: 235
+id: 18 x: 600 y: 195
+id: 19 x: 600 y: 235
+id: 20 x: 295 y: 210
+id: 21 x: 295 y: 250
+id: 22 x: 380 y: 210
+id: 23 x: 380 y: 250
+id: 24 x: 420 y: 210
+id: 25 x: 420 y: 250
+id: 26 x: 650 y: 210
+id: 27 x: 650 y: 250
+id: 28 x: 340 y: 195
+id: 29 x: 340 y: 250
+id: 30 x: 460 y: 195
+id: 31 x: 460 y: 250
+id: 32 x: 575 y: 195
+id: 33 x: 575 y: 235
+id: 34 x: 650 y: 195
+id: 35 x: 650 y: 235
+id: 36 x: 690 y: 195
+id: 37 x: 690 y: 235
+id: 38 x: 830 y: 195
+id: 39 x: 830 y: 235
+id: 40 x: 690 y: 210
+id: 41 x: 690 y: 250
+id: 42 x: 830 y: 210
+id: 43 x: 830 y: 250
+id: 44 x: 870 y: 195
+id: 45 x: 870 y: 235
+id: 46 x: 955 y: 195
+id: 47 x: 955 y: 235
+id: 48 x: 870 y: 210
+id: 49 x: 870 y: 250
+id: 50 x: 955 y: 210
+id: 51 x: 955 y: 250
+id: 52 x: 610 y: 195
+id: 53 x: 610 y: 250
+id: 54 x: 730 y: 195
+id: 55 x: 730 y: 250
+id: 56 x: 790 y: 195
+id: 57 x: 790 y: 250
+id: 58 x: 910 y: 195
+id: 59 x: 910 y: 250
+id: 60 x: 295 y: 5
+id: 61 x: 335 y: 250
+id: 62 x: 350 y: 5
+id: 63 x: 350 y: 235
+id: 64 x: 560 y: 5
+id: 65 x: 600 y: 100
+id: 66 x: 560 y: 100
+id: 67 x: 600 y: 140
+id: 68 x: 560 y: 140
+id: 69 x: 560 y: 235
+id: 70 x: 615 y: 5
+id: 71 x: 615 y: 100
+id: 72 x: 575 y: 100
+id: 73 x: 615 y: 140
+id: 74 x: 575 y: 140
+id: 75 x: 615 y: 235
+id: 76 x: 560 y: 60
+id: 77 x: 615 y: 60
+id: 78 x: 560 y: 180
+id: 79 x: 615 y: 180
+id: 80 x: 295 y: 300
+id: 81 x: 295 y: 340
+id: 82 x: 470 y: 300
+id: 83 x: 470 y: 340
+id: 84 x: 545 y: 300
+id: 85 x: 545 y: 340
+id: 86 x: 740 y: 300
+id: 87 x: 740 y: 340
+id: 88 x: 700 y: 300
+id: 89 x: 740 y: 355
+id: 90 x: 700 y: 355
+id: 91 x: 740 y: 315
+id: 92 x: 685 y: 355
+id: 93 x: 685 y: 315
+id: 94 x: 725 y: 315
+id: 95 x: 725 y: 455
+id: 96 x: 685 y: 455
+id: 97 x: 725 y: 495
+id: 98 x: 685 y: 495
+id: 99 x: 725 y: 550
+id: 100 x: 685 y: 550
+id: 101 x: 725 y: 525
+id: 102 x: 685 y: 525
+id: 103 x: 725 y: 580
+id: 104 x: 685 y: 580
+id: 105 x: 725 y: 610
+id: 106 x: 685 y: 610
+id: 107 x: 725 y: 715
+id: 108 x: 685 y: 715
+id: 109 x: 670 y: 415
+id: 110 x: 670 y: 455
+id: 111 x: 725 y: 415
+id: 112 x: 670 y: 495
+id: 113 x: 670 y: 535
+id: 114 x: 725 y: 535
+id: 115 x: 670 y: 540
+id: 116 x: 670 y: 580
+id: 117 x: 725 y: 540
+id: 118 x: 670 y: 610
+id: 119 x: 670 y: 650
+id: 120 x: 725 y: 650
+id: 121 x: 685 y: 510
+id: 122 x: 800 y: 510
+id: 123 x: 800 y: 550
+id: 124 x: 840 y: 510
+id: 125 x: 840 y: 550
+id: 126 x: 955 y: 510
+id: 127 x: 955 y: 550
+id: 128 x: 685 y: 565
+id: 129 x: 800 y: 525
+id: 130 x: 800 y: 565
+id: 131 x: 840 y: 525
+id: 132 x: 840 y: 565
+id: 133 x: 955 y: 525
+id: 134 x: 955 y: 565
+id: 135 x: 760 y: 510
+id: 136 x: 760 y: 565
+id: 137 x: 880 y: 510
+id: 138 x: 880 y: 565
+id: 139 x: 310 y: 315
+id: 140 x: 310 y: 355
+id: 141 x: 470 y: 315
+id: 142 x: 470 y: 355
+id: 143 x: 545 y: 315
+id: 144 x: 545 y: 355
+id: 145 x: 710 y: 315
+id: 146 x: 710 y: 355
+id: 147 x: 350 y: 315
+id: 148 x: 350 y: 485
+id: 149 x: 310 y: 485
+id: 150 x: 350 y: 550
+id: 151 x: 310 y: 550
+id: 152 x: 350 y: 715
+id: 153 x: 310 y: 715
+id: 154 x: 670 y: 315
+id: 155 x: 710 y: 455
+id: 156 x: 710 y: 495
+id: 157 x: 710 y: 580
+id: 158 x: 710 y: 610
+id: 159 x: 710 y: 715
+id: 160 x: 670 y: 715
+id: 161 x: 335 y: 300
+id: 162 x: 335 y: 470
+id: 163 x: 295 y: 470
+id: 164 x: 335 y: 550
+id: 165 x: 295 y: 550
+id: 166 x: 335 y: 715
+id: 167 x: 295 y: 715
+id: 168 x: 295 y: 590
+id: 169 x: 350 y: 590
+id: 170 x: 220 y: 550
+id: 171 x: 180 y: 550
+id: 172 x: 220 y: 715
+id: 173 x: 180 y: 715
+id: 174 x: 235 y: 550
+id: 175 x: 195 y: 550
+id: 176 x: 235 y: 715
+id: 177 x: 195 y: 715
+id: 178 x: 180 y: 590
+id: 179 x: 235 y: 590
+id: 180 x: 5 y: 675
+id: 181 x: 5 y: 715
+id: 182 x: 220 y: 675
+id: 183 x: 195 y: 675
+id: 184 x: 335 y: 675
+id: 185 x: 310 y: 675
+id: 186 x: 710 y: 675
+id: 187 x: 685 y: 675
+id: 188 x: 955 y: 675
+id: 189 x: 955 y: 715
+id: 190 x: 430 y: 300
+id: 191 x: 430 y: 355
+id: 192 x: 585 y: 300
+id: 193 x: 585 y: 355
+id: 194 x: 45 y: 5
+id: 195 x: 45 y: 470
+id: 196 x: 5 y: 470
+id: 197 x: 45 y: 445
+id: 198 x: 5 y: 445
+id: 199 x: 45 y: 715
+id: 200 x: 5 y: 430
+id: 201 x: 95 y: 430
+id: 202 x: 95 y: 470
+id: 203 x: 5 y: 485
+id: 204 x: 95 y: 445
+id: 205 x: 95 y: 485
+id: 206 x: 155 y: 430
+id: 207 x: 155 y: 470
+id: 208 x: 335 y: 430
+id: 209 x: 155 y: 445
+id: 210 x: 155 y: 485
+id: 211 x: 350 y: 445
+id: 212 x: 55 y: 430
+id: 213 x: 55 y: 485
+id: 214 x: 195 y: 430
+id: 215 x: 195 y: 485
+id: 216 x: 915 y: 5
+id: 217 x: 915 y: 235
+id: 218 x: 915 y: 210
+id: 219 x: 915 y: 550
+id: 220 x: 915 y: 525
+id: 221 x: 915 y: 715
+id: 222 x: 170 y: 195
+id: 223 x: 170 y: 235
+id: 224 x: 270 y: 195
+id: 225 x: 270 y: 235
+id: 226 x: 230 y: 235
+id: 227 x: 230 y: 135
+id: 228 x: 270 y: 135
+id: 229 x: 230 y: 175
+id: 230 x: 285 y: 135
+id: 231 x: 285 y: 175
+id: 232 x: 245 y: 135
+id: 233 x: 285 y: 250
+id: 234 x: 245 y: 250
+id: 235 x: 285 y: 210
+id: 236 x: 170 y: 250
+id: 237 x: 170 y: 210
+id: 238 x: 210 y: 250
+id: 239 x: 210 y: 195
+id: 240 x: 420 y: 385
+id: 241 x: 380 y: 385
+id: 242 x: 420 y: 455
+id: 243 x: 380 y: 455
+id: 244 x: 380 y: 425
+id: 245 x: 450 y: 385
+id: 246 x: 450 y: 425
+id: 247 x: 380 y: 415
+id: 248 x: 450 y: 415
+id: 249 x: 450 y: 455
+id: 250 x: 410 y: 385
+id: 251 x: 410 y: 455
+id: 252 x: 420 y: 575
+id: 253 x: 380 y: 575
+id: 254 x: 420 y: 645
+id: 255 x: 380 y: 645
+id: 256 x: 380 y: 615
+id: 257 x: 450 y: 575
+id: 258 x: 450 y: 615
+id: 259 x: 380 y: 605
+id: 260 x: 450 y: 605
+id: 261 x: 450 y: 645
+id: 262 x: 410 y: 575
+id: 263 x: 410 y: 645
+id: 264 x: 610 y: 385
+id: 265 x: 570 y: 385
+id: 266 x: 610 y: 455
+id: 267 x: 570 y: 455
+id: 268 x: 570 y: 425
+id: 269 x: 640 y: 385
+id: 270 x: 640 y: 425
+id: 271 x: 570 y: 415
+id: 272 x: 640 y: 415
+id: 273 x: 640 y: 455
+id: 274 x: 600 y: 385
+id: 275 x: 600 y: 455
+id: 276 x: 610 y: 575
+id: 277 x: 570 y: 575
+id: 278 x: 610 y: 645
+id: 279 x: 570 y: 645
+id: 280 x: 570 y: 615
+id: 281 x: 640 y: 575
+id: 282 x: 640 y: 615
+id: 283 x: 570 y: 605
+id: 284 x: 640 y: 605
+id: 285 x: 640 y: 645
+id: 286 x: 600 y: 575
+id: 287 x: 600 y: 645
+
+connections: 0
+
+wall: 25 25 315 25 id: 0 priority: 0
+wall: 330 25 580 25 id: 1 priority: 0
+wall: 595 25 935 25 id: 2 priority: 0
+wall: 330 215 360 215 id: 3 priority: 0
+wall: 440 215 580 215 id: 4 priority: 0
+wall: 315 230 360 230 id: 5 priority: 0
+wall: 440 230 630 230 id: 6 priority: 0
+wall: 360 215 360 230 id: 7 priority: 0
+wall: 440 215 440 230 id: 8 priority: 0
+wall: 595 215 630 215 id: 9 priority: 0
+wall: 710 215 810 215 id: 10 priority: 0
+wall: 710 230 810 230 id: 11 priority: 0
+wall: 890 215 935 215 id: 12 priority: 0
+wall: 890 230 935 230 id: 13 priority: 0
+wall: 630 215 630 230 id: 14 priority: 0
+wall: 710 215 710 230 id: 15 priority: 0
+wall: 810 215 810 230 id: 16 priority: 0
+wall: 890 215 890 230 id: 17 priority: 0
+wall: 315 25 315 230 id: 18 priority: 0
+wall: 330 25 330 215 id: 19 priority: 0
+wall: 580 25 580 80 id: 20 priority: 0
+wall: 580 160 580 215 id: 21 priority: 0
+wall: 595 25 595 80 id: 22 priority: 0
+wall: 595 160 595 215 id: 23 priority: 0
+wall: 580 80 595 80 id: 24 priority: 0
+wall: 580 160 595 160 id: 25 priority: 0
+wall: 315 320 450 320 id: 26 priority: 0
+wall: 565 320 720 320 id: 27 priority: 0
+wall: 720 320 720 335 id: 28 priority: 0
+wall: 720 335 705 335 id: 29 priority: 0
+wall: 705 335 705 435 id: 30 priority: 0
+wall: 705 515 705 530 id: 31 priority: 0
+wall: 705 545 705 560 id: 32 priority: 0
+wall: 705 630 705 695 id: 33 priority: 0
+wall: 690 435 705 435 id: 34 priority: 0
+wall: 690 515 705 515 id: 35 priority: 0
+wall: 690 560 705 560 id: 36 priority: 0
+wall: 690 630 705 630 id: 37 priority: 0
+wall: 705 530 780 530 id: 38 priority: 0
+wall: 860 530 935 530 id: 39 priority: 0
+wall: 705 545 780 545 id: 40 priority: 0
+wall: 860 545 935 545 id: 41 priority: 0
+wall: 780 530 780 545 id: 42 priority: 0
+wall: 860 530 860 545 id: 43 priority: 0
+wall: 330 335 450 335 id: 44 priority: 0
+wall: 565 335 690 335 id: 45 priority: 0
+wall: 330 335 330 465 id: 46 priority: 0
+wall: 330 570 330 695 id: 47 priority: 0
+wall: 690 335 690 435 id: 48 priority: 0
+wall: 690 515 690 560 id: 49 priority: 0
+wall: 690 630 690 695 id: 50 priority: 0
+wall: 315 320 315 450 id: 51 priority: 0
+wall: 315 570 315 695 id: 52 priority: 0
+wall: 315 570 330 570 id: 53 priority: 0
+wall: 200 570 200 695 id: 54 priority: 0
+wall: 215 570 215 695 id: 55 priority: 0
+wall: 200 570 215 570 id: 56 priority: 0
+wall: 25 695 200 695 id: 57 priority: 0
+wall: 215 695 315 695 id: 58 priority: 0
+wall: 330 695 690 695 id: 59 priority: 0
+wall: 705 695 935 695 id: 60 priority: 0
+wall: 450 320 450 335 id: 61 priority: 0
+wall: 565 320 565 335 id: 62 priority: 0
+wall: 25 25 25 450 id: 63 priority: 0
+wall: 25 465 25 695 id: 64 priority: 0
+wall: 25 450 75 450 id: 65 priority: 0
+wall: 25 465 75 465 id: 66 priority: 0
+wall: 175 450 315 450 id: 67 priority: 0
+wall: 175 465 330 465 id: 68 priority: 0
+wall: 75 450 75 465 id: 69 priority: 0
+wall: 175 450 175 465 id: 70 priority: 0
+wall: 935 25 935 215 id: 71 priority: 0
+wall: 935 230 935 530 id: 72 priority: 0
+wall: 935 545 935 695 id: 73 priority: 0
+wall: 190 215 250 215 id: 74 priority: 0
+wall: 250 215 250 155 id: 75 priority: 0
+wall: 250 155 265 155 id: 76 priority: 0
+wall: 265 155 265 230 id: 77 priority: 0
+wall: 265 230 190 230 id: 78 priority: 0
+wall: 190 230 190 215 id: 79 priority: 0
+wall: 400 405 400 435 id: 80 priority: 0
+wall: 400 405 430 405 id: 81 priority: 0
+wall: 400 435 430 435 id: 82 priority: 0
+wall: 430 405 430 435 id: 83 priority: 0
+wall: 400 595 400 625 id: 84 priority: 0
+wall: 400 595 430 595 id: 85 priority: 0
+wall: 400 625 430 625 id: 86 priority: 0
+wall: 430 595 430 625 id: 87 priority: 0
+wall: 590 405 590 435 id: 88 priority: 0
+wall: 590 405 620 405 id: 89 priority: 0
+wall: 590 435 620 435 id: 90 priority: 0
+wall: 620 405 620 435 id: 91 priority: 0
+wall: 590 595 590 625 id: 92 priority: 0
+wall: 590 595 620 595 id: 93 priority: 0
+wall: 590 625 620 625 id: 94 priority: 0
+wall: 620 595 620 625 id: 95 priority: 0

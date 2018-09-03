@@ -1,0 +1,21 @@
+#include "ActorKnowledge.h"
+#include "entities/Team.h"
+
+ActorKnowledge::ActorKnowledge(Actor* actor) : _actor(actor) {}
+ActorKnowledge::~ActorKnowledge() {}
+
+ActorInfo ActorKnowledge::getSelf() const { return ActorInfo(_actor); }
+const char* ActorKnowledge::getName() const { return _actor->getName().c_str(); }
+unsigned short ActorKnowledge::getTeam() const { return _actor->getTeam()->getNumber(); }
+Vector2 ActorKnowledge::getPosition() const { return _actor->getPosition(); }
+Vector2 ActorKnowledge::getDestination() const { return _actor->getDestination(); }
+bool ActorKnowledge::isMoving() const { return _actor->isMoving(); }
+float ActorKnowledge::getOrientation() const { return _actor->getOrientation(); }
+int ActorKnowledge::getHealth() const { return _actor->getHealth(); }
+int ActorKnowledge::getArmor() const { return _actor->getArmor(); }
+String ActorKnowledge::getWeaponType() const { return _actor->getCurrentWeapon(); }
+int ActorKnowledge::getAmmo(const String& weaponName) const { return _actor->getWeaponState(weaponName).ammo; }
+bool ActorKnowledge::isLoaded(const String& weaponName) const { return _actor->getWeaponState(weaponName).state == WeaponLoadState::WEAPON_LOADED; }
+//std::vector<ActorInfo> ActorKnowledge::getSeenFriends() const;
+//std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const;
+//std::vector<ActorInfo> ActorKnowledge::getSeenActors() const;
