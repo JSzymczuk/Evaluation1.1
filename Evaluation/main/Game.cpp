@@ -131,8 +131,16 @@ void Game::handleEvents() {
 	case SDL_MOUSEBUTTONUP:
 		SDL_GetMouseState(&mousePosX, &mousePosY);
 		if (event.button.button == SDL_BUTTON_LEFT) {
+			Actor* prevActor = _actor;
 			if (_actor == nullptr || keyboardState[SDL_SCANCODE_LCTRL]) {
 				trySelectActor(Vector2(mousePosX, mousePosY));
+				if (_actor == nullptr && prevActor != nullptr && keyboardState[SDL_SCANCODE_LALT]) {
+					Action* action = new WanderAction(prevActor);
+					if (!prevActor->setCurrentAction(action)) {
+						Logger::log("Failed");
+						delete action;
+					}
+				}
 			}
 			else if (_actor != nullptr) {
 				Action* action = new ShootAction(_actor, Vector2(mousePosX, mousePosY));

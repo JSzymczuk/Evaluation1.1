@@ -29,3 +29,16 @@ public:
 private:
 	Vector2 _velocity;
 };
+
+class WanderAction : public Action {
+public:
+	WanderAction(Actor* actor);
+	~WanderAction();
+	ActionType getActionType() const;
+	int getPriority() const;
+	void start(GameTime gameTime);
+	bool update(GameTime gameTime);
+
+private:
+	Vector2 _center;
+};

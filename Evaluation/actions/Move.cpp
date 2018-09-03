@@ -22,6 +22,7 @@ void MoveAction::start(GameTime gameTime) {
 		actor->move(Game::getInstance()->getMap()->findPath(actor->getPosition(), _position));
 		_pathplanning = false;
 	}
+	Action::start(gameTime);
 }
 
 MoveAtAction::MoveAtAction(Actor* actor, const Vector2& velocity) : Action(actor), _velocity(velocity) {}
@@ -38,4 +39,34 @@ void MoveAtAction::start(GameTime gameTime) {
 	Actor* actor = getActor();
 	actor->stop();
 	actor->setPreferredVelocity(_velocity.normal() * actor->getMaxSpeed());
+	Action::start(gameTime);
+}
+
+
+WanderAction::WanderAction(Actor* actor) : Action(actor) {}
+
+WanderAction::~WanderAction() {}
+
+ActionType WanderAction::getActionType() const { return ActionType::WANDER; }
+
+int WanderAction::getPriority() const { return 0; }
+
+void WanderAction::start(GameTime gameTime) {
+	Actor* actor = getActor();
+	actor->stop();
+	_center = actor->getPosition();
+	Logger::log("Actor " + actor->getName() + " started wandering.");
+	Action::start(gameTime);
+}
+
+bool WanderAction::update(GameTime gameTime) {
+	Actor* actor = getActor();
+	Vector2 velocity = actor->isMoving() ? actor->getVelocity() : -actor->getVelocity();
+	float ang = common::angle(velocity) + Rng::getFloat(-AgentWanderSpread, AgentWanderSpread);
+	Vector2 prefVelocity = Vector2(cosf(ang), sinf(ang));
+	Vector2 returnVel = _center - actor->getPosition();
+	float lth = returnVel.lengthSquared();
+	float k = common::max(0, common::min(1, lth / (WanderCentripetalForce * WanderCentripetalForce)));
+	actor->setPreferredVelocity((returnVel * k + prefVelocity * (1 - k)) * ActorSpeed);
+	return false;
 }

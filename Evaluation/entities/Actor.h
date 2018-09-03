@@ -31,6 +31,7 @@ public:
 	std::vector<Actor*> getSeenActors() const;
 	void setPreferredVelocity(const Vector2& velocity);
 	Vector2 getPreferredVelocity() const;
+	Vector2 getVelocity() const;
 
 	Action* getCurrentAction() const;
 	bool setCurrentAction(Action* action);

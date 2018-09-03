@@ -10,7 +10,8 @@ enum ActionType {
 	SHOOT,
 	CHANGE_WEAPON,
 	DIE,
-	DEAD
+	DEAD,
+	WANDER
 };
 
 class Actor;
@@ -56,5 +57,4 @@ protected:
 private:
 	Actor* _actor;
 	GameTime _timeStarted;
-
 };

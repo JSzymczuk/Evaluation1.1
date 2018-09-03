@@ -71,6 +71,8 @@ void Actor::setPreferredVelocity(const Vector2& velocity) { _preferredVelocity =
 
 Vector2 Actor::getPreferredVelocity() const { return _preferredVelocity; }
 
+Vector2 Actor::getVelocity() const { return _velocity; }
+
 Action* Actor::getCurrentAction() const { return _currentAction; }
 
 void Actor::clearCurrentAction() {
@@ -304,14 +306,19 @@ void Actor::updateMovement(GameTime time) {
 		}
 		else if (_isWaiting) {
 			if (time - _waitingStarted > (_recalculations > 0 ? MaxRecalculatedWaitingTime : MaxMovementWaitingTime)) {
-				Vector2 destination = _path.back();
-				stop();
-				if (_recalculations < MaxRecalculations) {
-					++_recalculations;
-					Logger::log("Actor " + _name + " is searching for alternative path.");
-					move(Game::getInstance()->getMap()->findPath(_position, destination, {
-						common::Circle(_position, ActorRadius * (_recalculations + 1))
-					}));
+				if (!_path.empty()) {
+					Vector2 destination = _path.back();
+					stop();
+					if (_recalculations < MaxRecalculations) {
+						++_recalculations;
+						Logger::log("Actor " + _name + " is searching for alternative path.");
+						move(Game::getInstance()->getMap()->findPath(_position, destination, {
+							common::Circle(_position, ActorRadius * (_recalculations + 1))
+						}));
+					}
+				}
+				else {
+					stop();
 				}
 			}
 		}
@@ -376,7 +383,7 @@ Actor::MovementCheckResult Actor::checkMovement() const {
 		}
 	}
 
-	if (checkMovementCollisions(Segment(_position, futurePosition), ActorRadius)) {
+	if (checkMovementCollisions(Segment(_position, futurePosition), ActorRadius + MovementSafetyMargin)) {
 		//_path.size() > 0 ? ActorRadius - MovementSafetyMargin : ActorRadius)) {
 		result.allowed = false;
 		Logger::log("Actor " + _name + " movement wasn't allowed.");
@@ -632,7 +639,7 @@ Vector2 Actor::getNextSafeGoal() const {
 					}
 				}
 
-				return commonPoint + translation.normal() * (ActorRadius + MovementSafetyMargin + common::EPSILON);
+				return commonPoint + translation.normal() * (ActorRadius + 3 * MovementSafetyMargin + common::EPSILON);
 			}
 		}
 		return _path.front();
