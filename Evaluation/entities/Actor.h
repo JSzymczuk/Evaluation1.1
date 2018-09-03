@@ -10,6 +10,7 @@ class MissileManager;
 class Team;
 class Action;
 class Trigger;
+class Wall;
 
 class Actor : public GameDynamicObject {
 public:
@@ -85,6 +86,7 @@ private:
 	Vector2 _preferredVelocity;
 	std::queue<Vector2> _path;
 	Vector2 _lastDestination;
+	Vector2 _nextSafeGoal;
 
 	bool _isRotating;
 	float _desiredOrientation;
@@ -131,6 +133,8 @@ public:
 	std::vector<Actor*> getActorsInViewAngle() const;
 	std::vector<VelocityObstacle> getVelocityObstacles(const std::vector<Actor*>& obstacles) const;
 	std::vector<Candidate> computeCandidates(const std::vector<VelocityObstacle>& vo) const;
+	std::vector<Wall> getWallsNearGoal() const;
+	Vector2 getNextSafeGoal() const;
 #ifdef _DEBUG
 private:
 #endif	

@@ -7,6 +7,7 @@
 #include "engine/MissileManager.h"
 #include "main/Configuration.h"
 #include "math/Math.h"
+#include "entities//Weapon.h"
 #include "main/Game.h"
 
 Actor::Actor(const std::string& name, Team* team, const Vector2& position)
@@ -125,11 +126,13 @@ void Actor::move(const std::queue<Vector2>& path) {
 	if (!path.empty()) {
 		_path = path;
 		_lastDestination = path.empty() ? _position : path.back();
+		_nextSafeGoal = getNextSafeGoal();
 	}
 	else {
 		_path = {};
 		_preferredVelocity = Vector2();
 		_isWaiting = false;
+		_nextSafeGoal = _position;
 		_lastDestination = _position;
 		Logger::log("Actor " + _name + " can't reach this destination.");
 	}
@@ -139,6 +142,7 @@ void Actor::stop() {
 	_path = {};
 	_preferredVelocity = Vector2();
 	_isWaiting = false;
+	_nextSafeGoal = _position;
 	_lastDestination = _position;
 	Logger::log("Actor " + _name + " stopped.");
 }
@@ -228,21 +232,21 @@ float Actor::calculateRotation() const {
 }
 
 void Actor::calculatePreferredVelocity() {
-	if (!_path.empty()) {
-		if ((_path.front() - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
-			_path.pop();
-		}
-		if (!_path.empty()) {
-			_preferredVelocity = _path.front() - _position;
-		}
-		else {
-			Logger::log("Actor " + _name + " reached its destination."); 
-			_preferredVelocity = Vector2();
-		}
-		if (_preferredVelocity.lengthSquared() > common::EPSILON) {
-			_preferredVelocity = _preferredVelocity.normal() * ActorSpeed;
-		}
-	}
+	//if (!_path.empty()) {
+	//	if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
+	//		_path.pop();
+	//	}
+	//	if (!_path.empty()) {
+	//		_preferredVelocity = _nextSafeGoal - _position;
+	//	}
+	//	else {
+	//		Logger::log("Actor " + _name + " reached its destination."); 
+	//		_preferredVelocity = Vector2();
+	//	}
+	//	if (_preferredVelocity.lengthSquared() > common::EPSILON) {
+	//		_preferredVelocity = _preferredVelocity.normal() * ActorSpeed;
+	//	}
+	//}
 }
 
 void Actor::updateOrientation(GameTime time) {
@@ -261,11 +265,12 @@ void Actor::updateMovement(GameTime time) {
 		//calculatePreferredVelocity();
 
 		if (!_path.empty()) {
-			if ((_path.front() - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
+			if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
 				_path.pop();
+				_nextSafeGoal = getNextSafeGoal();
 			}
 			if (!_path.empty()) {
-				_preferredVelocity = _path.front() - _position;
+				_preferredVelocity = _nextSafeGoal - _position;
 			}
 			else {
 				Logger::log("Actor " + _name + " reached its destination.");
@@ -349,7 +354,7 @@ void Actor::updateSpotting() {
 }
 
 Actor::MovementCheckResult Actor::checkMovement() const {
-	float halfSize = ActorRadius - MovementSafetyMargin;
+	float halfSize = ActorRadius;
 	Vector2 futurePosition = _position + _velocity;
 
 	Aabb futurePosAabb = Aabb(
@@ -382,7 +387,7 @@ Actor::MovementCheckResult Actor::checkMovement() const {
 
 float Actor::getDistanceToGoal() const {
 	if (_path.empty()) { return 0; }
-	return (_position - _path.front()).length();
+	return (_position - _nextSafeGoal).length();
 }
 
 std::pair<Vector2, Vector2> Actor::getViewBorders() const {
@@ -522,7 +527,7 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 		}
 	}
 	for (const Wall& w : checkCollisions(Segment(_position, endPoint))) {
-		float dist = common::distance(_position, w.getSegment()) - ActorRadius - MovementSafetyMargin;
+		float dist = common::distance(_position, w.getSegment()) - ActorRadius;
 		if (dist < minDist) { minDist = dist; }
 	}
 	return minDist;
@@ -540,4 +545,97 @@ Vector2 Actor::selectVelocity(const std::vector<Candidate>& candidates) const {
 		}
 	}
 	return candidates[min].velocity;
+}
+
+std::vector<Wall> Actor::getWallsNearGoal() const {
+	std::vector<Wall> result;
+	if (!_path.empty()) {
+		float dist = (1.1f * ActorRadius + common::EPSILON) * common::SQRT_2_F;
+		Vector2 point = _path.front();
+		for (const Wall& wall : Game::getInstance()->getMap()->getWalls()) {
+			int wallId = wall.getId();
+			if (!std::any_of(result.begin(), result.end(), [wallId](const Wall& w)->bool { return w.getId() == wallId; })
+				&& common::distance(point, wall.getSegment()) <= dist) {
+				result.push_back(wall);
+			}
+		}
+	}
+	return result;
+}
+
+Vector2 Actor::getNextSafeGoal() const {
+	if (!_path.empty()) {
+		auto walls = getWallsNearGoal();
+		if (walls.size() == 2) {
+			Vector2 p11 = walls.at(0).getFrom(),
+				p12 = walls.at(0).getTo(),
+				p21 = walls.at(1).getFrom(),
+				p22 = walls.at(1).getTo();
+
+			bool validFlag = false;
+			Vector2 commonPoint, otherPoint1, otherPoint2;
+			if (common::sqDist(p11, p21) < common::EPSILON) {
+				validFlag = true;
+				commonPoint = p11;
+				otherPoint1 = p12;
+				otherPoint2 = p22;
+			}
+			else if (common::sqDist(p11, p22) < common::EPSILON) {
+				validFlag = true;
+				commonPoint = p11;
+				otherPoint1 = p12;
+				otherPoint2 = p21;
+			}
+			if (common::sqDist(p12, p21) < common::EPSILON) {
+				validFlag = true;
+				commonPoint = p12;
+				otherPoint1 = p11;
+				otherPoint2 = p22;
+			}
+			else if (common::sqDist(p12, p22) < common::EPSILON) {
+				validFlag = true;
+				commonPoint = p12;
+				otherPoint1 = p11;
+				otherPoint2 = p21;
+			}
+
+			if (validFlag) {
+				Vector2 pos = _position;
+				bool o1 = common::triangleOrientation(otherPoint1, commonPoint, pos)
+					== common::triangleOrientation(otherPoint1, commonPoint, otherPoint2);
+				bool o2 = common::triangleOrientation(otherPoint2, commonPoint, pos)
+					== common::triangleOrientation(otherPoint2, commonPoint, otherPoint1);
+
+				Vector2 w1 = (p12 - p11).normal();
+				Vector2 w2 = (p22 - p21).normal();
+
+				float temp = w1.x; w1.x = w1.y; w1.y = temp;
+				temp = w2.x; w2.x = w2.y; w2.y = temp;
+
+				Vector2 q11 = commonPoint + w1, q12 = commonPoint - w1;
+				Vector2 q21 = commonPoint + w2, q22 = commonPoint - w2;
+
+				Vector2 translation;
+
+				if (o1 == o2) {
+					translation = (common::sqDist(pos, q11) < common::sqDist(pos, q12) ? w1 : -w1)
+						+ (common::sqDist(pos, q21) < common::sqDist(pos, q22) ? w2 : -w2);
+				}
+				else {
+					if (o2) {
+						translation = (common::sqDist(pos, q11) < common::sqDist(pos, q12) ? w1 : -w1)
+							+ (common::sqDist(pos, q21) < common::sqDist(pos, q22) ? -w2 : w2);
+					}
+					else {
+						translation = (common::sqDist(pos, q11) < common::sqDist(pos, q12) ? -w1 : w1)
+							+ (common::sqDist(pos, q21) < common::sqDist(pos, q22) ? w2 : -w2);
+					}
+				}
+
+				return commonPoint + translation.normal() * (ActorRadius + MovementSafetyMargin + common::EPSILON);
+			}
+		}
+		return _path.front();
+	}
+	return _position;
 }

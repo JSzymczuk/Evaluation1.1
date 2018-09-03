@@ -24,6 +24,8 @@ public:
 
 	bool operator==(const Vector2& v) const;
 	bool operator!=(const Vector2& v) const;
+	
+	Vector2 operator-() const;
 
 	Vector2 operator+(const Vector2 &v) const;
 	Vector2 operator-(const Vector2 &v) const;

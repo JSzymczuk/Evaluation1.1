@@ -2,8 +2,8 @@
 
 #include <stack>
 #include <vector>
+#include <algorithm>
 #include "math/Math.h"
-
 
 template <typename T> class SegmentTree {
 

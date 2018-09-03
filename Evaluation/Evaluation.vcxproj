@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\Kuba\Desktop\Evaluation_1_1\Evaluation;D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -85,7 +85,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;C:\Users\Kuba\Desktop\Evaluation_1_1\Evaluation;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2-2.0.8\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2-2.0.8\include;D:\Projekty\Evaluation_1_1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>D:\libs\SDL2-2.0.8\lib\x86;D:\libs\SDL2_ttf-2.0.14\lib\x86;D:\libs\SDL2_image-2.0.3\lib\x86;D:\libs\luabind\lib\debug;D:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

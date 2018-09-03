@@ -339,7 +339,7 @@ void Game::render() {
 		}
 	}
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 //	if (_actor != nullptr) {
 //		auto viewBorders = _actor->getViewBorders();
 //		Vector2 pos = _actor->getPosition();
@@ -358,7 +358,15 @@ void Game::render() {
 //		}
 //	}
 //
-//#endif // _DEBUG
+	if (_actor != nullptr) {
+		auto walls = _actor->getWallsNearGoal();
+		for (const Wall& wall : walls) {
+			drawSegment(wall.getSegment(), colors::pink);
+		}
+		//drawPoint(_actor->getNextSafeGoal(), colors::yellow);
+	}
+
+#endif // _DEBUG
 
 	auto time = SDL_GetPerformanceCounter();
 

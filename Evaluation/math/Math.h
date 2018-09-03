@@ -10,6 +10,7 @@ namespace common {
 	const float PI_2_F = PI_F / 2;
 	const float PI_8_F = PI_F / 8;
 	const float EPSILON = 0.0001f;
+	const float SQRT_2_F = 1.41421356237f;
 
 	template<typename T> void swap(T& x, T& y) {
 		T temp = x;
