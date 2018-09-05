@@ -24,11 +24,13 @@ public:
 	std::vector<GameDynamicObject*> getEntities() const;
 	std::vector<Wall> getWalls() const;
 
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to) const;
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, const std::vector<common::Circle>& ignoredAreas) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable, const std::vector<common::Circle>& ignoredAreas) const;
 	bool raycastStatic(const Segment& ray, Vector2& result) const;
 	std::vector<GameDynamicObject*> checkCollision(const Vector2& point) const;
 	std::vector<GameDynamicObject*> checkCollision(const Aabb& area) const;
+	bool isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const;
+	bool isPositionValid(const Vector2& point, float entityRadius) const;
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;
@@ -58,8 +60,6 @@ private:
 	std::vector<int> aStar(int from, int to, const std::vector<common::Circle>& ignoredAreas) const;
 	float estimateDistance(int fromIdx, int toIdx) const;
 	Vector2 getNodePosition(int index) const;
-	bool isMovementValid(const Segment& segment) const;
-	bool isPositionValid(const Vector2& point, float entityRadius) const;
 
 	static const int NULL_IDX;
 

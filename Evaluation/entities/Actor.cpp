@@ -75,6 +75,10 @@ Vector2 Actor::getVelocity() const { return _velocity; }
 
 Action* Actor::getCurrentAction() const { return _currentAction; }
 
+Vector2 Actor::getShortGoal() const { return _nextSafeGoal; }
+
+Vector2 Actor::getLongGoal() const { return _path.empty() ? _position : _path.back(); }
+
 void Actor::clearCurrentAction() {
 	if (_currentAction != nullptr) {
 		delete _currentAction; 
@@ -267,16 +271,30 @@ void Actor::updateMovement(GameTime time) {
 		//calculatePreferredVelocity();
 
 		if (!_path.empty()) {
-			if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
-				_path.pop();
-				_nextSafeGoal = getNextSafeGoal();
-			}
-			if (!_path.empty()) {
-				_preferredVelocity = _nextSafeGoal - _position;
+			Vector2 toDestination = _path.back() - _position;
+			if (Game::getInstance()->getMap()->isMovementValid(this, toDestination)) {
+				if ((toDestination).lengthSquared() < common::sqr(MovementGoalMargin)) {
+					_path = {};
+					_nextSafeGoal = _position;
+					_preferredVelocity = Vector2();
+					Logger::log("Actor " + _name + " reached its destination.");
+				}
+				else {
+					_preferredVelocity = toDestination;
+				}
 			}
 			else {
-				Logger::log("Actor " + _name + " reached its destination.");
-				_preferredVelocity = Vector2();
+				if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
+					_path.pop();
+					_nextSafeGoal = getNextSafeGoal();
+				}
+				if (!_path.empty()) {
+					_preferredVelocity = _nextSafeGoal - _position;
+				}
+				else {
+					Logger::log("Actor " + _name + " reached its destination.");
+					_preferredVelocity = Vector2();
+				}
 			}
 		}
 
@@ -312,7 +330,7 @@ void Actor::updateMovement(GameTime time) {
 					if (_recalculations < MaxRecalculations) {
 						++_recalculations;
 						Logger::log("Actor " + _name + " is searching for alternative path.");
-						move(Game::getInstance()->getMap()->findPath(_position, destination, {
+						move(Game::getInstance()->getMap()->findPath(_position, destination, this, {
 							common::Circle(_position, ActorRadius * (_recalculations + 1))
 						}));
 					}
@@ -412,11 +430,11 @@ std::vector<Actor*> Actor::getActorsInViewAngle() const {
 	for (Actor* other : _seenActors) {
 		Vector2 otherPos = other->_position;
 		if (
-			//(common::isAngleBetween(common::angleFromTo(_position, otherPos), from, to)
-			//|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(from), sinf(from)) * ActorVOCheckRadius)) <= ActorRadius
-			//|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(to), sinf(to)) * ActorVOCheckRadius)) <= ActorRadius)
-			//&& 
-			common::sqDist(otherPos, _position) <= common::sqr(ActorVOCheckRadius)) {
+			(common::isAngleBetween(common::angleFromTo(_position, otherPos), from, to)
+			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(from), sinf(from)) * ActorVOCheckRadius)) <= ActorRadius
+			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(to), sinf(to)) * ActorVOCheckRadius)) <= ActorRadius)
+			&& common::sqDist(otherPos, _position) <= common::sqr(ActorVOCheckRadius)
+			|| common::sqDist(otherPos, _position) <= common::sqr(2 * ActorRadius + common::EPSILON + MovementSafetyMargin)) {
 			result.push_back(other);
 		}
 	}
@@ -639,7 +657,7 @@ Vector2 Actor::getNextSafeGoal() const {
 					}
 				}
 
-				return commonPoint + translation.normal() * (ActorRadius + 3 * MovementSafetyMargin + common::EPSILON);
+				return commonPoint + translation.normal() * common::SQRT_2_F * (ActorRadius + MovementSafetyMargin + common::EPSILON);
 			}
 		}
 		return _path.front();

@@ -98,11 +98,17 @@ bool Game::initialize(const char* title, int width, int height) {
 
 	std::vector<GameDynamicObject*> entities;
 	float w3 = DisplayWidth / 3, h3 = DisplayHeight / 3;
+	
+	/*
 	entities.push_back(new Actor("Actor1", 0, Vector2(DisplayWidth / 2, DisplayHeight / 2)));
 	entities.push_back(new Actor("Actor2", 0, Vector2(w3, h3)));
 	entities.push_back(new Actor("Actor3", 0, Vector2(w3, 2 * h3)));
 	entities.push_back(new Actor("Actor4", 0, Vector2(2 * w3, h3)));
-	entities.push_back(new Actor("Actor5", 0, Vector2(2 * w3, 2 * h3)));
+	entities.push_back(new Actor("Actor5", 0, Vector2(2 * w3, 2 * h3)));*/
+
+	for (int i = 0; i < 20; ++i) {
+		entities.push_back(new Actor("Actor" + std::to_string(i), 0, Vector2(Rng::getInteger(80, DisplayWidth - 80), Rng::getInteger(80, DisplayHeight - 80))));
+	}
 
 	entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
 	entities.push_back(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
@@ -218,6 +224,9 @@ void Game::handleEvents() {
 				_iscurrentPathVisible = true;
 			}
 		}
+		if (keyboardState[SDL_SCANCODE_LALT]) {
+			_isUpdateEnabled = !_isUpdateEnabled;
+		}
 		break;
 	}
 	/*case SDL_KEYUP: {
@@ -247,16 +256,17 @@ void Game::dispose() {
 }
 
 void Game::update() {
+	if (_isUpdateEnabled) {
+		GameTime time = SDL_GetPerformanceCounter();
 
-	GameTime time = SDL_GetPerformanceCounter();
+		for (GameDynamicObject* entity : _gameMap->getEntities()) {
+			entity->update(time);
+		}
+		_missileManager->update(time);
 
-	for (GameDynamicObject* entity : _gameMap->getEntities()) {
-		entity->update(time);
+		Logger::printLogs();
+		Logger::clear();
 	}
-	_missileManager->update(time);
-
-	Logger::printLogs();
-	Logger::clear();
 }
 
 void Game::render() {
@@ -329,10 +339,10 @@ void Game::render() {
 	*/
 
 	if (_actor != nullptr) { 
-		fillRing(_actor->getPosition(), 24, 25, colors::green); 
+		fillRing(_actor->getPosition(), ActorSelectionRing, ActorSelectionRing + 1, colors::green);
 
 		for (Actor* seenActor : _actor->getSeenActors()) {
-			fillRing(seenActor->getPosition(), 24, 24, colors::cyan);
+			fillRing(seenActor->getPosition(), ActorSelectionRing, ActorSelectionRing, colors::cyan);
 		}
 	}
 
@@ -340,6 +350,11 @@ void Game::render() {
 		switch (entity->getGameObjectType()) {
 		case GameDynamicObjectType::ACTOR:
 			drawActor(*((Actor*)entity));
+#ifdef _DEBUG
+			if (_areAabbsVisible) {
+				drawCircle(entity->getPosition(), ActorRadius, colors::black);
+			}
+#endif // _DEBUG
 			break;
 		case GameDynamicObjectType::TRIGGER:
 			drawTrigger(*((Trigger*)entity));
@@ -348,30 +363,34 @@ void Game::render() {
 	}
 
 #ifdef _DEBUG
-//	if (_actor != nullptr) {
-//		auto viewBorders = _actor->getViewBorders();
-//		Vector2 pos = _actor->getPosition();
-//		drawSegment(Segment(pos, pos + viewBorders.first * ActorSightRadius), colors::pink);
-//		drawSegment(Segment(pos, pos + viewBorders.second * ActorSightRadius), colors::pink);
-//
-//		auto vos = _actor->getVelocityObstacles(_actor->getActorsInViewAngle());
-//		for (VelocityObstacle vo : vos) {
-//			fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
-//			drawSegment(Segment(vo.apex, vo.apex + vo.side1 * ActorSightRadius), colors::yellow);
-//			drawSegment(Segment(vo.apex, vo.apex + vo.side2 * ActorSightRadius), colors::yellow);
-//		}
-//
-//		for (auto candidate : _actor->computeCandidates(vos)) {
-//			drawSegment(Segment(pos, pos + candidate.velocity * 50), colors::darkRed);
-//		}
-//	}
-//
 	if (_actor != nullptr) {
-		auto walls = _actor->getWallsNearGoal();
-		for (const Wall& wall : walls) {
-			drawSegment(wall.getSegment(), colors::pink);
+
+		if (_iscurrentPathVisible) {
+			auto viewBorders = _actor->getViewBorders();
+			Vector2 pos = _actor->getPosition();
+			drawSegment(Segment(pos, pos + viewBorders.first * ActorSightRadius), colors::pink);
+			drawSegment(Segment(pos, pos + viewBorders.second * ActorSightRadius), colors::pink);
+
+			auto vos = _actor->getVelocityObstacles(_actor->getActorsInViewAngle());
+			for (VelocityObstacle vo : vos) {
+				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
+				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * ActorSightRadius), colors::yellow);
+				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * ActorSightRadius), colors::yellow);
+			}
+
+			for (auto candidate : _actor->computeCandidates(vos)) {
+				drawSegment(Segment(pos, pos + candidate.velocity * 50), colors::darkRed);
+			}
+	
+			auto walls = _actor->getWallsNearGoal();
+			for (const Wall& wall : walls) {
+				drawSegment(wall.getSegment(), colors::pink);
+			}
+
+			drawSegment(Segment(_actor->getPosition(), _actor->getLongGoal()), colors::cyan);
+			drawPoint(_actor->getShortGoal(), colors::yellow);
+			drawPoint(_actor->getLongGoal(), colors::cyan);
 		}
-		//drawPoint(_actor->getNextSafeGoal(), colors::yellow);
 	}
 
 #endif // _DEBUG
@@ -386,6 +405,8 @@ void Game::render() {
 	for (common::Ring& ring : _missileManager->getExplosions(time)) {
 		fillRing(ring.center, ring.radius1, ring.radius2, colors::red);
 	}
+
+
 
 	SDL_RenderPresent(_renderer);
 }

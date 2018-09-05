@@ -32,6 +32,8 @@ public:
 	void setPreferredVelocity(const Vector2& velocity);
 	Vector2 getPreferredVelocity() const;
 	Vector2 getVelocity() const;
+	Vector2 getShortGoal() const;
+	Vector2 getLongGoal() const;
 
 	Action* getCurrentAction() const;
 	bool setCurrentAction(Action* action);

@@ -47,6 +47,9 @@ public:
 	// Skaluje prostok¹t wzglêdem jego œrodka o podany wspó³czynnik. Wartoœæ wspó³czynnika musi byæ dodatnia.
 	void scale(float multiplier, ResizeOrigin origin = ResizeOrigin::CENTER);
 
+	// Zwraca poszerzony prostok¹t.
+	Aabb inflate(float padding) const;
+
 	// £¹czy podan¹ parê Aabb. Tworzy najmniejszy Aabb, który je ogranicza.
 	static Aabb merge(const Aabb& aabb1, const Aabb& aabb2);
 

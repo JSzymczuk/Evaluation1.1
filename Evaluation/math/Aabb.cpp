@@ -64,6 +64,11 @@ void Aabb::scale(float multiplier, ResizeOrigin origin) {
 	resize(getSize() * multiplier, origin);
 }
 
+Aabb Aabb::inflate(float padding) const {
+	float x = _minPoint.x, y = _minPoint.y, doublePadding = 2 * padding;
+	return Aabb(x - padding, y - padding, _maxPoint.x - x + doublePadding, _maxPoint.y - y + doublePadding);
+}
+
 Aabb Aabb::merge(const Aabb& aabb1, const Aabb& aabb2) {
 	return Aabb(
 		Vector2::min(aabb1._minPoint, aabb2._minPoint),

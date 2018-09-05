@@ -51,6 +51,7 @@ private:
 	bool _isNavigationMeshVisible = false;
 	bool _areAabbsVisible = false;
 	bool _iscurrentPathVisible = false;
+	bool _isUpdateEnabled = true;
 	std::queue<Vector2> _path;
 
 	int mousePosX;

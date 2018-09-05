@@ -19,7 +19,7 @@ bool MoveAction::update(GameTime gameTime) {
 void MoveAction::start(GameTime gameTime) {
 	if (_pathplanning) {
 		Actor* actor = getActor();
-		actor->move(Game::getInstance()->getMap()->findPath(actor->getPosition(), _position));
+		actor->move(Game::getInstance()->getMap()->findPath(actor->getPosition(), _position, actor));
 		_pathplanning = false;
 	}
 	Action::start(gameTime);

@@ -46,7 +46,7 @@ std::vector<GameDynamicObject*> GameMap::initializeEntities(const std::vector<Ga
 	std::vector<GameDynamicObject*> allowed;
 	allowed.reserve(entities.size());
 	for (auto entity : entities) {
-		if (isPositionValid(entity->getPosition(), entity->getRadius())) {
+		if (isPositionValid(entity->getPosition(), entity->getRadius() + MovementSafetyMargin)) {
 			allowed.push_back(entity);
 		}
 		else {
@@ -261,11 +261,13 @@ std::vector<int> GameMap::aStar(int from, int to, const std::vector<common::Circ
 	return path;
 }
 
-std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to) const {
-	return findPath(from, to, {});
+std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable) const {
+	return findPath(from, to, movable, {});
 }
 
-std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, const std::vector<common::Circle>& ignoredAreas) const {
+std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, 
+	GameDynamicObject* movable, const std::vector<common::Circle>& ignoredAreas) const {
+
 	int start = getClosestNavigationNode(from, ignoredAreas);
 	int end = isPositionValid(to, ActorRadius) ? getClosestNavigationNode(to, ignoredAreas) : -1;
 	if (start == -1 || end == -1) { return std::queue<Vector2>(); }
@@ -276,28 +278,38 @@ std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, co
 
 		if (size > 0) {
 
-			int first = 0;
-			int last = size - 1;
+			//int first = 0;
+			//int last = size - 1;
 
-			bool keepLooping = true;
-			while (first < last && keepLooping) {
-				bool condition1 = isMovementValid(Segment(to, getNodePosition(pathIndices.at(first + 1))));
-				bool condition2 = false;
-				if (condition1) { ++first; }
-				if (first < last) {
-					condition2 = isMovementValid(Segment(from, getNodePosition(pathIndices.at(last - 1))));
-					if (condition2) { --last; }
-				}
-				keepLooping = condition1 || condition2;
-			}
+			//bool keepLooping = true;
+			//while (first < last && keepLooping) {
+			//	bool condition1 = isMovementValid(Segment(to, getNodePosition(pathIndices.at(first + 1))));
+			//	bool condition2 = false;
+			//	if (condition1) { ++first; }
+			//	if (first < last) {
+			//		condition2 = isMovementValid(Segment(from, getNodePosition(pathIndices.at(last - 1))));
+			//		if (condition2) { --last; }
+			//	}
+			//	keepLooping = condition1 || condition2;
+			//}
 
-			if (first == last) {
-				if (!isMovementValid(Segment(from, to))) {
-					result.push(getNodePosition(pathIndices.at(first)));
+			//if (first == last) {
+			//	if (!isMovementValid(Segment(from, to))) {
+			//		result.push(getNodePosition(pathIndices.at(first)));
+			//	}
+			//}
+			//else {
+			//	for (int i = last; i >= first; --i) {
+			//		result.push(getNodePosition(pathIndices.at(i)));
+			//	}
+			//}
+
+			if (!isMovementValid(movable, to - from)) {
+				int first = size - 1;
+				if (movable != nullptr && size > 1 && isMovementValid(movable, getNodePosition(pathIndices.at(size - 2)) - movable->getPosition())) {
+					--first;
 				}
-			}
-			else {
-				for (int i = last; i >= first; --i) {
+				for (int i = first; i >= 0; --i) {
 					result.push(getNodePosition(pathIndices.at(i)));
 				}
 			}
@@ -310,19 +322,30 @@ std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, co
 
 Vector2 GameMap::getNodePosition(int index) const { return _navigationMesh.at(index).position; }
 
-bool GameMap::isMovementValid(const Segment& segment) const {
+bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const {
+
+	float padding = movable->getRadius() + MovementSafetyMargin + common::EPSILON;
+	Vector2 pos = movable->getPosition();
+	Segment segment = Segment(pos, pos + movementVector);
 
 	for (Wall& wall : _walls.getElements()) {
-		if (common::sqDist(segment, wall.getSegment()) < common::sqr(ActorRadius)) {
+		if (common::sqDist(segment, wall.getSegment()) <= common::sqr(padding)) {
 			return false;
 		}
 	}
+
+	for (auto entity : _entities.broadphase(Aabb(pos, segment.to).inflate(padding))) {
+		if (movable != entity && entity->isSolid() && common::distance(entity->getPosition(), segment) <= entity->getRadius() + padding) {
+			return false;
+		}
+	}
+
 	return true;
 }
 
 bool GameMap::isPositionValid(const Vector2& point, float entityRadius) const {
 	for (Wall& wall : _walls.getElements()) {
-		if (common::distance(point, wall.getSegment()) < entityRadius) {
+		if (common::distance(point, wall.getSegment()) <= entityRadius) {
 			return false;
 		}
 	}

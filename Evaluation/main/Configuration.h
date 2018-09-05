@@ -11,9 +11,10 @@ const int DisplayHeight = 720;
 const int FPS = 30;
 
 const int TriggerRadius = 20;
-const int ActorRadius = 20;
+const int ActorRadius = 15;
+const int ActorSelectionRing = 24;
 const int ActorSightRadius = 300;
-const int ActorVOCheckRadius = 200;
+const int ActorVOCheckRadius = 80;
 const int ActorVOCheckAngle = 30;
 const float VOSideVelocityMargin = 0.30f;
 const int MissileInitialDistance = 30;
