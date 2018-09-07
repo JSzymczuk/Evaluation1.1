@@ -28,6 +28,7 @@ public:
 	//bool isWeaponLoaded(WeaponType weaponType) const;
 	Vector2 getDestination() const;
 	float getMaxSpeed() const;
+	float getSpeed() const;
 	std::vector<Actor*> getSeenActors() const;
 	void setPreferredVelocity(const Vector2& velocity);
 	Vector2 getPreferredVelocity() const;
@@ -90,6 +91,7 @@ private:
 	std::queue<Vector2> _path;
 	Vector2 _lastDestination;
 	Vector2 _nextSafeGoal;
+	float _currentSpeed;
 
 	bool _isRotating;
 	float _desiredOrientation;
@@ -99,11 +101,11 @@ private:
 
 	Action* _currentAction;
 
+	void updateCurrentSpeed(GameTime gameTime);
 	float calculateRotation() const;
 	void calculatePreferredVelocity();
 	void clearCurrentAction();
 
-	GameTime _lastUpdate;
 	std::vector<Actor*> _seenActors;
 
 	struct MovementCheckResult {
