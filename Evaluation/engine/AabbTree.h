@@ -283,10 +283,10 @@ template<typename Item> void AabbTree<Item>::update(Item item) {
 
 template<typename Item> void AabbTree<Item>::clear() {
 	mutex.lock();
-	for (int i = 0; i < count; ++i) {
+	for (int i = 0; i < _count; ++i) {
 		clearNode(i);
 	}
-	count = 0;
+	_count = 0;
 	rootId = NULL_ID;
 	mutex.unlock();
 }

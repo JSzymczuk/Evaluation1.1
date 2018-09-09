@@ -91,7 +91,7 @@ bool Game::initialize(const char* title, int width, int height) {
 	rm->loadImage(HealthBarTextureKey, HealthBarTexturePath);
 
 	_actor = nullptr;
-	_gameMap = GameMap::create("test.map");
+	_gameMap = GameMap::create("empty.map");
 
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
@@ -105,15 +105,23 @@ bool Game::initialize(const char* title, int width, int height) {
 	entities.push_back(new Actor("Actor3", 0, Vector2(w3, 2 * h3)));
 	entities.push_back(new Actor("Actor4", 0, Vector2(2 * w3, h3)));
 	entities.push_back(new Actor("Actor5", 0, Vector2(2 * w3, 2 * h3)));*/
-
+/*
 	for (int i = 0; i < 20; ++i) {
 		entities.push_back(new Actor("Actor" + std::to_string(i), 0, Vector2(Rng::getInteger(80, DisplayWidth - 80), Rng::getInteger(80, DisplayHeight - 80))));
+	}*/
+	
+	int n = 50;
+	float r = 300;
+	float angle = 2 * common::PI_F / n;
+	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
+	for (int i = 0; i < n; ++i) {
+		entities.push_back(new Actor("Actor" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r));
 	}
 
-	entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
+	/*entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
 	entities.push_back(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
 	entities.push_back(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
-	entities.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
+	entities.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));*/
 
 	for (auto invalidEntity : _gameMap->initializeEntities(entities)) {
 		delete invalidEntity;
@@ -209,8 +217,7 @@ void Game::handleEvents() {
 					Logger::log("Failed");
 					delete action;
 				}
-			}
-			
+			}			
 		}
 		if (keyboardState[SDL_SCANCODE_SPACE]) {
 			if (_isNavigationMeshVisible) {
@@ -224,8 +231,26 @@ void Game::handleEvents() {
 				_iscurrentPathVisible = true;
 			}
 		}
-		if (keyboardState[SDL_SCANCODE_LALT]) {
+		if (keyboardState[SDL_SCANCODE_TAB]) {
 			_isUpdateEnabled = !_isUpdateEnabled;
+		}
+		if (keyboardState[SDL_SCANCODE_LCTRL]) {
+			if (keyboardState[SDL_SCANCODE_W]) {
+				for (GameDynamicObject* a : getMap()->getEntities()) {
+					if (a->getGameObjectType() == GameDynamicObjectType::ACTOR) {
+						Actor* actor = (Actor*)a;
+						Action* action = new WanderAction(actor);
+						if (!actor->setCurrentAction(action)) {
+							Logger::log("Failed");
+							delete action;
+						}
+					}
+				}
+			}
+			else if (keyboardState[SDL_SCANCODE_L]) {
+				if (Logger::isLogging()) { Logger::stopLogging(); }
+				else { Logger::startLogging(); }
+			}
 		}
 		break;
 	}
@@ -348,14 +373,25 @@ void Game::render() {
 
 	for (GameDynamicObject* entity : _gameMap->getEntities()) {
 		switch (entity->getGameObjectType()) {
-		case GameDynamicObjectType::ACTOR:
-			drawActor(*((Actor*)entity));
+		case GameDynamicObjectType::ACTOR: {
+			Actor* actor = (Actor*)entity;
+			if (actor->isMoving()) {
+				GameTime from, to;
+				from = SDL_GetPerformanceCounter();
+				drawActor(*actor);
+				to = SDL_GetPerformanceCounter();
+				//Logger::log("Render:                 " + std::to_string(to - from));
+			}
+			else {
+				drawActor(*actor);
+			}
 #ifdef _DEBUG
 			if (_areAabbsVisible) {
 				drawCircle(entity->getPosition(), ActorRadius, colors::black);
 			}
 #endif // _DEBUG
 			break;
+		}
 		case GameDynamicObjectType::TRIGGER:
 			drawTrigger(*((Trigger*)entity));
 			break;

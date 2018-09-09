@@ -96,15 +96,26 @@ private:
 	bool _isWaiting;
 	GameTime _waitingStarted;
 	int _recalculations;
+	std::vector<Vector2> _positionHistory;
+	size_t _nextHistoryIdx;
+	size_t _positionHistoryLength;
 
 	Action* _currentAction;
 
 	float calculateRotation() const;
-	void calculatePreferredVelocity();
+	void setPreferredVelocityAndSafeGoal();
 	void clearCurrentAction();
-
+	
 	GameTime _lastUpdate;
-	std::vector<Actor*> _seenActors;
+	std::vector<Actor*> _actorsNearby;
+	std::vector<Actor*> seenActors;
+	
+	std::vector<Actor*> getActorsNearby() const;
+	void updateSpotting2();
+	void abortMovement(String loggerMessage);
+	void saveCurrentPositionInHistory();
+	void clearPositionHistory();
+	bool isOscilating() const;
 
 	struct MovementCheckResult {
 		bool allowed;
@@ -124,8 +135,9 @@ public:
 private:
 #endif	
 	void updateMovement(GameTime time);
-	void updateOrientation(GameTime time);
-	void updateWeapons(GameTime time);
+	bool updateOrientation(GameTime time);
+	bool updateWeapons(GameTime time);
+	bool updateCurrentAction(GameTime time);
 	void updateSpotting();
 	MovementCheckResult checkMovement() const;
 	float getDistanceToGoal() const;

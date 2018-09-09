@@ -9,6 +9,8 @@ typedef unsigned long long int GameTime;
 const int DisplayWidth = 960;
 const int DisplayHeight = 720;
 const int FPS = 30;
+const bool AreLogsVisible = true;
+const bool CollisionMethodAabbTree = false;
 
 const int TriggerRadius = 20;
 const int ActorRadius = 15;
@@ -27,6 +29,8 @@ const int ActorDyingTime = 3000000;
 const float MaxMovementWaitingTime = 500000;
 const float MaxRecalculatedWaitingTime = 1000;
 const int MaxRecalculations = 5;
+const size_t ActionPositionHistoryLength = 10;
+const float ActorOscilationRadius = 4.0f;
 const float TriggerRotationSpeed = 0.05f;
 const float ActorRotationSpeed = 0.25f;
 const float ActorSpeed = 3.1f;

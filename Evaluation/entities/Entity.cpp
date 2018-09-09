@@ -34,7 +34,7 @@ bool GameDynamicObject::checkMovementCollisions(const Segment& segment, float mi
 }
 
 void GameDynamicObject::update(GameTime gameTime) {
-	if (!isStaticElement() && _collisionTree != nullptr && hasPositionChanged()) {
+	if (CollisionMethodAabbTree && !isStaticElement() && _collisionTree != nullptr && hasPositionChanged()) {
 		_collisionTree->update(this);
 	}
 }

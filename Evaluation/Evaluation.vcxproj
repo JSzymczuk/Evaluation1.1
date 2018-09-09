@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2-2.0.8\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -85,10 +85,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2-2.0.8\include;D:\Projekty\Evaluation_1_1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>D:\libs\SDL2-2.0.8\lib\x86;D:\libs\SDL2_ttf-2.0.14\lib\x86;D:\libs\SDL2_image-2.0.3\lib\x86;D:\libs\luabind\lib\debug;D:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.8\lib\x86;C:\libs\SDL2_ttf-2.0.14\lib\x86;C:\libs\SDL2_image-2.0.3\lib\x86;C:\libs\luabind\lib\debug;C:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;lua53.lib;luabind.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
