@@ -33,13 +33,10 @@ bool GameDynamicObject::checkMovementCollisions(const Segment& segment, float mi
 	return false;
 }
 
-GameTime GameDynamicObject::getTimeFromLastUpdate(GameTime gameTime) const { return gameTime - _lastUpdate; }
-
 void GameDynamicObject::update(GameTime gameTime) {
 	if (!isStaticElement() && _collisionTree != nullptr && hasPositionChanged()) {
 		_collisionTree->update(this);
 	}
-	_lastUpdate = gameTime;
 }
 
 void GameDynamicObject::enableCollisions(AabbTree<GameDynamicObject*>* collisionTree, SegmentTree<Wall>* segmentTree) {

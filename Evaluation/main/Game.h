@@ -18,7 +18,7 @@ public:
 	bool initialize(const char* title, int width, int height);
 	bool isRunning();
 	void handleEvents();
-	void update(GameTime time);
+	void update();
 	void render();
 	void dispose();
 

@@ -24,7 +24,6 @@ public:
 	common::Circle getCollisionArea() const;
 	void enableCollisions(AabbTree<GameDynamicObject*>* collisionTree, SegmentTree<Wall>* segmentTree);
 	void disableCollisions();
-	GameTime getTimeFromLastUpdate(GameTime gameTime) const;
 
 	virtual void update(GameTime gameTime);
 
@@ -46,7 +45,6 @@ protected:
 	bool checkMovementCollisions(const Segment& segment, float minDistance) const;
 
 private:
-	GameTime _lastUpdate;
 	AabbTree<GameDynamicObject*>* _collisionTree = nullptr;
 	SegmentTree<Wall>* _segmentTree = nullptr;
 };

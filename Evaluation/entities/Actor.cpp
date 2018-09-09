@@ -79,12 +79,6 @@ Vector2 Actor::getShortGoal() const { return _nextSafeGoal; }
 
 Vector2 Actor::getLongGoal() const { return _path.empty() ? _position : _path.back(); }
 
-float Actor::getSpeed() const { return _currentSpeed; }
-
-void Actor::updateCurrentSpeed(GameTime gameTime) { 
-	_currentSpeed = common::min(ActorSpeed * getTimeFromLastUpdate(gameTime) / 1000000, ActorSpeed);
-}
-
 void Actor::clearCurrentAction() {
 	if (_currentAction != nullptr) {
 		delete _currentAction; 
@@ -198,7 +192,9 @@ void Actor::lookAt(const Vector2& point) {
 }
 
 void Actor::update(GameTime time) {
-	
+
+	_lastUpdate = time;
+
 	updateWeapons(time);
 	 
 	if (_currentAction != nullptr) {
@@ -224,8 +220,6 @@ void Actor::update(GameTime time) {
 		}
 		currentAction->onEnter(this, time);
 	}*/
-
-	updateCurrentSpeed(time);
 
 	updateSpotting();
 	updateMovement(time);
@@ -307,7 +301,7 @@ void Actor::updateMovement(GameTime time) {
 		_velocity = selectVelocity(computeCandidates(getVelocityObstacles(getActorsInViewAngle())));
 
 		if (_velocity.lengthSquared() > common::EPSILON) {
-			_velocity = _velocity.normal() * _currentSpeed;
+			_velocity = _velocity.normal() * ActorSpeed;
 		}
 
 		MovementCheckResult movementCheckResult = checkMovement();
@@ -495,7 +489,7 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 		c.velocity = _preferredVelocity;
 		c.difference = 0;
 		c.collisionFreeDistance = minDistanceWithoutCollision(_preferredVelocity, ActorVOCheckRadius);
-		if (c.collisionFreeDistance > _currentSpeed) {
+		if (c.collisionFreeDistance > ActorSpeed) {
 			result.push_back(c);
 		}
 	}
@@ -504,7 +498,7 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 
 	// SprawdŸ wektory ruchu wzd³u¿ krawêdzi VO.
 	for (size_t i = 0; i < n; ++i) {
-		Vector2 v1 = common::adjustLength(vo[i].side1, _currentSpeed), v2 = common::adjustLength(vo[i].side2, _currentSpeed);
+		Vector2 v1 = common::adjustLength(vo[i].side1, ActorSpeed), v2 = common::adjustLength(vo[i].side2, ActorSpeed);
 		Vector2 point1 = vo[i].apex + v1, point2 = vo[i].apex + v2;
 		bool accept1 = true, accept2 = true;
 		for (size_t j = 0; j < n && (accept1 || accept2); ++j) {

@@ -67,6 +67,6 @@ bool WanderAction::update(GameTime gameTime) {
 	Vector2 returnVel = _center - actor->getPosition();
 	float lth = returnVel.lengthSquared();
 	float k = common::max(0, common::min(1, lth / (WanderCentripetalForce * WanderCentripetalForce)));
-	actor->setPreferredVelocity((returnVel * k + prefVelocity * (1 - k)) * actor->getSpeed());
+	actor->setPreferredVelocity((returnVel * k + prefVelocity * (1 - k)) * ActorSpeed);
 	return false;
 }

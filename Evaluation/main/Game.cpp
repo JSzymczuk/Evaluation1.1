@@ -255,8 +255,10 @@ void Game::dispose() {
 	SDL_Quit();
 }
 
-void Game::update(GameTime time) {
+void Game::update() {
 	if (_isUpdateEnabled) {
+		GameTime time = SDL_GetPerformanceCounter();
+
 		for (GameDynamicObject* entity : _gameMap->getEntities()) {
 			entity->update(time);
 		}

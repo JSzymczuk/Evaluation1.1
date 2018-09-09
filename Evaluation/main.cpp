@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
 
 	//GameMap::Loader().generateConnections("map1.map", MapsDirectory + "/map2.map");
 
-	int preferredFrameDuration = 1000000 / FPS;
+	int preferredFrameDuration = 1000 / FPS;
 	int initialFrame;
 	int frameDuration;
 
@@ -14,16 +14,16 @@ int main(int argc, char** argv) {
 
 		while (game->isRunning()) {
 
-			initialFrame = SDL_GetPerformanceCounter();
+			initialFrame = SDL_GetTicks();
 
 			game->handleEvents();
-			game->update(initialFrame);
+			game->update();
 			game->render();
 
-			frameDuration = SDL_GetPerformanceCounter() - initialFrame;
+			frameDuration = SDL_GetTicks() - initialFrame;
 
 			if (frameDuration < preferredFrameDuration) {
-				SDL_Delay((preferredFrameDuration - frameDuration) / 1000);
+				SDL_Delay(preferredFrameDuration - frameDuration);
 			}
 		}
 		game->dispose();
