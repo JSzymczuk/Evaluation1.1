@@ -2,6 +2,7 @@
 
 #include <map>
 #include <queue>
+#include <thread>
 #include "Entity.h"
 #include "Weapon.h"
 #include "engine/Logger.h"
@@ -11,6 +12,7 @@ class Team;
 class Action;
 class Trigger;
 class Wall;
+class Game;
 
 class Actor : public GameDynamicObject {
 public:
@@ -51,7 +53,8 @@ public:
 	void move(const std::queue<Vector2>& path);
 	void stop();
 
-	void update(GameTime time);
+	void run();
+	void update();
 
 	bool isDead() const;
 	bool isMoving() const;
@@ -74,6 +77,10 @@ private:
 	Team* _team;
 	std::string _name;
 	std::string _sprite;
+
+	std::thread _thread;
+	GameTime _lastUpdate;
+	Game* _game;
 
 	float _health;
 	float _armor;
@@ -106,13 +113,12 @@ private:
 	void setPreferredVelocityAndSafeGoal();
 	void clearCurrentAction();
 	
-	GameTime _lastUpdate;
 	std::vector<Actor*> _actorsNearby;
 	std::vector<Actor*> seenActors;
 	
 	std::vector<Actor*> getActorsNearby() const;
 	void updateSpotting2();
-	void abortMovement(String loggerMessage);
+	void abortMovement(String loggerMessage, bool resetCounter);
 	void saveCurrentPositionInHistory();
 	void clearPositionHistory();
 	bool isOscilating() const;

@@ -21,6 +21,9 @@ public:
 	static void destroy(GameMap* game);
 	std::vector<GameDynamicObject*> initializeEntities(const std::vector<GameDynamicObject*>& entities);
 
+	float getWidth() const;
+	float getHeight() const;
+
 	std::vector<GameDynamicObject*> getEntities() const;
 	std::vector<Wall> getWalls() const;
 

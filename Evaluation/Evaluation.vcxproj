@@ -150,6 +150,7 @@
     <ClCompile Include="engine\Logger.cpp" />
     <ClCompile Include="engine\MissileManager.cpp" />
     <ClCompile Include="engine\Navigation.cpp" />
+    <ClCompile Include="engine\RegularGrid.cpp" />
     <ClCompile Include="engine\ResourceManager.cpp" />
     <ClCompile Include="engine\Rng.cpp" />
     <ClCompile Include="engine\TriggerFactory.cpp" />
@@ -173,14 +174,17 @@
     <ClInclude Include="actions\Move.h" />
     <ClInclude Include="actions\Shoot.h" />
     <ClInclude Include="actions\Face.h" />
-    <ClInclude Include="Agent.h" />
     <ClInclude Include="agents\ActorInfo.h" />
     <ClInclude Include="agents\ActorKnowledge.h" />
+    <ClInclude Include="agents\Agent.h" />
+    <ClInclude Include="agents\LuaEnvironment.h" />
+    <ClInclude Include="CommonFunctions.h" />
     <ClInclude Include="engine\AabbTree.h" />
     <ClInclude Include="engine\DataLoader.h" />
     <ClInclude Include="engine\Logger.h" />
     <ClInclude Include="engine\MissileManager.h" />
     <ClInclude Include="engine\Navigation.h" />
+    <ClInclude Include="engine\RegularGrid.h" />
     <ClInclude Include="engine\ResourceManager.h" />
     <ClInclude Include="engine\Rng.h" />
     <ClInclude Include="engine\SegmentTree.h" />
@@ -193,7 +197,6 @@
     <ClInclude Include="entities\Trigger.h" />
     <ClInclude Include="entities\Wall.h" />
     <ClInclude Include="entities\Weapon.h" />
-    <ClInclude Include="LuaEnvironment.h" />
     <ClInclude Include="main\Configuration.h" />
     <ClInclude Include="main\Game.h" />
     <ClInclude Include="math\Aabb.h" />

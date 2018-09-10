@@ -287,7 +287,7 @@ template<typename Item> void AabbTree<Item>::clear() {
 		clearNode(i);
 	}
 	_count = 0;
-	rootId = NULL_ID;
+	_rootId = NULL_ID;
 	mutex.unlock();
 }
 

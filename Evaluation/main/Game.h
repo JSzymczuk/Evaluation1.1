@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <condition_variable>
+#include <thread>
 #include "Configuration.h"
 #include "math/Math.h"
 #include "engine/SegmentTree.h"
@@ -24,6 +26,7 @@ public:
 
 	static Game* getInstance();
 	
+	GameTime getTime() const;
 	GameMap* getMap() const;
 	std::vector<Team*> getTeams() const;
 	std::vector<Actor*> getActors() const;
@@ -32,6 +35,12 @@ public:
 
 private:
 	static Game* _instance;
+
+	GameTime _gameTime;
+	std::mutex _updateMutex;
+	std::condition_variable _updateHolder;
+
+	friend class Actor;
 
 	bool _isRunning;
 	SDL_Window* _window;

@@ -21,6 +21,9 @@ Game::Game() {
 }
 
 Game::~Game() {
+	for (Actor* a : getActors()) {
+		delete a;
+	}
 	if (_instance == this) { _instance = nullptr; }
 }
 
@@ -29,6 +32,8 @@ Game* Game::_instance = nullptr;
 Game* Game::getInstance() { return _instance; }
 
 MissileManager* Game::getMissileManager() const { return _missileManager; }
+
+GameTime Game::getTime() const { return _gameTime; }
 
 GameMap* Game::getMap() const { return _gameMap; }
 
@@ -45,6 +50,7 @@ std::vector<Actor*> Game::getActors() const {
 	}
 	return result;
 }
+
 std::vector<Trigger*> Game::getTriggers() const {
 	std::vector<Trigger*> result;
 	if (_instance != nullptr) {
@@ -110,7 +116,7 @@ bool Game::initialize(const char* title, int width, int height) {
 		entities.push_back(new Actor("Actor" + std::to_string(i), 0, Vector2(Rng::getInteger(80, DisplayWidth - 80), Rng::getInteger(80, DisplayHeight - 80))));
 	}*/
 	
-	int n = 50;
+	int n = 40;
 	float r = 300;
 	float angle = 2 * common::PI_F / n;
 	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
@@ -125,6 +131,10 @@ bool Game::initialize(const char* title, int width, int height) {
 
 	for (auto invalidEntity : _gameMap->initializeEntities(entities)) {
 		delete invalidEntity;
+	}
+
+	for (Actor* a : getActors()) {
+		a->run();
 	}
 		
 	return true;
@@ -282,12 +292,15 @@ void Game::dispose() {
 
 void Game::update() {
 	if (_isUpdateEnabled) {
-		GameTime time = SDL_GetPerformanceCounter();
+		_gameTime = SDL_GetPerformanceCounter();
 
-		for (GameDynamicObject* entity : _gameMap->getEntities()) {
+		//Logger::log("Update at: " + std::to_string(_gameTime) + ".");
+
+		/*for (GameDynamicObject* entity : _gameMap->getEntities()) {
 			entity->update(time);
-		}
-		_missileManager->update(time);
+		}*/
+		_updateHolder.notify_all();
+		_missileManager->update(_gameTime);
 
 		Logger::printLogs();
 		Logger::clear();

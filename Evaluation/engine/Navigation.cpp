@@ -5,6 +5,10 @@
 #include "engine/SegmentTree.h"
 #include "main/Configuration.h"
 
+
+float GameMap::getWidth() const { return _width; }
+float GameMap::getHeight() const { return _height; }
+
 GameMap* GameMap::create(const char* filepath) { return Loader().load(filepath); }
 
 void GameMap::destroy(GameMap* game) { 

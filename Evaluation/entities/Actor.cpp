@@ -9,37 +9,7 @@
 #include "math/Math.h"
 #include "entities//Weapon.h"
 #include "main/Game.h"
-
-template <typename T> size_t indexOf(const std::vector<T>& vec, T element) {
-	size_t n = vec.size();
-	for (size_t i = 0; i < n; ++i) {
-		if (vec.at(i) == element) {
-			return i;
-		}
-	}
-	return n;
-}
-
-std::vector<String> loggerIgnore = std::vector<String>({
-	/*"updateOrientation",
-	"updateMovement",
-	"setPreferredVelocityAndSafeGoal",
-	"updateSpotting2",
-	"getActorsInViewAngle",
-	"getVelocityObstacles",
-	"computeCandidates",
-	"selectVelocity",
-	"checkMovement",
-	"updateCurrentAction",
-	"updateMovement",
-	"updateWeapons"*/
-});
-
-size_t LOGGER_NOT_IGNORED = loggerIgnore.size();
-
-bool loggerIgnores(String name) {
-	return indexOf<String>(loggerIgnore, name) != LOGGER_NOT_IGNORED;
-}
+#include "engine//CommonFunctions.h"
 
 Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	: GameDynamicObject(position, common::PI_F / 2) {
@@ -56,6 +26,7 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	_recalculations = 0;
 	_positionHistoryLength = 0;
 	_nextHistoryIdx = 0;
+	_lastUpdate = 0;
 
 	for (size_t i = 0; i < ActionPositionHistoryLength; ++i) {
 		_positionHistory.push_back(_position);
@@ -70,7 +41,9 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	}
 }
 
-Actor::~Actor() {}
+Actor::~Actor() {
+	_thread.join();
+}
 
 float Actor::getHealth() const { return _health; }
 
@@ -172,11 +145,11 @@ void Actor::move(const std::queue<Vector2>& path) {
 		_nextSafeGoal = getNextSafeGoal();
 	}
 	else {
-		abortMovement("Actor " + _name + " can't reach this destination.");
+		abortMovement("Actor " + _name + " can't reach this destination.", true);
 	}
 }
 
-void Actor::abortMovement(String loggerMessage) {
+void Actor::abortMovement(String loggerMessage, bool resetCounter) {
 	_path = {};
 	_preferredVelocity = Vector2();
 	_isWaiting = false;
@@ -184,12 +157,15 @@ void Actor::abortMovement(String loggerMessage) {
 	_lastDestination = _position;
 	_positionHistoryLength = 0;
 	_nextHistoryIdx = 0;
+	if (resetCounter) {
+		_recalculations = 0;
+	}
 	clearPositionHistory();
 	Logger::log(loggerMessage);
 }
 
 void Actor::stop() {
-	abortMovement("Actor " + _name + " stopped.");
+	abortMovement("Actor " + _name + " stopped.", true);
 }
 
 Aabb Actor::getAabb() const {
@@ -244,40 +220,57 @@ bool Actor::updateCurrentAction(GameTime time) {
 	return false;
 }
 
-void Actor::update(GameTime time) {
-	_lastUpdate = time;
-	GameTime from, to;
-	bool logIfSuccessful;
+void Actor::run() {
+	_thread = std::thread(&Actor::update, this);
+	_lastUpdate = 0;
+}
 
-	from = SDL_GetPerformanceCounter();
-	logIfSuccessful = updateWeapons(time);
-	to = SDL_GetPerformanceCounter();
-	if (logIfSuccessful && !loggerIgnores("updateWeapons")) {
-		Logger::log("Update Weapons:         " + std::to_string(to - from));
+void Actor::update() {
+
+	auto game = Game::getInstance();
+
+	while (!isDead()) {
+		std::unique_lock<std::mutex> lk(game->_updateMutex);
+		int lastUpdate = _lastUpdate;
+		GameTime time = game->getTime();
+		game->_updateHolder.wait(lk);// , [time, lastUpdate] { return SDL_GetPerformanceCounter() - lastUpdate >= ActorUpdateFrequency; });
+		_lastUpdate = game->getTime();
+		
+		GameTime from, to;
+		bool logIfSuccessful;
+
+		from = SDL_GetPerformanceCounter();
+		logIfSuccessful = updateWeapons(_lastUpdate);
+		to = SDL_GetPerformanceCounter();
+		if (logIfSuccessful) {
+			Logger::logIfNotIgnored("updateWeapons", "Update Weapons:         " + std::to_string(to - from));
+		}
+
+		from = SDL_GetPerformanceCounter();
+		logIfSuccessful = updateCurrentAction(_lastUpdate);
+		to = SDL_GetPerformanceCounter();
+		if (logIfSuccessful) {
+			Logger::logIfNotIgnored("updateCurrentAction", "Update Current Action:  " + std::to_string(to - from));
+		}
+		/*
+			from = SDL_GetPerformanceCounter();
+			updateSpotting();
+			to = SDL_GetPerformanceCounter();
+			Logger::log("Update Spotting:        " + std::to_string(to - from));*/
+
+		updateMovement(_lastUpdate);
+
+		from = SDL_GetPerformanceCounter();
+		logIfSuccessful = updateOrientation(_lastUpdate);
+		to = SDL_GetPerformanceCounter();
+		if (logIfSuccessful) {
+			Logger::logIfNotIgnored("updateOrientation", "Update Orientation:     " + std::to_string(to - from));
+		}
+
+		GameDynamicObject::update(_lastUpdate);
 	}
 
-	from = SDL_GetPerformanceCounter();
-	logIfSuccessful = updateCurrentAction(time);
-	to = SDL_GetPerformanceCounter();
-	if (logIfSuccessful && !loggerIgnores("updateCurrentAction")) {
-		Logger::log("Update Current Action:  " + std::to_string(to - from));
-	}
-/*
-	from = SDL_GetPerformanceCounter();
-	updateSpotting();
-	to = SDL_GetPerformanceCounter();
-	Logger::log("Update Spotting:        " + std::to_string(to - from));*/
-
-	updateMovement(time);
-
-	from = SDL_GetPerformanceCounter();
-	logIfSuccessful = updateOrientation(time);
-	to = SDL_GetPerformanceCounter();
-	if (logIfSuccessful && !loggerIgnores("updateOrientation")) {
-		Logger::log("Update Orientation:     " + std::to_string(to - from));
-	}
-
-	GameDynamicObject::update(time);
+	_thread.join();
 }
 
 float Actor::calculateRotation() const {
@@ -294,7 +287,7 @@ void Actor::setPreferredVelocityAndSafeGoal() {
 		Vector2 toDestination = _path.back() - _position;
 		if (Game::getInstance()->getMap()->isMovementValid(this, toDestination)) {
 			if ((toDestination).lengthSquared() < common::sqr(MovementGoalMargin)) {
-				abortMovement("Actor " + _name + " reached its destination.");
+				abortMovement("Actor " + _name + " reached its destination.", true);
 			}
 			else {
 				_preferredVelocity = toDestination;
@@ -309,8 +302,7 @@ void Actor::setPreferredVelocityAndSafeGoal() {
 				_preferredVelocity = _nextSafeGoal - _position;
 			}
 			else {
-				Logger::log("Actor " + _name + " reached its destination.");
-				_preferredVelocity = Vector2();
+				abortMovement("Actor " + _name + " reached its destination.", true);
 			}
 		}
 	}
@@ -336,44 +328,32 @@ void Actor::updateMovement(GameTime time) {
 		from = SDL_GetPerformanceCounter();
 		setPreferredVelocityAndSafeGoal();
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("setPreferredVelocityAndSafeGoal")) {
-			Logger::log("Compute Pref. Velocity: " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("setPreferredVelocityAndSafeGoal", "Compute Pref. Velocity: " + std::to_string(to - from));		
 
 		from = SDL_GetPerformanceCounter();
 		updateSpotting2();
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("updateSpotting2")) {
-			Logger::log("Update spotting:        " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("updateSpotting", "Update spotting:        " + std::to_string(to - from));
 
 		from = SDL_GetPerformanceCounter();
 		auto actorsInViewAngle = getActorsInViewAngle();
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("getActorsInViewAngle")) {
-			Logger::log("Actors in View Angle:   " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("getActorsInViewAngle", "Actors in View Angle:   " + std::to_string(to - from));
 
 		from = SDL_GetPerformanceCounter();
 		auto velocityObstacles = getVelocityObstacles(actorsInViewAngle);
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("getVelocityObstacles")) {
-			Logger::log("Get Velocity Obstacles: " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("getVelocityObstacles", "Get Velocity Obstacles: " + std::to_string(to - from));
 
 		from = SDL_GetPerformanceCounter();
 		auto candidates = computeCandidates(velocityObstacles);
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("computeCandidates")) {
-			Logger::log("Compute Candidates:     " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("computeCandidates", "Compute Candidates:     " + std::to_string(to - from));
 
 		from = SDL_GetPerformanceCounter();
 		_velocity = selectVelocity(candidates);
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("selectVelocity")) {
-			Logger::log("Select Velocity:        " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("selectVelocity", "Select Velocity:        " + std::to_string(to - from));
 
 		if (_velocity.lengthSquared() > common::EPSILON) {
 			_velocity = _velocity.normal() * ActorSpeed;
@@ -382,9 +362,7 @@ void Actor::updateMovement(GameTime time) {
 		from = SDL_GetPerformanceCounter();
 		MovementCheckResult movementCheckResult = checkMovement();
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("checkMovement")) {
-			Logger::log("Check Movement:         " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("checkMovement", "Check Movement:         " + std::to_string(to - from));
 
 		bool oscilationDetected = isOscilating();
 
@@ -393,7 +371,6 @@ void Actor::updateMovement(GameTime time) {
 			_position += _velocity;
 			saveCurrentPositionInHistory();
 			_isWaiting = false;
-			_recalculations = 0;
 
 			if ((_currentAction == nullptr || !_currentAction->locksRotation())
 				&&_velocity.lengthSquared() > common::EPSILON) {
@@ -409,7 +386,7 @@ void Actor::updateMovement(GameTime time) {
 			if (time - _waitingStarted > (_recalculations > 0 ? MaxRecalculatedWaitingTime : MaxMovementWaitingTime)) {
 				if (!_path.empty()) {
 					Vector2 destination = _path.back();
-					abortMovement("Actor " + _name + " is searching for alternative path.");
+					abortMovement("Actor " + _name + " is searching for alternative path.", false);
 					if (_recalculations < MaxRecalculations) {
 						++_recalculations;
 						move(Game::getInstance()->getMap()->findPath(_position, destination, this, {
@@ -430,9 +407,7 @@ void Actor::updateMovement(GameTime time) {
 			_velocity.y = 0;
 		}
 		to = SDL_GetPerformanceCounter();
-		if (!loggerIgnores("updateMovement")) {
-			Logger::log("Update Movement:        " + std::to_string(to - from));
-		}
+		Logger::logIfNotIgnored("updateMovement", "Update Movement:        " + std::to_string(to - from));
 	}
 }
 
@@ -829,10 +804,7 @@ std::vector<Actor*> Actor::getActorsNearby() const {
 void Actor::updateSpotting2() {
 	// Podczas ruchu zaktualizuj zbiór widzianych aktorów
 	if (hasPositionChanged()) {
-		GameTime from = SDL_GetPerformanceCounter();
 		auto actorsNearby = getActorsNearby();
-		GameTime to = SDL_GetPerformanceCounter();
-		Logger::log("GetActorsNearby: " + std::to_string(to - from));
 
 		size_t notSpottedPreviously = _actorsNearby.size();
 		size_t notSpottedNow = actorsNearby.size();
@@ -843,8 +815,8 @@ void Actor::updateSpotting2() {
 			if (actor->hasPositionChanged()) { continue; }
 
 			// Je¿eli siê nie porusza, to ustal czy aktor znikn¹³ czy pojawi³ siê w pobli¿u.
-			size_t wasSpotted = indexOf(_actorsNearby, actor);
-			size_t isSpotted = indexOf(actorsNearby, actor);
+			size_t wasSpotted = common::indexOf(_actorsNearby, actor);
+			size_t isSpotted = common::indexOf(actorsNearby, actor);
 
 			if (wasSpotted == notSpottedPreviously && isSpotted != notSpottedNow) {
 				actor->_actorsNearby.push_back(this);
@@ -852,7 +824,7 @@ void Actor::updateSpotting2() {
 			else if (wasSpotted != notSpottedPreviously && isSpotted == notSpottedNow) {
 				std::vector<Actor*>* nearbyPtr = &actor->_actorsNearby;
 				size_t n = nearbyPtr->size();
-				size_t k = indexOf(*nearbyPtr, this);
+				size_t k = common::indexOf(*nearbyPtr, this);
 				if (k != n) {
 					if (k != n - 1) {
 						nearbyPtr->operator[](k) = nearbyPtr->at(n - 1);
