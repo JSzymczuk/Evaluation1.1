@@ -45,6 +45,10 @@ const int GameMap::NULL_IDX = -1;
 
 GameMap::NavigationNode::NavigationNode(float x, float y, int index) : position(x, y), index(index) { }
 
+std::vector<GameDynamicObject*> GameMap::initializeRegularGrid(const std::vector<GameDynamicObject*>& entities) {
+	return _grid.initialize(this, RegularGridSize, entities);
+}
+
 std::vector<GameDynamicObject*> GameMap::initializeEntities(const std::vector<GameDynamicObject*>& entities) {
 	std::vector<GameDynamicObject*> invalid;
 	std::vector<GameDynamicObject*> allowed;
@@ -96,10 +100,22 @@ int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<co
 	return closest;
 }
 
-std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point) const { return _entities.broadphase(point); }
-std::vector<GameDynamicObject*> GameMap::checkCollision(const Aabb& area) const { return _entities.broadphase(area); }
+std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point) { 
+	if (CollisionMethodAabbTree) {
+	return _entities.broadphase(point); 
+	}
+	else {
+		return _grid.broadphase(point, common::EPSILON);
+	}
+}
 
-std::vector<GameDynamicObject*> GameMap::getEntities() const { return _entities.getElements(); }
+std::vector<GameDynamicObject*> GameMap::checkCollision(const Aabb& area) const { 
+	return _entities.broadphase(area); 
+}
+
+std::vector<GameDynamicObject*> GameMap::getEntities() const {
+	return _entities.getElements();
+}
 
 struct AStarNodeInfo {
 	int nodeValue;
@@ -457,6 +473,36 @@ std::vector<Segment> GameMap::getNavigationArcs() const {
 }
 
 std::vector<Aabb> GameMap::getAabbs() const { return _entities.getAabbs(); }
+
+std::vector<Aabb> GameMap::getRegionsContaining(const common::Circle& circle) {
+	auto regions = _grid.getRegionsContaining(circle.center, circle.radius);
+	std::vector<Aabb> result;
+	result.reserve(regions.size());
+	for (auto region : regions) {
+		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+	}
+	return result;
+}
+
+std::vector<Aabb> GameMap::getRegionsContaining(const Segment& segment) {
+	auto regions = _grid.getRegionsContaining(segment);
+	std::vector<Aabb> result;
+	result.reserve(regions.size());
+	for (auto region : regions) {
+		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+	}
+	return result;
+}
+
+std::vector<Aabb> GameMap::getRegionsContaining(const Vector2& from, const Vector2& to, float radius) {
+	auto regions = _grid.getRegionsForMovement(from, to, radius);
+	std::vector<Aabb> result;
+	result.reserve(regions.size());
+	for (auto region : regions) {
+		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+	}
+	return result;
+}
 
 /*
 void GameMap::Loader::appendIfNotContains(std::vector<GameMap::NavigationNode>& collection, const Vector2& point) const {

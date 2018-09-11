@@ -2,6 +2,16 @@
 
 namespace common {
 
+	template <typename T> bool contains(const std::vector<T>& vec, T element) {
+		size_t n = vec.size();
+		for (size_t i = 0; i < n; ++i) {
+			if (vec.at(i) == element) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	template <typename T> size_t indexOf(const std::vector<T>& vec, T element) {
 		size_t n = vec.size();
 		for (size_t i = 0; i < n; ++i) {
@@ -19,6 +29,16 @@ namespace common {
 				vec[idx] = vec.at(n - 1);
 			}
 			vec.pop_back();
+		}
+	}
+
+	template <typename T> void addIfUnique(std::vector<T>& result, const std::vector<T>& elements) {
+		size_t n = result.size();
+		for (T element : elements) {
+			if (common::indexOf(result, element) == n) {
+				result.push_back(element);
+				++n;
+			}
 		}
 	}
 }

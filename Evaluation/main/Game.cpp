@@ -133,6 +133,10 @@ bool Game::initialize(const char* title, int width, int height) {
 		delete invalidEntity;
 	}
 
+	for (auto invalidEntity : _gameMap->initializeRegularGrid(entities)) {
+		delete invalidEntity;
+	}
+
 	for (Actor* a : getActors()) {
 		a->run();
 	}
@@ -340,6 +344,24 @@ void Game::render() {
 			drawAabb(aabb, colors::white);
 		}
 	}
+
+	size_t n = (int)ceil(_gameMap->getWidth() / RegularGridSize);
+	size_t m = (int)ceil(_gameMap->getHeight() / RegularGridSize);
+	for (size_t i = 0; i < n; ++i) {
+		for (size_t j = 0; j < m; ++j) {
+			drawAabb(Aabb(i * RegularGridSize, j * RegularGridSize, RegularGridSize, RegularGridSize), colors::gray);
+		}
+	}
+	//for (Aabb& aabb : _gameMap->getRegionsContaining(common::Circle(mousePos, 20))) {
+	//	drawAabb(aabb, colors::red);
+	//}
+	//drawCircle(mousePos, 20, colors::darkRed);
+	Segment seg(Vector2(mousePosX, mousePosY), Vector2(300, 300));
+	for (GameDynamicObject* obj : _gameMap->checkCollision(Vector2(mousePosX, mousePosY))) {
+		drawCircle(obj->getPosition(), obj->getRadius(), colors::red);
+	}
+	drawSegment(seg, colors::darkRed);
+
 
 	if (_iscurrentPathVisible && _actor != nullptr) {
 		auto pathCopy = std::queue<Vector2>(_actor->getCurrentPath());

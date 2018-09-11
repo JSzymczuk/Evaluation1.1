@@ -12,6 +12,7 @@ const int FPS = 30;
 const bool AreLogsVisible = true;
 const bool CollisionMethodAabbTree = false;
 const long long ActorUpdateFrequency = 1000000 / 30;
+const int RegularGridSize = 120;
 
 const int TriggerRadius = 20;
 const int ActorRadius = 15;

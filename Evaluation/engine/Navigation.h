@@ -11,6 +11,7 @@
 #include "Rng.h"
 #include "SegmentTree.h"
 #include "main/Configuration.h"
+#include "engine/RegularGrid.h"
 
 class GameDynamicObject;
 class Wall;
@@ -20,6 +21,7 @@ public:
 	static GameMap* create(const char* filepath);
 	static void destroy(GameMap* game);
 	std::vector<GameDynamicObject*> initializeEntities(const std::vector<GameDynamicObject*>& entities);
+	std::vector<GameDynamicObject*> initializeRegularGrid(const std::vector<GameDynamicObject*>& entities);
 
 	float getWidth() const;
 	float getHeight() const;
@@ -30,7 +32,7 @@ public:
 	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable) const;
 	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable, const std::vector<common::Circle>& ignoredAreas) const;
 	bool raycastStatic(const Segment& ray, Vector2& result) const;
-	std::vector<GameDynamicObject*> checkCollision(const Vector2& point) const;
+	std::vector<GameDynamicObject*> checkCollision(const Vector2& point);
 	std::vector<GameDynamicObject*> checkCollision(const Aabb& area) const;
 	bool isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const;
 	bool isPositionValid(const Vector2& point, float entityRadius) const;
@@ -40,6 +42,9 @@ public:
 	std::vector<Vector2> getNavigationNodes() const;
 	std::vector<Segment> getNavigationArcs() const;
 	std::vector<Aabb> getAabbs() const;
+	std::vector<Aabb> getRegionsContaining(const common::Circle& circle);
+	std::vector<Aabb> getRegionsContaining(const Segment& segment);
+	std::vector<Aabb> getRegionsContaining(const Vector2& from, const Vector2& to, float radius);
 #endif
 
 private:
@@ -53,11 +58,12 @@ private:
 		NavigationNode(float x, float y, int index);
 	};
 
-	std::vector<NavigationNode> _navigationMesh;
-	SegmentTree<Wall> _walls;
-	AabbTree<GameDynamicObject*> _entities;
 	float _width;
 	float _height;
+	std::vector<NavigationNode> _navigationMesh;
+	RegularGrid _grid;
+	SegmentTree<Wall> _walls;
+	AabbTree<GameDynamicObject*> _entities;
 
 	int getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const;
 	std::vector<int> aStar(int from, int to, const std::vector<common::Circle>& ignoredAreas) const;
