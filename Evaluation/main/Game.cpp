@@ -339,11 +339,11 @@ void Game::render() {
 	
 	//drawPoint(_gameMap->getClosest(mousePos), colors::pink);
 
-	if (_areAabbsVisible) {
+	/*if (_areAabbsVisible) {
 		for (Aabb& aabb : _gameMap->getAabbs()) {
 			drawAabb(aabb, colors::white);
 		}
-	}
+	}*/
 
 	size_t n = (int)ceil(_gameMap->getWidth() / RegularGridSize);
 	size_t m = (int)ceil(_gameMap->getHeight() / RegularGridSize);
@@ -411,10 +411,10 @@ void Game::render() {
 		case GameDynamicObjectType::ACTOR: {
 			Actor* actor = (Actor*)entity;
 			if (actor->isMoving()) {
-				GameTime from, to;
-				from = SDL_GetPerformanceCounter();
+				//GameTime from, to;
+				//from = SDL_GetPerformanceCounter();
 				drawActor(*actor);
-				to = SDL_GetPerformanceCounter();
+				//to = SDL_GetPerformanceCounter();
 				//Logger::log("Render:                 " + std::to_string(to - from));
 			}
 			else {

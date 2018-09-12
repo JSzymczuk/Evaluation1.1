@@ -466,10 +466,10 @@ void Actor::updateSpotting() {
 	Vector2 pos = getPosition();
 	float maxDist = common::sqr(ActorSightRadius);
 
-	for (GameDynamicObject* entity : Game::getInstance()->getMap()->getEntities()) {
+	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, ActorSightRadius)) {
 		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
 			&& common::sqDist(entity->getPosition(), pos) < maxDist
-			&& checkCollisions(Segment(pos, entity->getPosition())).empty()) {
+			&& getStaticObjectsOnLine(Segment(pos, entity->getPosition())).empty()) {
 			_actorsNearby.push_back((Actor*)entity);
 		}
 	}
@@ -487,14 +487,8 @@ void Actor::updateSpotting() {
 }
 
 Actor::MovementCheckResult Actor::checkMovement() const {
-	float halfSize = ActorRadius;
 	Vector2 futurePosition = _position + _velocity;
-
-	Aabb futurePosAabb = Aabb(
-		futurePosition - Vector2(halfSize, halfSize),
-		halfSize * 2,
-		halfSize * 2);
-	auto potentialColliders = checkCollisions(futurePosAabb);
+	auto potentialColliders = getDynamicObjectsInArea(futurePosition, ActorRadius);
 
 	Actor::MovementCheckResult result;
 	result.allowed = true;
@@ -646,12 +640,14 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDistance) const {
 	Vector2 dirVec = common::adjustLength(direction, maxDistance);
 	Vector2 endPoint = _position + dirVec;
-	Aabb aabb = Aabb(Vector2::min(_position, endPoint) - Vector2(ActorRadius, ActorRadius),
+	/*Aabb aabb = Aabb(Vector2::min(_position, endPoint) - Vector2(ActorRadius, ActorRadius),
 		abs(dirVec.x) + 2 * ActorRadius,
-		abs(dirVec.y) + 2 * ActorRadius);
+		abs(dirVec.y) + 2 * ActorRadius);*/
+	Segment segment(_position, endPoint);
 	float minDist = maxDistance;
 	Segment movementSegment = Segment(_position, endPoint);
-	for (auto c : checkCollisions(aabb)) {
+
+	for (auto c : getDynamicObjectsOnLine(segment)) {
 		Vector2 otherPos = c->getPosition();
 		float otherRadius = c->getRadius();
 		if (c != this && c->isSolid() && common::distance(otherPos, movementSegment) <= ActorRadius + otherRadius + common::EPSILON) {
@@ -659,10 +655,12 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 			if (dist < minDist) { minDist = dist; }
 		}
 	}
-	for (const Wall& w : checkCollisions(Segment(_position, endPoint))) {
-		float dist = common::distance(_position, w.getSegment()) - ActorRadius;
+
+	for (auto elem : getStaticObjectsOnLine(segment)) {
+		float dist = elem->getDistanceTo(_position) - ActorRadius;
 		if (dist < minDist) { minDist = dist; }
 	}
+
 	return minDist;
 }
 
@@ -777,24 +775,12 @@ std::vector<Actor*> Actor::getActorsNearby() const {
 	std::vector<Actor*> result;
 	Vector2 pos = getPosition();
 	float maxDist = common::sqr(ActorSightRadius);
-	float d_r = 2 * ActorSightRadius;	
 
-	if (CollisionMethodAabbTree) {
-		for (GameDynamicObject* entity : checkCollisions(Aabb(_position.x - ActorSightRadius, _position.y - ActorSightRadius, d_r, d_r))) {
-			if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
-				&& common::sqDist(entity->getPosition(), pos) < maxDist
-				&& checkCollisions(Segment(pos, entity->getPosition())).empty()) {
-				result.push_back((Actor*)entity);
-			}
-		}
-	}
-	else {
-		for (GameDynamicObject* entity : Game::getInstance()->getMap()->getEntities()) {
-			if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
-				&& common::sqDist(entity->getPosition(), pos) < maxDist
-				&& checkCollisions(Segment(pos, entity->getPosition())).empty()) {
-				result.push_back((Actor*)entity);
-			}
+	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, ActorSightRadius)) {
+		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
+			&& common::sqDist(entity->getPosition(), pos) < maxDist
+			&& getStaticObjectsOnLine(Segment(pos, entity->getPosition())).empty()) {
+			result.push_back((Actor*)entity);
 		}
 	}	
 

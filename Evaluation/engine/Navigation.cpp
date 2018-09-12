@@ -61,12 +61,15 @@ std::vector<GameDynamicObject*> GameMap::initializeEntities(const std::vector<Ga
 			invalid.push_back(entity);
 		}
 	}
-	auto treePtr = &_entities;
+
+	/*auto treePtr = &_entities;
 	auto wallTreePtr = &_walls;
-	AabbTree<GameDynamicObject*>::initialize(treePtr, allowed, CollisionTreeMovablePadding);
+	AabbTree<GameDynamicObject*>::initialize(treePtr, allowed, CollisionTreeMovablePadding);*/
+
 	for (auto entity : allowed) {
-		entity->enableCollisions(treePtr, wallTreePtr);
+		entity->enableCollisions(_collisionResolver);
 	}
+
 	return invalid;
 }
 
@@ -101,20 +104,15 @@ int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<co
 }
 
 std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point) { 
-	if (CollisionMethodAabbTree) {
-	return _entities.broadphase(point); 
-	}
-	else {
-		return _grid.broadphase(point, common::EPSILON);
-	}
+	return _collisionResolver->broadphase(point);
 }
 
 std::vector<GameDynamicObject*> GameMap::checkCollision(const Aabb& area) const { 
-	return _entities.broadphase(area); 
+	return _collisionResolver->broadphase(area);
 }
 
 std::vector<GameDynamicObject*> GameMap::getEntities() const {
-	return _entities.getElements();
+	return _entities;
 }
 
 struct AStarNodeInfo {
@@ -354,7 +352,7 @@ bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movemen
 		}
 	}
 
-	for (auto entity : _entities.broadphase(Aabb(pos, segment.to).inflate(padding))) {
+	for (auto entity : _collisionResolver->broadphase(pos, segment.to, padding)) {
 		if (movable != entity && entity->isSolid() && common::distance(entity->getPosition(), segment) <= entity->getRadius() + padding) {
 			return false;
 		}
@@ -472,37 +470,38 @@ std::vector<Segment> GameMap::getNavigationArcs() const {
 	return result;
 }
 
-std::vector<Aabb> GameMap::getAabbs() const { return _entities.getAabbs(); }
+//std::vector<Aabb> GameMap::getAabbs() const { return _entities.getAabbs(); }
+//
+//std::vector<Aabb> GameMap::getRegionsContaining(const common::Circle& circle) {
+//	auto regions = _grid.getRegionsContaining(circle.center, circle.radius);
+//	std::vector<Aabb> result;
+//	result.reserve(regions.size());
+//	for (auto region : regions) {
+//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+//	}
+//	return result;
+//}
 
-std::vector<Aabb> GameMap::getRegionsContaining(const common::Circle& circle) {
-	auto regions = _grid.getRegionsContaining(circle.center, circle.radius);
-	std::vector<Aabb> result;
-	result.reserve(regions.size());
-	for (auto region : regions) {
-		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-	}
-	return result;
-}
+//std::vector<Aabb> GameMap::getRegionsContaining(const Segment& segment) {
+//	auto regions = _grid.getRegionsContaining(segment);
+//	std::vector<Aabb> result;
+//	result.reserve(regions.size());
+//	for (auto region : regions) {
+//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+//	}
+//	return result;
+//}
+//
+//std::vector<Aabb> GameMap::getRegionsContaining(const Vector2& from, const Vector2& to, float radius) {
+//	auto regions = _grid.getRegionsForMovement(from, to, radius);
+//	std::vector<Aabb> result;
+//	result.reserve(regions.size());
+//	for (auto region : regions) {
+//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
+//	}
+//	return result;
+//}
 
-std::vector<Aabb> GameMap::getRegionsContaining(const Segment& segment) {
-	auto regions = _grid.getRegionsContaining(segment);
-	std::vector<Aabb> result;
-	result.reserve(regions.size());
-	for (auto region : regions) {
-		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-	}
-	return result;
-}
-
-std::vector<Aabb> GameMap::getRegionsContaining(const Vector2& from, const Vector2& to, float radius) {
-	auto regions = _grid.getRegionsForMovement(from, to, radius);
-	std::vector<Aabb> result;
-	result.reserve(regions.size());
-	for (auto region : regions) {
-		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-	}
-	return result;
-}
 
 /*
 void GameMap::Loader::appendIfNotContains(std::vector<GameMap::NavigationNode>& collection, const Vector2& point) const {

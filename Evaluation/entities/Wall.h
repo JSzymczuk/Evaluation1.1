@@ -9,6 +9,8 @@ public:
 	Vector2 getFrom() const;
 	Vector2 getTo() const;
 	Segment getSegment() const;
+	bool checkCollision(const Segment& segment) const;
+	float getSqDistanceTo(const Segment& segment) const;
 
 	Wall();
 	Wall(int identifier, Vector2 from, Vector2 to, int priority);

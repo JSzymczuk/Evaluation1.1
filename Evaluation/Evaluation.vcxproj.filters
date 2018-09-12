@@ -245,5 +245,8 @@
     <ClInclude Include="engine\RegularGrid.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="engine\CollisionResolver.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

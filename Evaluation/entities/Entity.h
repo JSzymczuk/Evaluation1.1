@@ -10,19 +10,30 @@ enum GameDynamicObjectType {
 	TRIGGER
 };
 
-template <typename T> class AabbTree;
-template <typename T> class SegmentTree;
+class CollisionResolver;
 
-class GameDynamicObject {
+class GameObject { };
+
+class GameStaticObject : public GameObject { 
+public:
+	virtual std::vector<Segment> getBounds() const = 0;
+	virtual bool checkCollision(const Segment& segment) const = 0;
+	virtual float getDistanceTo(const Vector2& point) const = 0;
+	virtual float getSqDistanceTo(const Segment& segment) const = 0;
+};
+
+class GameDynamicObject : public GameObject {
 public:
 	GameDynamicObject();
 	GameDynamicObject(const Vector2& position, float orientation);
 	virtual ~GameDynamicObject();
 
 	Vector2 getPosition() const;
+	Vector2 getVelocity() const;
 	float getOrientation() const;
 	common::Circle getCollisionArea() const;
-	void enableCollisions(AabbTree<GameDynamicObject*>* collisionTree, SegmentTree<Wall>* segmentTree);
+	bool hasPositionChanged() const;
+	void enableCollisions(CollisionResolver* collisionResolver);
 	void disableCollisions();
 
 	virtual void update(GameTime gameTime);
@@ -35,18 +46,17 @@ public:
 
 protected:
 	Vector2 _position;
+	Vector2 _velocity;
 	float _orientation;
 
-	virtual bool hasPositionChanged() const = 0;
-	std::vector<GameDynamicObject*> checkCollisions(const Aabb& aabb) const;
-	std::vector<Wall> checkCollisions(const Segment& segment) const;
-
-	// wyrzuciæ to st¹d
-	bool checkMovementCollisions(const Segment& segment, float minDistance) const;
-
+	bool checkMovementCollisions(const Segment& segment, float margin) const;
+	std::vector<GameDynamicObject*> getDynamicObjectsInArea(const Vector2& point, float radius) const;
+	std::vector<GameStaticObject*> getStaticObjectsInArea(const Vector2& point, float radius) const;
+	std::vector<GameDynamicObject*> getDynamicObjectsOnLine(const Segment& segment) const;
+	std::vector<GameStaticObject*> getStaticObjectsOnLine(const Segment& segment) const;
+	
 private:
-	AabbTree<GameDynamicObject*>* _collisionTree = nullptr;
-	SegmentTree<Wall>* _segmentTree = nullptr;
+	CollisionResolver* _collisionResolver = nullptr;
 };
 
 struct VelocityObstacle {

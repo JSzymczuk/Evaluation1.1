@@ -41,10 +41,10 @@ public:
 	Vector2 getClosest(const Vector2& point) const;
 	std::vector<Vector2> getNavigationNodes() const;
 	std::vector<Segment> getNavigationArcs() const;
-	std::vector<Aabb> getAabbs() const;
+	/*std::vector<Aabb> getAabbs() const;
 	std::vector<Aabb> getRegionsContaining(const common::Circle& circle);
 	std::vector<Aabb> getRegionsContaining(const Segment& segment);
-	std::vector<Aabb> getRegionsContaining(const Vector2& from, const Vector2& to, float radius);
+	std::vector<Aabb> getRegionsContaining(const Vector2& from, const Vector2& to, float radius);*/
 #endif
 
 private:
@@ -63,7 +63,8 @@ private:
 	std::vector<NavigationNode> _navigationMesh;
 	RegularGrid _grid;
 	SegmentTree<Wall> _walls;
-	AabbTree<GameDynamicObject*> _entities;
+	CollisionResolver* _collisionResolver;
+	std::vector<GameDynamicObject*> _entities;
 
 	int getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const;
 	std::vector<int> aStar(int from, int to, const std::vector<common::Circle>& ignoredAreas) const;

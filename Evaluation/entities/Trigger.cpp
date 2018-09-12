@@ -5,9 +5,6 @@
 #include "engine/MissileManager.h"
 #include "engine/Rng.h"
 
-Vector2 GameDynamicObject::getPosition() const { return _position; }
-float GameDynamicObject::getOrientation() const { return _orientation; }
-
 Trigger::Trigger(const Vector2& position, const String& label)
 	: _isActive(false), _label(label), GameDynamicObject(position, 0) {
 	_activationTime = SDL_GetPerformanceCounter()
