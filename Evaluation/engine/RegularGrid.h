@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mutex>
 #include "engine/CollisionResolver.h"
 
 class GameDynamicObject;
@@ -9,28 +10,6 @@ class GameMap;
 // Za³o¿enie: maksymalny promieñ obiektu dynamicznego jest mniejszy od rozmiaru regionu siatki.
 
 class RegularGrid : public CollisionResolver {
-public:
-	RegularGrid();
-	~RegularGrid();
-
-	std::vector<GameDynamicObject*> initialize(GameMap* map, size_t regionSize, std::vector<GameDynamicObject*> objects);
-
-	void add(GameStaticObject* element) override;
-	void add(GameDynamicObject* element) override;
-	void remove(GameDynamicObject* element) override;
-	void update(GameDynamicObject* element) override;
-
-	//std::vector<GameDynamicObject*> broadphase(const Aabb& area) const override;
-	//std::vector<GameDynamicObject*> broadphase(const Vector2& point) const override;
-
-	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point, float radius) const override;
-	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to) const override;
-	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const override;
-
-	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& point, float radius) const override;
-	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to) const override;
-	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const override;
-
 #ifdef _DEBUG
 public:
 #else
@@ -49,6 +28,35 @@ private:
 	std::vector<const Region*> getRegionsContaining(const Segment& segment) const;
 	std::vector<const Region*> getRegionsForMovement(const Vector2& from, const Vector2& to, float radius) const;
 
+public:
+	RegularGrid(float width, float height, size_t regionSize);
+	~RegularGrid();
+
+	EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) override;
+
+	void add(GameStaticObject* element) override;
+	void add(GameDynamicObject* element) override;
+	void remove(GameDynamicObject* element) override;
+	void update(GameDynamicObject* element) override;
+	bool isPositionValid(const GameDynamicObject* entity) const;
+
+	std::vector<GameDynamicObject*> narrowphaseDynamic(const GameDynamicObject* entity) const;
+	std::vector<GameStaticObject*> narrowphaseStatic(const GameDynamicObject* entity) const;
+		
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point) const override;
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point, float radius) const override;
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to) const override;
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const override;
+
+	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& point) const override;
+	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& point, float radius) const override;
+	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to) const override;
+	std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const override;
+
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point, float radius, std::vector<std::pair<size_t, size_t>>& regions) const;
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to, std::vector<std::pair<size_t, size_t>>& regions) const;
+	std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to, float radius, std::vector<std::pair<size_t, size_t>>& regions) const;
+
 private:
 	Region** _regions;
 	size_t _regionSize;
@@ -56,7 +64,9 @@ private:
 	size_t _regionsY;
 	float _width;
 	float _height;
-
+public:
+	mutable std::mutex _mtx;
+private:
 	Region* getRegionById(size_t i, size_t j);
 	Region* getRegionByCoordinates(float x, float y);
 	std::vector<Region*> getRegionsContaining(const Vector2& point, float radius);

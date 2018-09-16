@@ -31,7 +31,7 @@ MoveAtAction::~MoveAtAction() {}
 
 ActionType MoveAtAction::getActionType() const { return ActionType::MOVE; }
 
-int MoveAtAction::getPriority() const { return 1; }
+int MoveAtAction::getPriority() const { return 0; }
 
 bool MoveAtAction::update(GameTime gameTime) { return getActor()->isMoving(); }
 

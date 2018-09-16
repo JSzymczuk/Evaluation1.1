@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace common {
 
 	template <typename T> bool contains(const std::vector<T>& vec, T element) {

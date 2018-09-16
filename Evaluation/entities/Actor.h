@@ -27,11 +27,9 @@ public:
 	String getCurrentWeapon() const;
 	WeaponState& getWeaponState(const String& weaponName);
 	const WeaponState& getWeaponState(const String& weaponName) const;
-	//bool isWeaponLoaded(WeaponType weaponType) const;
 	Vector2 getDestination() const;
 	float getMaxSpeed() const;
-	std::vector<Actor*> getSeenActors() const;
-	void setPreferredVelocity(const Vector2& velocity);
+	std::vector<GameDynamicObject*> getSeenObjects() const;
 	Vector2 getPreferredVelocity() const;
 	Vector2 getVelocity() const;
 	Vector2 getShortGoal() const;
@@ -40,7 +38,6 @@ public:
 	Action* getCurrentAction() const;
 	bool setCurrentAction(Action* action);
 
-	void setCurrentWeapon(const String& weaponName);
 	void setAmmo(const String& weaponName, int value);
 	void setArmor(float value);
 	void setRemainingArmorShots(int value);
@@ -48,10 +45,6 @@ public:
 	float heal(float health);
 	float damage(float dmg);
 	void registerKill(Actor* actor);
-	//void shootAt(const Vector2& point, GameTime time);
-	void lookAt(const Vector2& point);
-	void move(const std::queue<Vector2>& path);
-	void stop();
 
 	void run();
 	void update();
@@ -61,16 +54,17 @@ public:
 	bool isRotating() const;
 	bool hasPositionChanged() const;
 
-	Aabb getAabb() const;
-	float getRadius() const;
-	bool isStaticElement() const;
-	bool isSolid() const;
-	GameDynamicObjectType getGameObjectType() const;
+	Aabb getAabb() const override;
+	float getRadius() const override;
+	bool isSolid() const override;
+	GameDynamicObjectType getGameObjectType() const override;
+
+	bool isSpotting() const override;
+	void spot(GameDynamicObject* object) override;
+	void unspot(GameDynamicObject* object) override;
 
 #ifdef _DEBUG
-	std::queue<Vector2> getCurrentPath() const {
-		return _path;
-	}
+	std::queue<Vector2> getCurrentPath() const { return _path; }
 #endif
 	
 private:
@@ -80,7 +74,7 @@ private:
 
 	std::thread _thread;
 	GameTime _lastUpdate;
-	Game* _game;
+	bool _hasStarted;
 
 	float _health;
 	float _armor;
@@ -91,12 +85,12 @@ private:
 	int _kills;
 	int _friendkills;
 
-	Vector2 _velocity;
-	float _rotation;
 	Vector2 _preferredVelocity;
 	std::queue<Vector2> _path;
 	Vector2 _lastDestination;
 	Vector2 _nextSafeGoal;
+
+	std::vector<GameDynamicObject*> _nearbyObjects;
 
 	bool _isRotating;
 	float _desiredOrientation;
@@ -106,22 +100,17 @@ private:
 	std::vector<Vector2> _positionHistory;
 	size_t _nextHistoryIdx;
 	size_t _positionHistoryLength;
-
 	Action* _currentAction;
+
+	void lookAt(const Vector2& point);
+	void move(const std::queue<Vector2>& path);
+	void stop();
+	void setPreferredVelocity(const Vector2& velocity);
+	void setCurrentWeapon(const String& weaponName);
 
 	float calculateRotation() const;
 	void setPreferredVelocityAndSafeGoal();
-	void clearCurrentAction();
-	
-	std::vector<Actor*> _actorsNearby;
-	std::vector<Actor*> seenActors;
-	
-	std::vector<Actor*> getActorsNearby() const;
-	void updateSpotting2();
-	void abortMovement(String loggerMessage, bool resetCounter);
-	void saveCurrentPositionInHistory();
-	void clearPositionHistory();
-	bool isOscilating() const;
+	void clearCurrentAction();	
 
 	struct MovementCheckResult {
 		bool allowed;
@@ -137,6 +126,13 @@ public:
 		float collisionFreeDistance;
 	};
 
+	std::pair<Vector2, Vector2> getViewBorders() const;
+	std::vector<GameDynamicObject*> getObjectsInViewAngle() const;
+	std::vector<VelocityObstacle> getVelocityObstacles(const std::vector<GameDynamicObject*>& obstacles) const;
+	std::vector<Candidate> computeCandidates(const std::vector<VelocityObstacle>& vo) const;
+	std::vector<Wall*> getWallsNearGoal() const;
+	Vector2 getNextSafeGoal() const;
+
 #ifdef _DEBUG
 private:
 #endif	
@@ -147,20 +143,21 @@ private:
 	void updateSpotting();
 	MovementCheckResult checkMovement() const;
 	float getDistanceToGoal() const;
-#ifdef _DEBUG
-public:
-#endif
-	std::pair<Vector2, Vector2> getViewBorders() const;
-	std::vector<Actor*> getActorsInViewAngle() const;
-	std::vector<VelocityObstacle> getVelocityObstacles(const std::vector<Actor*>& obstacles) const;
-	std::vector<Candidate> computeCandidates(const std::vector<VelocityObstacle>& vo) const;
-	std::vector<Wall> getWallsNearGoal() const;
-	Vector2 getNextSafeGoal() const;
-#ifdef _DEBUG
-private:
-#endif	
+	std::vector<GameDynamicObject*> getNearbyObjects() const;
+	void abortMovement(String loggerMessage, bool resetCounter);
+	void saveCurrentPositionInHistory();
+	void clearPositionHistory();
+	bool isOscilating() const;
 	float minDistanceWithoutCollision(const Vector2& direction, float maxDistance) const;
 	Vector2 selectVelocity(const std::vector<Candidate>& candidates) const;
 
 	friend class Team;
+	friend class MoveAction;
+	friend class MoveAtAction;
+	friend class WanderAction;
+	friend class FaceAction;
+	friend class ChangeWeaponAction;
+	friend class ShootAction;
+	friend class IdleAction;
+
 };

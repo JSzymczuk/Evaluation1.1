@@ -97,50 +97,37 @@ bool Game::initialize(const char* title, int width, int height) {
 	rm->loadImage(HealthBarTextureKey, HealthBarTexturePath);
 
 	_actor = nullptr;
-	_gameMap = GameMap::create("empty.map");
+	_gameMap = GameMap::create("test.map");
 
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
 
 	std::vector<GameDynamicObject*> entities;
-	float w3 = DisplayWidth / 3, h3 = DisplayHeight / 3;
-	
-	/*
-	entities.push_back(new Actor("Actor1", 0, Vector2(DisplayWidth / 2, DisplayHeight / 2)));
-	entities.push_back(new Actor("Actor2", 0, Vector2(w3, h3)));
-	entities.push_back(new Actor("Actor3", 0, Vector2(w3, 2 * h3)));
-	entities.push_back(new Actor("Actor4", 0, Vector2(2 * w3, h3)));
-	entities.push_back(new Actor("Actor5", 0, Vector2(2 * w3, 2 * h3)));*/
-/*
-	for (int i = 0; i < 20; ++i) {
-		entities.push_back(new Actor("Actor" + std::to_string(i), 0, Vector2(Rng::getInteger(80, DisplayWidth - 80), Rng::getInteger(80, DisplayHeight - 80))));
-	}*/
-	
-	int n = 40;
+		
+	int n = 1;
 	float r = 300;
 	float angle = 2 * common::PI_F / n;
 	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
+
 	for (int i = 0; i < n; ++i) {
 		entities.push_back(new Actor("Actor" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r));
 	}
 
-	/*entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
+	entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
 	entities.push_back(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
 	entities.push_back(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
-	entities.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));*/
+	entities.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
+
+	CollisionResolver* collisionResolver = new RegularGrid(_gameMap->getWidth(), _gameMap->getHeight(), RegularGridSize);
 
 	for (auto invalidEntity : _gameMap->initializeEntities(entities)) {
-		delete invalidEntity;
-	}
-
-	for (auto invalidEntity : _gameMap->initializeRegularGrid(entities)) {
 		delete invalidEntity;
 	}
 
 	for (Actor* a : getActors()) {
 		a->run();
 	}
-		
+
 	return true;
 }
 
@@ -194,11 +181,7 @@ void Game::handleEvents() {
 					Logger::log("Failed");
 					delete action;
 				}
-				//_path = _gameMap->findPath(_actor->getPosition(), Vector2(mousePosX, mousePosY));
-				//_actor->move(_path);
 			}
-			//actor->lookAt(Vector2(mousePosX, mousePosY));
-			//actor->move(Vector2(mousePosX, mousePosY));
 		}
 		break;
 	case SDL_KEYDOWN: {
@@ -268,16 +251,6 @@ void Game::handleEvents() {
 		}
 		break;
 	}
-	/*case SDL_KEYUP: {
-		const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
-		if (!keyboardState[SDL_SCANCODE_SPACE]) {
-			_areAabbsVisible = true;
-			_areHealthBarsVisible = true;
-			_isNavigationMeshVisible = true;
-			_iscurrentPathVisible = true;
-		}
-		break;
-	}*/
 	case SDL_QUIT:
 		_isRunning = false;
 		break;
@@ -298,11 +271,6 @@ void Game::update() {
 	if (_isUpdateEnabled) {
 		_gameTime = SDL_GetPerformanceCounter();
 
-		//Logger::log("Update at: " + std::to_string(_gameTime) + ".");
-
-		/*for (GameDynamicObject* entity : _gameMap->getEntities()) {
-			entity->update(time);
-		}*/
 		_updateHolder.notify_all();
 		_missileManager->update(_gameTime);
 
@@ -319,11 +287,23 @@ void Game::render() {
 	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
 	Vector2 mousePos = Vector2(mousePosX, mousePosY);
 	Segment centerMouseSegment = Segment(center, mousePos);
-	
+
+	if (_isNavigationMeshVisible) {
+		size_t n = (int)ceil(_gameMap->getWidth() / RegularGridSize);
+		size_t m = (int)ceil(_gameMap->getHeight() / RegularGridSize);
+		for (size_t i = 0; i < n; ++i) {
+			for (size_t j = 0; j < m; ++j) {
+				drawAabb(Aabb(i * RegularGridSize, j * RegularGridSize, RegularGridSize, RegularGridSize), colors::gray);
+			}
+		}
+	}
+
 	auto walls = _gameMap->getWalls();
-	for (Wall wall : walls) {
+	for (GameStaticObject* wall : walls) {
 		//drawSegment(common::extendSegment(wall, Aabb(0, 0, DisplayWidth, DisplayHeight)), gray);
-		drawSegment(wall.getSegment(), colors::black);
+		for (Segment segment : wall->getBounds()) {
+			drawSegment(segment, colors::black);
+		}
 	}
 
 #ifdef _DEBUG
@@ -345,23 +325,10 @@ void Game::render() {
 		}
 	}*/
 
-	size_t n = (int)ceil(_gameMap->getWidth() / RegularGridSize);
-	size_t m = (int)ceil(_gameMap->getHeight() / RegularGridSize);
-	for (size_t i = 0; i < n; ++i) {
-		for (size_t j = 0; j < m; ++j) {
-			drawAabb(Aabb(i * RegularGridSize, j * RegularGridSize, RegularGridSize, RegularGridSize), colors::gray);
-		}
-	}
 	//for (Aabb& aabb : _gameMap->getRegionsContaining(common::Circle(mousePos, 20))) {
 	//	drawAabb(aabb, colors::red);
 	//}
 	//drawCircle(mousePos, 20, colors::darkRed);
-	Segment seg(Vector2(mousePosX, mousePosY), Vector2(300, 300));
-	for (GameDynamicObject* obj : _gameMap->checkCollision(Vector2(mousePosX, mousePosY))) {
-		drawCircle(obj->getPosition(), obj->getRadius(), colors::red);
-	}
-	drawSegment(seg, colors::darkRed);
-
 
 	if (_iscurrentPathVisible && _actor != nullptr) {
 		auto pathCopy = std::queue<Vector2>(_actor->getCurrentPath());
@@ -401,8 +368,8 @@ void Game::render() {
 	if (_actor != nullptr) { 
 		fillRing(_actor->getPosition(), ActorSelectionRing, ActorSelectionRing + 1, colors::green);
 
-		for (Actor* seenActor : _actor->getSeenActors()) {
-			fillRing(seenActor->getPosition(), ActorSelectionRing, ActorSelectionRing, colors::cyan);
+		for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+			fillRing(seenObject->getPosition(), ActorSelectionRing, ActorSelectionRing, colors::cyan);
 		}
 	}
 
@@ -442,7 +409,7 @@ void Game::render() {
 			drawSegment(Segment(pos, pos + viewBorders.first * ActorSightRadius), colors::pink);
 			drawSegment(Segment(pos, pos + viewBorders.second * ActorSightRadius), colors::pink);
 
-			auto vos = _actor->getVelocityObstacles(_actor->getActorsInViewAngle());
+			auto vos = _actor->getVelocityObstacles(_actor->getObjectsInViewAngle());
 			for (VelocityObstacle vo : vos) {
 				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
 				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * ActorSightRadius), colors::yellow);
@@ -454,8 +421,8 @@ void Game::render() {
 			}
 	
 			auto walls = _actor->getWallsNearGoal();
-			for (const Wall& wall : walls) {
-				drawSegment(wall.getSegment(), colors::pink);
+			for (auto wall : walls) {
+				drawSegment(wall->getSegment(), colors::pink);
 			}
 
 			drawSegment(Segment(_actor->getPosition(), _actor->getLongGoal()), colors::cyan);

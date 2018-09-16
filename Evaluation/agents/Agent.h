@@ -22,8 +22,9 @@ public:
 	void move(const Vector2& target);
 	void face(const Vector2& target);
 	void shoot(const Vector2& target);
+	void moveDirection(const Vector2& direction);
+	void wander();
 	void wait();
-	//void moveDirection(const Vector2& target);
 
 private:
 	Actor* _actor;
@@ -49,9 +50,15 @@ void Agent::shoot(const Vector2& target) {
 void Agent::wait() {
 	_actor->setCurrentAction(new IdleAction(_actor));
 }
-/*void Agent::moveDirection(const Vector2& target) {
-current->getActor()->setMoveVector(direction);
-}*/
+void Agent::moveDirection(const Vector2& direction) {
+	_actor->setCurrentAction(new MoveAtAction(_actor, direction));
+}
+void Agent::moveDirection(const Vector2& direction) {
+	_actor->setCurrentAction(new MoveAtAction(_actor, direction));
+}
+void Agent::wander() {
+	_actor->setCurrentAction(new WanderAction(_actor));
+}
 
 #include "agents/ActorKnowledge.h"
 
@@ -64,8 +71,6 @@ public:
 protected:
 	virtual void initialize(const ActorKnowledge& actorKnowledge, GameTime time) = 0;
 	virtual void update(const ActorKnowledge& actorKnowledge, GameTime time) = 0;
-	//ActorKnowledge * current;
-	//std::unique_ptr<Action> nextAction;
 };
 
 void PlayerAgent::update(GameTime time) {
@@ -77,9 +82,9 @@ void PlayerAgent::initialize(GameTime time) {
 }
 
 extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
+	#include "lua.h"
+	#include "lualib.h"
+	#include "lauxlib.h"
 }
 
 #include <iostream>

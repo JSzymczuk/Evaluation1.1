@@ -18,7 +18,6 @@ public:
 	~Trigger();
 
 	bool isSolid() const;
-	bool isStaticElement() const;
 	GameDynamicObjectType getGameObjectType() const;
 	Aabb getAabb() const;
 	float getRadius() const;

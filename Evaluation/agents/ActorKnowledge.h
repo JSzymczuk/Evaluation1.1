@@ -24,7 +24,5 @@ public:
 	std::vector<ActorInfo> getSeenActors() const;
 
 private:
-	//std::set<ActorInfo> seenActors;
-	//std::set<ObjectInfo*> seenObjects;
 	Actor* _actor;
 };

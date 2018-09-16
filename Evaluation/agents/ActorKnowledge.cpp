@@ -16,6 +16,41 @@ int ActorKnowledge::getArmor() const { return _actor->getArmor(); }
 String ActorKnowledge::getWeaponType() const { return _actor->getCurrentWeapon(); }
 int ActorKnowledge::getAmmo(const String& weaponName) const { return _actor->getWeaponState(weaponName).ammo; }
 bool ActorKnowledge::isLoaded(const String& weaponName) const { return _actor->getWeaponState(weaponName).state == WeaponLoadState::WEAPON_LOADED; }
-//std::vector<ActorInfo> ActorKnowledge::getSeenFriends() const;
-//std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const;
-//std::vector<ActorInfo> ActorKnowledge::getSeenActors() const;
+
+std::vector<ActorInfo> ActorKnowledge::getSeenActors() const { 
+	std::vector<ActorInfo> result;
+	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
+			result.push_back(ActorInfo((Actor*)seenObject));
+		}
+	}
+	return result;
+}
+
+std::vector<ActorInfo> ActorKnowledge::getSeenFriends() const {
+	std::vector<ActorInfo> result;
+	Team* team = _actor->getTeam();
+	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
+			Actor* other = (Actor*)seenObject;
+			if (other->getTeam() == team) {
+				result.push_back(ActorInfo(other));
+			}
+		}
+	}
+	return result;
+}
+
+std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const {
+	std::vector<ActorInfo> result;
+	Team* team = _actor->getTeam();
+	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
+			Actor* other = (Actor*)seenObject;
+			if (other->getTeam() != team) {
+				result.push_back(ActorInfo(other));
+			}
+		}
+	}
+	return result;
+}

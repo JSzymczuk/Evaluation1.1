@@ -14,7 +14,7 @@ Trigger::Trigger(const Vector2& position, const String& label)
 
 Trigger::~Trigger() {}
 
-bool Trigger::isStaticElement() const { return true; }
+//bool Trigger::isStaticElement() const { return true; }
 
 bool Trigger::hasPositionChanged() const { return false; }
 

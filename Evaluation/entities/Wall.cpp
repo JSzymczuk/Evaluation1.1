@@ -29,3 +29,11 @@ bool Wall::checkCollision(const Segment& segment) const {
 float Wall::getSqDistanceTo(const Segment& segment) const {
 	return common::sqDist(segment, getSegment());
 }
+
+std::vector<Segment> Wall::getBounds() const {
+	return { getSegment() };
+}
+
+float Wall::getDistanceTo(const Vector2& point) const {
+	return common::distance(point, this->getSegment());
+}

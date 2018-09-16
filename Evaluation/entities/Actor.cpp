@@ -5,11 +5,12 @@
 #include "Trigger.h"
 #include "actions/Action.h"
 #include "engine/MissileManager.h"
+#include "engine/CommonFunctions.h"
 #include "main/Configuration.h"
 #include "math/Math.h"
 #include "entities//Weapon.h"
 #include "main/Game.h"
-#include "engine//CommonFunctions.h"
+#include "entities/Wall.h"
 
 Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	: GameDynamicObject(position, common::PI_F / 2) {
@@ -27,6 +28,7 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	_positionHistoryLength = 0;
 	_nextHistoryIdx = 0;
 	_lastUpdate = 0;
+	_hasStarted = false;
 
 	for (size_t i = 0; i < ActionPositionHistoryLength; ++i) {
 		_positionHistory.push_back(_position);
@@ -42,7 +44,9 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 }
 
 Actor::~Actor() {
-	_thread.join();
+	if (_hasStarted) {
+		_thread.join();
+	}
 }
 
 float Actor::getHealth() const { return _health; }
@@ -59,7 +63,7 @@ float Actor::getArmor() const { return _armor; }
 
 int Actor::getRemainingArmorShots() const { return _armorShotsRemaining; }
 
-std::vector<Actor*> Actor::getSeenActors() const { return _actorsNearby; }
+std::vector<GameDynamicObject*> Actor::getSeenObjects() const { return _nearbyObjects; }
 
 bool Actor::isDead() const { return _health <= 0; }
 
@@ -178,8 +182,6 @@ Aabb Actor::getAabb() const {
 
 float Actor::getRadius() const { return ActorRadius; }
 
-bool Actor::isStaticElement() const { return false; }
-
 bool Actor::isSolid() const { return true; }
 
 void Actor::registerKill(Actor* actor) {
@@ -221,56 +223,62 @@ bool Actor::updateCurrentAction(GameTime time) {
 }
 
 void Actor::run() {
+	_hasStarted = true;
 	_thread = std::thread(&Actor::update, this);
 	_lastUpdate = 0;
 }
 
 void Actor::update() {
+	if (_hasStarted) {
+		auto game = Game::getInstance();
 
-	auto game = Game::getInstance();
+		while (!isDead()) {
 
-	while (!isDead()) {
-		std::unique_lock<std::mutex> lk(game->_updateMutex);
-		int lastUpdate = _lastUpdate;
-		GameTime time = game->getTime();
-		game->_updateHolder.wait(lk);// , [time, lastUpdate] { return SDL_GetPerformanceCounter() - lastUpdate >= ActorUpdateFrequency; });
-		_lastUpdate = game->getTime();
-		
-		GameTime from, to;
-		bool logIfSuccessful;
+			actorLogs[this].clear();
 
-		from = SDL_GetPerformanceCounter();
-		logIfSuccessful = updateWeapons(_lastUpdate);
-		to = SDL_GetPerformanceCounter();
-		if (logIfSuccessful) {
-			Logger::logIfNotIgnored("updateWeapons", "Update Weapons:         " + std::to_string(to - from));
-		}
+			std::unique_lock<std::mutex> lk(game->_updateMutex);
+			game->_updateHolder.wait(lk);
+			lk.unlock();
+			_lastUpdate = game->getTime();
 
-		from = SDL_GetPerformanceCounter();
-		logIfSuccessful = updateCurrentAction(_lastUpdate);
-		to = SDL_GetPerformanceCounter();
-		if (logIfSuccessful) {
-			Logger::logIfNotIgnored("updateCurrentAction", "Update Current Action:  " + std::to_string(to - from));
-		}
-		/*
+#ifdef _DEBUG
+			GameTime from, to;
+			bool logIfSuccessful;
+
 			from = SDL_GetPerformanceCounter();
-			updateSpotting();
+			logIfSuccessful = updateWeapons(_lastUpdate);
 			to = SDL_GetPerformanceCounter();
-			Logger::log("Update Spotting:        " + std::to_string(to - from));*/
+			if (logIfSuccessful) {
+				Logger::logIfNotIgnored("updateWeapons", "Update Weapons:         " + std::to_string(to - from));
+			}
 
-		updateMovement(_lastUpdate);
+			from = SDL_GetPerformanceCounter();
+			logIfSuccessful = updateCurrentAction(_lastUpdate);
+			to = SDL_GetPerformanceCounter();
+			if (logIfSuccessful) {
+				Logger::logIfNotIgnored("updateCurrentAction", "Update Current Action:  " + std::to_string(to - from));
+			}
 
-		from = SDL_GetPerformanceCounter();
-		logIfSuccessful = updateOrientation(_lastUpdate);
-		to = SDL_GetPerformanceCounter();
-		if (logIfSuccessful) {
-			Logger::logIfNotIgnored("updateOrientation", "Update Orientation:     " + std::to_string(to - from));
+			updateMovement(_lastUpdate);
+
+			from = SDL_GetPerformanceCounter();
+			logIfSuccessful = updateOrientation(_lastUpdate);
+			to = SDL_GetPerformanceCounter();
+			if (logIfSuccessful) {
+				Logger::logIfNotIgnored("updateOrientation", "Update Orientation:     " + std::to_string(to - from));
+			}
+#else
+			updateWeapons(_lastUpdate);
+			updateCurrentAction(_lastUpdate);
+			updateMovement(_lastUpdate);
+			updateOrientation(_lastUpdate);
+#endif 
+
+			GameDynamicObject::update(_lastUpdate);
 		}
 
-		GameDynamicObject::update(_lastUpdate);
+		_thread.join();
 	}
-
-	_thread.join();
 }
 
 float Actor::calculateRotation() const {
@@ -323,6 +331,8 @@ bool Actor::updateOrientation(GameTime time) {
 
 void Actor::updateMovement(GameTime time) {
 	if (isMoving()) {
+
+#ifdef _DEBUG
 		GameTime from, to;
 
 		from = SDL_GetPerformanceCounter();
@@ -331,12 +341,12 @@ void Actor::updateMovement(GameTime time) {
 		Logger::logIfNotIgnored("setPreferredVelocityAndSafeGoal", "Compute Pref. Velocity: " + std::to_string(to - from));		
 
 		from = SDL_GetPerformanceCounter();
-		updateSpotting2();
+		updateSpotting();
 		to = SDL_GetPerformanceCounter();
 		Logger::logIfNotIgnored("updateSpotting", "Update spotting:        " + std::to_string(to - from));
 
 		from = SDL_GetPerformanceCounter();
-		auto actorsInViewAngle = getActorsInViewAngle();
+		auto actorsInViewAngle = getObjectsInViewAngle();
 		to = SDL_GetPerformanceCounter();
 		Logger::logIfNotIgnored("getActorsInViewAngle", "Actors in View Angle:   " + std::to_string(to - from));
 
@@ -367,6 +377,22 @@ void Actor::updateMovement(GameTime time) {
 		bool oscilationDetected = isOscilating();
 
 		from = SDL_GetPerformanceCounter();
+#else		
+		setPreferredVelocityAndSafeGoal();
+		updateSpotting();
+		getObjectsInViewAngle();
+		getVelocityObstacles(actorsInViewAngle);
+		computeCandidates(velocityObstacles);
+		selectVelocity(candidates);
+		
+		if (_velocity.lengthSquared() > common::EPSILON) {
+			_velocity = _velocity.normal() * ActorSpeed;
+		}
+
+		MovementCheckResult movementCheckResult = checkMovement();
+		
+		bool oscilationDetected = isOscilating();
+#endif
 		if (movementCheckResult.allowed && !oscilationDetected) {
 			_position += _velocity;
 			saveCurrentPositionInHistory();
@@ -406,8 +432,10 @@ void Actor::updateMovement(GameTime time) {
 			_velocity.x = 0;
 			_velocity.y = 0;
 		}
+#ifdef  _DEBUG
 		to = SDL_GetPerformanceCounter();
 		Logger::logIfNotIgnored("updateMovement", "Update Movement:        " + std::to_string(to - from));
+#endif 		
 	}
 }
 
@@ -461,31 +489,6 @@ bool Actor::updateWeapons(GameTime time) {
 	return wasAntyhingUpdated;
 }
 
-void Actor::updateSpotting() {
-	_actorsNearby.clear();
-	Vector2 pos = getPosition();
-	float maxDist = common::sqr(ActorSightRadius);
-
-	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, ActorSightRadius)) {
-		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
-			&& common::sqDist(entity->getPosition(), pos) < maxDist
-			&& getStaticObjectsOnLine(Segment(pos, entity->getPosition())).empty()) {
-			_actorsNearby.push_back((Actor*)entity);
-		}
-	}
-
-	/*for (GameDynamicObject* entity : this->checkCollisions(Aabb(
-		pos.x - ActorSightRadius, pos.y - ActorSightRadius,
-		2 * ActorSightRadius, 2 * ActorSightRadius))) {
-
-		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
-			&& common::sqDist(entity->getPosition(), pos) < maxDist
-			&& checkCollisions(Segment(pos, entity->getPosition())).empty()) {
-			_seenActors.push_back((Actor*)entity);
-		}
-	}*/
-}
-
 Actor::MovementCheckResult Actor::checkMovement() const {
 	Vector2 futurePosition = _position + _velocity;
 	auto potentialColliders = getDynamicObjectsInArea(futurePosition, ActorRadius);
@@ -524,13 +527,13 @@ std::pair<Vector2, Vector2> Actor::getViewBorders() const {
 	return std::make_pair(Vector2(cosf(from), sinf(from)), Vector2(cosf(to), sinf(to)));
 }
 
-std::vector<Actor*> Actor::getActorsInViewAngle() const {
+std::vector<GameDynamicObject*> Actor::getObjectsInViewAngle() const {
 	float angle = common::radians(ActorVOCheckAngle);
 	float from = _orientation - angle;
 	float to = _orientation + angle;
-	std::vector<Actor*> result;
-	for (Actor* other : _actorsNearby) {
-		Vector2 otherPos = other->_position;
+	std::vector<GameDynamicObject*> result;
+	for (GameDynamicObject* other : _nearbyObjects) {
+		Vector2 otherPos = other->getPosition();
 		if (
 			(common::isAngleBetween(common::angleFromTo(_position, otherPos), from, to)
 			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(from), sinf(from)) * ActorVOCheckRadius)) <= ActorRadius
@@ -559,11 +562,11 @@ std::pair<Vector2, Vector2> getVOSides(const Vector2& point, const common::Circl
 	);
 }
 
-std::vector<VelocityObstacle> Actor::getVelocityObstacles(const std::vector<Actor*>& obstacles) const {
+std::vector<VelocityObstacle> Actor::getVelocityObstacles(const std::vector<GameDynamicObject*>& obstacles) const {
 	std::vector<VelocityObstacle> result;
 	result.reserve(obstacles.size());
 	Vector2 pos = _position;
-	for (Actor* other : obstacles) {
+	for (GameDynamicObject* other : obstacles) {
 		//Vector2D apex = cder->is_static() ? pos : pos + (cder->predicted_velocity() + movable->velocity) / 2;
 		Vector2 apex = pos;
 		auto sides = getVOSides(pos, common::Circle(other->getPosition(), ActorRadius * 2));
@@ -586,6 +589,7 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 			accept = false;
 		}
 	}
+
 	if (accept && _preferredVelocity.lengthSquared() > common::EPSILON) {
 		Candidate c;
 		c.velocity = _preferredVelocity;
@@ -646,7 +650,7 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 	Segment segment(_position, endPoint);
 	float minDist = maxDistance;
 	Segment movementSegment = Segment(_position, endPoint);
-
+	
 	for (auto c : getDynamicObjectsOnLine(segment)) {
 		Vector2 otherPos = c->getPosition();
 		float otherRadius = c->getRadius();
@@ -655,7 +659,7 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 			if (dist < minDist) { minDist = dist; }
 		}
 	}
-
+	
 	for (auto elem : getStaticObjectsOnLine(segment)) {
 		float dist = elem->getDistanceTo(_position) - ActorRadius;
 		if (dist < minDist) { minDist = dist; }
@@ -678,15 +682,16 @@ Vector2 Actor::selectVelocity(const std::vector<Candidate>& candidates) const {
 	return candidates[min].velocity;
 }
 
-std::vector<Wall> Actor::getWallsNearGoal() const {
-	std::vector<Wall> result;
+std::vector<Wall*> Actor::getWallsNearGoal() const {
+	std::vector<Wall*> result;
 	if (!_path.empty()) {
 		float dist = (1.1f * ActorRadius + common::EPSILON) * common::SQRT_2_F;
 		Vector2 point = _path.front();
-		for (const Wall& wall : Game::getInstance()->getMap()->getWalls()) {
-			int wallId = wall.getId();
-			if (!std::any_of(result.begin(), result.end(), [wallId](const Wall& w)->bool { return w.getId() == wallId; })
-				&& common::distance(point, wall.getSegment()) <= dist) {
+		for (GameStaticObject* staticObj : Game::getInstance()->getMap()->getWalls()) {
+			Wall* wall = (Wall*)staticObj;
+			int wallId = wall->getId();
+			if (!std::any_of(result.begin(), result.end(), [wallId](Wall* w)->bool { return w->getId() == wallId; })
+				&& common::distance(point, wall->getSegment()) <= dist) {
 				result.push_back(wall);
 			}
 		}
@@ -698,10 +703,10 @@ Vector2 Actor::getNextSafeGoal() const {
 	if (!_path.empty()) {
 		auto walls = getWallsNearGoal();
 		if (walls.size() == 2) {
-			Vector2 p11 = walls.at(0).getFrom(),
-				p12 = walls.at(0).getTo(),
-				p21 = walls.at(1).getFrom(),
-				p22 = walls.at(1).getTo();
+			Vector2 p11 = walls.at(0)->getFrom(),
+				p12 = walls.at(0)->getTo(),
+				p21 = walls.at(1)->getFrom(),
+				p22 = walls.at(1)->getTo();
 
 			bool validFlag = false;
 			Vector2 commonPoint, otherPoint1, otherPoint2;
@@ -771,8 +776,8 @@ Vector2 Actor::getNextSafeGoal() const {
 	return _position;
 }
 
-std::vector<Actor*> Actor::getActorsNearby() const {
-	std::vector<Actor*> result;
+std::vector<GameDynamicObject*> Actor::getNearbyObjects() const {
+	std::vector<GameDynamicObject*> result;
 	Vector2 pos = getPosition();
 	float maxDist = common::sqr(ActorSightRadius);
 
@@ -787,39 +792,49 @@ std::vector<Actor*> Actor::getActorsNearby() const {
 	return result;
 }
 
-void Actor::updateSpotting2() {
+void Actor::updateSpotting() {
 	// Podczas ruchu zaktualizuj zbiór widzianych aktorów
 	if (hasPositionChanged()) {
-		auto actorsNearby = getActorsNearby();
+		auto actorsNearby = getNearbyObjects();
 
-		size_t notSpottedPreviously = _actorsNearby.size();
+		size_t notSpottedPreviously = _nearbyObjects.size();
 		size_t notSpottedNow = actorsNearby.size();
 
 		// Uaktualnij informacjê o s¹siedztwie w przypadku aktorów statycznych.
-		for (Actor* actor : _actorsNearby) {
+		for (GameDynamicObject* actor : _nearbyObjects) {
+			
 			// Je¿eli aktor siê przemieszcza, to i tak sam wymieni ca³y wektor.
 			if (actor->hasPositionChanged()) { continue; }
 
 			// Je¿eli siê nie porusza, to ustal czy aktor znikn¹³ czy pojawi³ siê w pobli¿u.
-			size_t wasSpotted = common::indexOf(_actorsNearby, actor);
+			size_t wasSpotted = common::indexOf(_nearbyObjects, actor);
 			size_t isSpotted = common::indexOf(actorsNearby, actor);
 
 			if (wasSpotted == notSpottedPreviously && isSpotted != notSpottedNow) {
-				actor->_actorsNearby.push_back(this);
+				actor->spot(this);
 			}
 			else if (wasSpotted != notSpottedPreviously && isSpotted == notSpottedNow) {
-				std::vector<Actor*>* nearbyPtr = &actor->_actorsNearby;
-				size_t n = nearbyPtr->size();
-				size_t k = common::indexOf(*nearbyPtr, this);
-				if (k != n) {
-					if (k != n - 1) {
-						nearbyPtr->operator[](k) = nearbyPtr->at(n - 1);
-						nearbyPtr->pop_back();
-					}
-				}
+				actor->unspot(this);
 			}
 		}
 
-		_actorsNearby = actorsNearby;
+		_nearbyObjects = actorsNearby;
+	}
+}
+
+bool Actor::isSpotting() const { return true; }
+
+void Actor::spot(GameDynamicObject* entity) {
+	_nearbyObjects.push_back(entity);
+}
+
+void Actor::unspot(GameDynamicObject* entity) {
+	size_t n = _nearbyObjects.size();
+	size_t k = common::indexOf(_nearbyObjects, entity);
+	if (k != n) {
+		if (k != n - 1) {
+			_nearbyObjects[k] = _nearbyObjects.at(n - 1);
+			_nearbyObjects.pop_back();
+		}
 	}
 }

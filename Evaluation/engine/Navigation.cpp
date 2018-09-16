@@ -19,21 +19,23 @@ void GameMap::destroy(GameMap* game) {
 	delete game;
 }
 
-std::vector<Wall> GameMap::getWalls() const { return _walls.getElements(); }
+std::vector<GameStaticObject*> GameMap::getWalls() const { return _walls; }
 
 bool GameMap::raycastStatic(const Segment& ray, Vector2& result) const {
 	Vector2 rayOrigin = ray.from;
 	bool collisionFound = false;
 	float minDist;
 
-	for (Wall wall : _walls.broadphase(ray)) {
+	for (GameStaticObject* staticObj : _collisionResolver->broadphaseStatic(ray.from, ray.to)) {
 		Vector2 collisionResult;
-		if (common::testSegments(ray, wall.getSegment(), collisionResult)) {
-			float dist = common::sqDist(rayOrigin, collisionResult);
-			if (!collisionFound || dist < minDist) {
-				collisionFound = true;
-				minDist = dist;
-				result = collisionResult;
+		for (const Segment& seg : staticObj->getBounds()) {
+			if (common::testSegments(ray, seg, collisionResult)) {
+				float dist = common::sqDist(rayOrigin, collisionResult);
+				if (!collisionFound || dist < minDist) {
+					collisionFound = true;
+					minDist = dist;
+					result = collisionResult;
+				}
 			}
 		}
 	}
@@ -45,32 +47,10 @@ const int GameMap::NULL_IDX = -1;
 
 GameMap::NavigationNode::NavigationNode(float x, float y, int index) : position(x, y), index(index) { }
 
-std::vector<GameDynamicObject*> GameMap::initializeRegularGrid(const std::vector<GameDynamicObject*>& entities) {
-	return _grid.initialize(this, RegularGridSize, entities);
-}
-
 std::vector<GameDynamicObject*> GameMap::initializeEntities(const std::vector<GameDynamicObject*>& entities) {
-	std::vector<GameDynamicObject*> invalid;
-	std::vector<GameDynamicObject*> allowed;
-	allowed.reserve(entities.size());
-	for (auto entity : entities) {
-		if (isPositionValid(entity->getPosition(), entity->getRadius() + MovementSafetyMargin)) {
-			allowed.push_back(entity);
-		}
-		else {
-			invalid.push_back(entity);
-		}
-	}
-
-	/*auto treePtr = &_entities;
-	auto wallTreePtr = &_walls;
-	AabbTree<GameDynamicObject*>::initialize(treePtr, allowed, CollisionTreeMovablePadding);*/
-
-	for (auto entity : allowed) {
-		entity->enableCollisions(_collisionResolver);
-	}
-
-	return invalid;
+	auto initializeResult = _collisionResolver->initialize(entities);
+	_entities = initializeResult.first;
+	return initializeResult.second;
 }
 
 int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const {
@@ -104,11 +84,19 @@ int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<co
 }
 
 std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point) { 
-	return _collisionResolver->broadphase(point);
+	return _collisionResolver->broadphaseDynamic(point);
 }
 
-std::vector<GameDynamicObject*> GameMap::checkCollision(const Aabb& area) const { 
-	return _collisionResolver->broadphase(area);
+//std::vector<GameDynamicObject*> GameMap::checkCollision(const Aabb& area) const { 
+//	return _collisionResolver->broadphase(area);
+//}
+
+std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point, float radius) {
+	return _collisionResolver->broadphaseDynamic(point, radius);
+}
+
+std::vector<GameDynamicObject*> GameMap::checkCollision(const Segment& segment) {
+	return _collisionResolver->broadphaseDynamic(segment.from, segment.to);
 }
 
 std::vector<GameDynamicObject*> GameMap::getEntities() const {
@@ -343,16 +331,17 @@ Vector2 GameMap::getNodePosition(int index) const { return _navigationMesh.at(in
 bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const {
 
 	float padding = movable->getRadius() + MovementSafetyMargin + common::EPSILON;
+	float sqPadding = padding * padding;
 	Vector2 pos = movable->getPosition();
 	Segment segment = Segment(pos, pos + movementVector);
 
-	for (Wall& wall : _walls.getElements()) {
-		if (common::sqDist(segment, wall.getSegment()) <= common::sqr(padding)) {
+	for (auto wall : _collisionResolver->broadphaseStatic(segment.from, segment.to, padding)) {
+		if (wall->getSqDistanceTo(segment) <= sqPadding) {
 			return false;
 		}
 	}
 
-	for (auto entity : _collisionResolver->broadphase(pos, segment.to, padding)) {
+	for (auto entity : _collisionResolver->broadphaseDynamic(pos, segment.to, padding)) {
 		if (movable != entity && entity->isSolid() && common::distance(entity->getPosition(), segment) <= entity->getRadius() + padding) {
 			return false;
 		}
@@ -362,8 +351,9 @@ bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movemen
 }
 
 bool GameMap::isPositionValid(const Vector2& point, float entityRadius) const {
-	for (Wall& wall : _walls.getElements()) {
-		if (common::distance(point, wall.getSegment()) <= entityRadius) {
+	float r = entityRadius + common::EPSILON + MovementSafetyMargin;
+	for (auto staticObj : _collisionResolver->broadphaseStatic(point, r)) {
+		if (staticObj->getDistanceTo(point) <= r) {
 			return false;
 		}
 	}
@@ -378,10 +368,17 @@ GameMap* GameMap::Loader::load(const char* mapFilename) {
 	}
 
 	_map = new GameMap();
+
 	loadMapSize();
+	_map->_collisionResolver = new RegularGrid(_map->getWidth(), _map->getHeight(), RegularGridSize);
+
 	loadNavigationPoints();
 	loadNavigationMesh();
-	loadTriggers();
+	_map->_walls = loadStaticObjects();
+	
+	for (auto staticObj : _map->_walls) {
+		_map->_collisionResolver->add(staticObj);
+	}
 
 	_reader.close();
 
@@ -426,21 +423,22 @@ void GameMap::Loader::loadNavigationMesh() {
 	}
 }
 
-void GameMap::Loader::loadTriggers() {
+std::vector<GameStaticObject*> GameMap::Loader::loadStaticObjects() {
 	float x1, y1, x2, y2, id, p;
 	std::string objectType, s;
-	std::vector<Wall> walls;
+	std::vector<GameStaticObject*> staticObjects;
 
 	while (_reader >> objectType) {
 		if (objectType == "wall:") {
 			_reader >> x1 >> y1 >> x2 >> y2 >> s >> id >> s >> p;
-			walls.push_back(Wall(id, Vector2(x1, y1), Vector2(x2, y2), p));
+			staticObjects.push_back(new Wall(id, Vector2(x1, y1), Vector2(x2, y2), p));
 		}
 		else {
 			throw "Nieprawid³owa struktura pliku mapy! Nie rozpoznano: '" + objectType + "'.";
 		}
 	}
-	_map->_walls.initialize(walls);
+
+	return staticObjects;
 }
 
 #ifdef _DEBUG

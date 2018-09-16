@@ -233,9 +233,6 @@
     <ClInclude Include="actions\Face.h">
       <Filter>Header Files\Actions</Filter>
     </ClInclude>
-    <ClInclude Include="CommonFunctions.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
     <ClInclude Include="agents\Agent.h">
       <Filter>Header Files\Agents</Filter>
     </ClInclude>
@@ -246,6 +243,9 @@
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="engine\CollisionResolver.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\CommonFunctions.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
