@@ -18,6 +18,8 @@ public:
 	Actor* getMember(const String& name) const;
 	void addMember(const String& name, Actor* member);
 	size_t getSize() const;
+	size_t getRemainingActors() const;
+	float getTotalRemainingHelath() const;
 
 private:
 	unsigned short _teamNumber;

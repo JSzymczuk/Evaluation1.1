@@ -15,6 +15,13 @@
 #include "agents/Agent.h"
 #include "agents/LuaEnvironment.h"
 
+enum GameState {
+	IN_PROGRESS,
+	ENDED_WIN,
+	ENDED_DRAW,
+	TIME_OUT
+};
+
 class Game {
 public:
 	Game();
@@ -35,10 +42,17 @@ public:
 	std::vector<Trigger*> getTriggers() const;
 	MissileManager* getMissileManager() const;
 
+	void registerAgentToDispose(Agent* agent);
+	GameState checkWinLoseConditions(std::vector<Team*>& winners) const;
+	GameTime getRemainingTime() const;
+
+	void start();
+
 private:
 	static Game* _instance;
 
 	GameTime _gameTime;
+	GameTime _timeEnd;
 	std::mutex _updateMutex;
 	std::condition_variable _updateHolder;
 
@@ -53,6 +67,7 @@ private:
 
 	PlayerAgent* _playerAgent;
 	std::vector<Agent*> _agents;
+	std::queue<Agent*> _threadsToDispose;
 
 	void initializeTeams(const String& filename);
 

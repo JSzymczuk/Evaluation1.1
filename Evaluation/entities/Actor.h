@@ -36,6 +36,7 @@ public:
 
 	Action* getCurrentAction() const;
 	bool setCurrentAction(Action* action);
+	void setNextAction(Action* action);
 
 	void setAmmo(const String& weaponName, int value);
 	void setArmor(float value);
@@ -95,6 +96,7 @@ private:
 	size_t _nextHistoryIdx;
 	size_t _positionHistoryLength;
 	Action* _currentAction;
+	Action* _nextAction;
 
 	void lookAt(const Vector2& point);
 	void move(const std::queue<Vector2>& path);
@@ -153,4 +155,5 @@ private:
 	friend class ChangeWeaponAction;
 	friend class ShootAction;
 	friend class IdleAction;
+	friend class DeadAction;
 };

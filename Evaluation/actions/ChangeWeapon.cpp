@@ -11,6 +11,7 @@ int ChangeWeaponAction::getPriority() const { return 5; }
 
 void ChangeWeaponAction::finish(GameTime gameTime) {
 	getActor()->setCurrentWeapon(_weaponName);
+	Action::finish(gameTime);
 }
 
 bool ChangeWeaponAction::update(GameTime gameTime) {

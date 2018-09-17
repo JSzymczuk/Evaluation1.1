@@ -13,6 +13,7 @@
 #include "actions/Move.h"
 #include "actions/Shoot.h"
 #include "agents/LuaEnvironment.h"
+#include "engine//CommonFunctions.h"
 
 Game::Game() {
 	if (_instance != nullptr) {
@@ -140,11 +141,18 @@ bool Game::initialize(const char* title, int width, int height) {
 
 	initializeTeams("actors.dat");
 
+	start();
+
+	return true;
+}
+
+
+void Game::start() {
 	for (Agent* agent : _agents) {
 		agent->start();
 	}
-
-	return true;
+	_gameTime = SDL_GetPerformanceCounter();
+	_timeEnd = _gameTime + 1000000 * Duration;
 }
 
 void Game::initializeTeams(const String& filename) {
@@ -300,9 +308,51 @@ void Game::dispose() {
 void Game::update() {
 	if (_isUpdateEnabled) {
 		_gameTime = SDL_GetPerformanceCounter();
-		
-		_updateHolder.notify_all();
-		_missileManager->update(_gameTime);
+
+		std::vector<Team*> winners;
+		GameState state = checkWinLoseConditions(winners);
+
+		if (state == GameState::IN_PROGRESS) {
+			_updateHolder.notify_all();
+			_missileManager->update(_gameTime);
+
+			while (!_threadsToDispose.empty()) {
+				Agent* agent = _threadsToDispose.front();
+				size_t idx = common::indexOf(_agents, agent);
+				size_t n = _agents.size();
+				if (idx != n) {
+					common::swapLastAndRemove(_agents, idx);
+					agent->_thread.join();
+					_threadsToDispose.pop();
+					delete agent;
+				}
+			}
+		}
+		else if (state == GameState::ENDED_WIN) {
+			Logger::log("Wygrala druzyna " + std::to_string(winners.at(0)->getNumber()) + "!");
+			_isUpdateEnabled = false;
+		}
+		else if (state == GameState::TIME_OUT) {
+			if (winners.size() == 1) {
+				Logger::log("Koniec czasu. Wygrala druzyna " + std::to_string(winners.at(0)->getNumber()) + ".");
+			}
+			else {
+				String message = "Koniec czasu. Remis pomiedzy druzynami: ";
+				bool addComma = false;
+				for (Team* team : winners) {
+					if (addComma) { message += ", "; }
+					else { addComma = true; }
+					message += std::to_string(team->getNumber());
+				}
+				message += ".";
+				Logger::log(message);
+			} 
+			_isUpdateEnabled = false;
+		}
+		else if (state == GameState::ENDED_DRAW) {
+			Logger::log("Remis: wszystkie druzyny zostaly wyeliminowane!");
+			_isUpdateEnabled = false;
+		}		
 
 		Logger::printLogs();
 		Logger::clear();
@@ -612,4 +662,65 @@ void Game::drawActor(const Actor& actor) const {
 		}
 	}
 	catch (...) { std::cout << "Error" << std::endl; }
+}
+
+void Game::registerAgentToDispose(Agent* agent) {
+	_threadsToDispose.push(agent);
+	Actor* actor = agent->getActor();
+	getMap()->remove(actor);
+	if (actor->getTeam()->getRemainingActors() == 0) {
+		Logger::log("Druzyna " + std::to_string(actor->getTeam()->getNumber()) + " odpada!");
+	}
+}
+
+GameState Game::checkWinLoseConditions(std::vector<Team*>& winners) const {
+	if (getRemainingTime() > 0) {
+		size_t teamsRemaining = 0;
+		size_t maxRemainingActors = 0;
+
+		for (Team* team : _teams) {
+			size_t remainingActors = team->getRemainingActors();
+			if (remainingActors > 0) {
+				++teamsRemaining;
+			}
+			if (remainingActors > maxRemainingActors) {
+				maxRemainingActors = remainingActors;
+				winners.clear();
+				winners.push_back(team);
+			}
+			else if (remainingActors == maxRemainingActors) {
+				winners.push_back(team);
+			}
+		}
+
+		if (teamsRemaining > 1) {
+			return GameState::IN_PROGRESS;
+		}
+		if (teamsRemaining == 1) {
+			return GameState::ENDED_WIN;
+		}
+		return GameState::ENDED_DRAW;
+	}
+	else {
+		float maxRemainingHealth = 0;
+
+		for (Team* team : _teams) {
+			float remainingHealth = team->getTotalRemainingHelath();
+			if (remainingHealth > maxRemainingHealth) {
+				maxRemainingHealth = remainingHealth;
+				winners.clear();
+				winners.push_back(team);
+			}
+			else if (remainingHealth == maxRemainingHealth) {
+				winners.push_back(team);
+			}
+		}
+
+		return GameState::TIME_OUT;
+	}
+}
+
+GameTime Game::getRemainingTime() const { 
+	GameTime remaining = _timeEnd - _gameTime;
+	return remaining > 0 ? remaining : 0;
 }

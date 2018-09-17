@@ -17,10 +17,11 @@ const String LuaInitializeFunctionName = "Initialize";
 const String LuaUpdateFunctionName = "Update";
 const String AgentControlled = "ms";
 const String AgentScriptPrefix = "sc:";
+const int Duration = 30;
 
 const int TriggerRadius = 20;
 const int ActorRadius = 15;
-const int ActorSelectionRing = 24;
+const int ActorSelectionRing = 19;
 const int ActorSightRadius = 300;
 const int ActorVOCheckRadius = 80;
 const int ActorVOCheckAngle = 30;
@@ -56,7 +57,7 @@ const SDL_Color HealthBarEmptyColor = { 215, 0, 0 };
 const std::string HealthBarTextureKey = "health_bar";
 const std::string HealthBarTexturePath = "content/health_bar.png";
 const std::string ActorRingTextureKey = "actor_ring";
-const std::string ActorRingTexturePath = "content/actor_ring.png";
+const std::string ActorRingTexturePath = "content/actor_ring_medium.png";
 const std::string TriggerRingTextureKey = "trigger_ring";
 const std::string TriggerRingTexturePath = "content/trigger_ring.png";
 

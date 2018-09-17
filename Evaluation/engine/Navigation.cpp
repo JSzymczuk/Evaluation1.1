@@ -4,6 +4,7 @@
 #include "entities/Wall.h"
 #include "engine/SegmentTree.h"
 #include "main/Configuration.h"
+#include "engine/CommonFunctions.h"
 
 
 float GameMap::getWidth() const { return _width; }
@@ -56,6 +57,16 @@ bool GameMap::place(GameDynamicObject* object) {
 		return true;
 	}
 	return false;
+}
+
+void GameMap::remove(GameDynamicObject* object) {
+	size_t idx = common::indexOf(_entities, object);
+	size_t n = _entities.size();
+	if (idx != n) {
+		_collisionResolver->remove(object);
+		object->disableCollisions();
+		common::swapLastAndRemove(_entities, idx);
+	}
 }
 
 int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const {

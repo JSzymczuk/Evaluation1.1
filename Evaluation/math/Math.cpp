@@ -164,8 +164,10 @@ namespace common {
 		return a1 <= a2;
 	}
 	
-	bool testCircleAndSegment(const Circle& circle, const Segment& segment) {
-		if (circle.contains(segment.from) || circle.contains(segment.to)) { return true; }
+	SegmentAndCircleCollisionTestResult testCircleAndSegment(const Circle& circle, const Segment& segment) {
+		
+		SegmentAndCircleCollisionTestResult result;
+		result.pointsFound = 0;
 
 		Vector2 v = segment.to - segment.from;
 		Vector2 m = segment.from - circle.center;
@@ -175,14 +177,29 @@ namespace common {
 		float c = sqr(m.x) + sqr(m.y) - sqr(circle.radius);
 
 		float discr = b * b - 4 * a * c;
-		if (discr < 0) return false;
+		
+		if (discr >= 0) {
+			float d = sqrtf(discr), temp = 1 / (2 * a);
+			float t1 = (-b - d) * temp;
+			float t2 = (-b + d) * temp;
 
-		float d = sqrtf(discr), temp = 1 / (2 * a);
-		float t1 = (-b - d) * temp;
-		float t2 = (-b + d) * temp;
+			if (t1 >= 0 && t1 <= 1) {
+				result.first = segment.from + v * t1;
+				if (t2 >= 0 && t2 <= 1) {
+					result.second = segment.from + v * t2;
+					result.pointsFound = 2;
+				}
+				else {
+					result.pointsFound = 1;
+				}
+			}
+			else if (t2 >= 0 && t2 <= 1) {
+				result.first = segment.from + v * t2;
+				result.pointsFound = 1;
+			}
+		}
 
-		if (t1 >= 0 && t1 <= 1 || t2 >= 0 && t2 <= 1) { return true; }
-		return false;
+		return result;
 	}
 
 	Vector2 rotatePoint(const Vector2& point, const Vector2& origin, float angle) {

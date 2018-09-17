@@ -31,3 +31,21 @@ void Team::addMember(const String& name, Actor* member) {
 		member->_team = this;
 	}
 }
+
+size_t Team::getRemainingActors() const {
+	size_t alive = 0;
+	for (auto entry : _members) {
+		if (!entry.second->isDead()) {
+			alive++;
+		}
+	}
+	return alive;
+}
+
+ float Team::getTotalRemainingHelath() const {
+	float health = 0;
+	for (auto entry : _members) {
+		health += entry.second->getHealth();
+	}
+	return health;
+}

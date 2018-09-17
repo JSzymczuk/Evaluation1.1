@@ -14,11 +14,11 @@ void ShootAction::start(GameTime gameTime) {
 }
 
 void ShootAction::finish(GameTime gameTime) {
-	Action::finish(gameTime);
 	Actor* actor = getActor();
 	WeaponState& weaponState = actor->getWeaponState(actor->getCurrentWeapon());
 	weaponState.state = WeaponLoadState::WEAPON_UNLOADED;
 	weaponState.lastShot = gameTime;
+	Action::finish(gameTime);
 }
 
 bool ShootAction::update(GameTime gameTime) {

@@ -33,24 +33,7 @@ public:
 
 	bool hasStarted() const;
 
-	// std::string getActionCode() { return actionCode; }
-	//bool isRepeatable() { return repeatable; }
-
-	//GameTime getActionStarted() { return actionStarted; }
-	//Action* getNextAction() { return nextAction; }
-	//void setNextAction(Action * action) { this->nextAction = action; }
-	//ActionType getActionType() { return actionType; }
-	
 protected:
-	//ActionType actionType;
-	//void rotate(Actor * actor, Vector4d direction, GameTime time);
-	//const double cosOfPiBy8;
-	//std::string actionCode;
-	//bool breakable;
-	//bool repeatable;
-	//TimeUnit standardCost;
-	//Action * nextAction;
-
 	Actor* getActor() const;
 	GameTime getTimeStarted() const;
 

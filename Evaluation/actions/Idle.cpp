@@ -11,5 +11,8 @@ int IdleAction::getPriority() const { return 0; }
 
 bool IdleAction::update(GameTime gameTime) { return false; }
 
-void IdleAction::start(GameTime gameTime) { getActor()->stop(); }
+void IdleAction::start(GameTime gameTime) { 
+	getActor()->stop();
+	Action::start(gameTime);
+}
 

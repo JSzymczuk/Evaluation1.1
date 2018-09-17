@@ -135,6 +135,9 @@
     <ClCompile Include="agents\Agent.cpp">
       <Filter>Source Files\Agents</Filter>
     </ClCompile>
+    <ClCompile Include="agents\SharedKnowledge.cpp">
+      <Filter>Source Files\Agents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="agents\ActorInfo.h">
@@ -250,6 +253,9 @@
     </ClInclude>
     <ClInclude Include="engine\CommonFunctions.h">
       <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="agents\SharedKnowledge.h">
+      <Filter>Header Files\Agents</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

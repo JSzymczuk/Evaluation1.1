@@ -11,7 +11,10 @@ int FaceAction::getPriority() const { return 0; }
 
 bool FaceAction::locksRotation() const { return true; }
 
-void FaceAction::start(GameTime gameTime) { getActor()->lookAt(_target); }
+void FaceAction::start(GameTime gameTime) {
+	getActor()->lookAt(_target); 
+	Action::start(gameTime);
+}
 
 bool FaceAction::update(GameTime gameTime) { 
 	Actor* actor = getActor();

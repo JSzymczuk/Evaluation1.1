@@ -81,8 +81,14 @@ namespace common {
 	bool testSegments(const Segment& segment1, const Segment& segment2, Vector2& result);
 
 	bool testCircles(const Circle& circle1, const Circle& circle2);
+	
+	struct SegmentAndCircleCollisionTestResult {
+		unsigned short pointsFound;
+		Vector2 first;
+		Vector2 second;
+	};
 
-	bool testCircleAndSegment(const Circle& circle, const Segment& segment);
+	SegmentAndCircleCollisionTestResult testCircleAndSegment(const Circle& circle, const Segment& segment);
 
 	Vector2 rotatePoint(const Vector2& point, const Vector2& origin, float angle);
 

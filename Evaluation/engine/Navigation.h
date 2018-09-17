@@ -38,6 +38,7 @@ public:
 	bool isPositionValid(const Vector2& point, float entityRadius) const;
 	bool canPlace(const GameDynamicObject* object) const;
 	bool place(GameDynamicObject* object);
+	void remove(GameDynamicObject* object);
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;

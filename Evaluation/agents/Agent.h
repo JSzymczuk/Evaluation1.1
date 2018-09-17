@@ -15,6 +15,7 @@ class Action;
 class Actor;
 class ActorKnowledge;
 class Vector2;
+class Game;
 typedef lua_State LuaEnv;
 
 
@@ -47,6 +48,8 @@ private:
 	bool _hasStarted;
 
 	bool trySetAction(Action* action);
+
+	friend class Game;
 };
 
 

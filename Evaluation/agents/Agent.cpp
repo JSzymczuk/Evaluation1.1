@@ -10,6 +10,34 @@
 #include <iostream>
 #include "main/Game.h"
 
+
+void Agent::start() {
+	_hasStarted = true;
+	initialize(ActorKnowledge(_actor), Game::getInstance()->getTime());
+	_thread = std::thread(&Agent::run, this);
+	_actor->setCurrentAction(new IdleAction(_actor));
+}
+
+void Agent::run() {
+	if (_hasStarted) {
+		Actor* actor = getActor();
+		auto game = Game::getInstance();
+
+		while (!actor->isDead()) {
+			std::unique_lock<std::mutex> lk(game->_updateMutex);
+			game->_updateHolder.wait(lk);
+			lk.unlock();
+			GameTime time = Game::getInstance()->getTime();
+
+			update(ActorKnowledge(_actor), time);
+			actor->update(time);
+		}
+
+		Game::getInstance()->registerAgentToDispose(this);
+	}
+}
+
+
 bool Agent::trySetAction(Action* action) {
 	if (!_actor->setCurrentAction(action)) {
 		delete action;
@@ -76,29 +104,4 @@ LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor)
 	}
 	this->_luaEnv = luaEnv;
 	_name = actor->getName();
-}
-
-void Agent::start() {
-	_hasStarted = true;
-	initialize(ActorKnowledge(_actor), Game::getInstance()->getTime());
-	_thread = std::thread(&Agent::run, this);
-}
-
-void Agent::run() {
-	if (_hasStarted) {
-		Actor* actor = getActor();
-		auto game = Game::getInstance();
-
-		while (!actor->isDead()) {
-			std::unique_lock<std::mutex> lk(game->_updateMutex);
-			game->_updateHolder.wait(lk);
-			lk.unlock();
-			GameTime time = Game::getInstance()->getTime();
-
-			update(ActorKnowledge(_actor), time);
-			actor->update(time);
-		}
-
-		_thread.join();
-	}
 }

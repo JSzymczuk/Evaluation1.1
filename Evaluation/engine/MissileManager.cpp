@@ -4,6 +4,7 @@
 #include "entities/Missile.h"
 #include "engine//WeaponLoader.h"
 #include "math/Math.h"
+#include "actions//Die.h"
 
 MissileManager::MissileManager() {
 	_capacity = DEFAULT_CAPACITY;
@@ -72,9 +73,9 @@ void MissileManager::invokeDamage(Missile& missile, const Vector2& point) {
 				actor->damage(sqDist > entityRadius * entityRadius ? 
 					weaponInfo.minDamage + (1 - sqDist / maxSqDist) * (weaponInfo.maxDamage - weaponInfo.minDamage)
 					: weaponInfo.maxDamage); 
-				if (actor->isDead()) {
+				if (actor->getHealth() <= 0) {
 					missile.owner->registerKill(actor);
-					actor->disableCollisions();
+					actor->setCurrentAction(new DieAction(actor));
 				}
 			}
 		}
@@ -92,9 +93,11 @@ void MissileManager::update(GameTime time) {
 		Missile& missile = _missiles[i];
 		if (missile.isActive) {
 			Segment missileSegment = getMissileLine(missile, time);
+			Vector2 backPositionOld = missile.backPosition;
 			missile.backPosition = missileSegment.to;
 
 			if (missile.isTargetReached) {
+				//missile.isActive = false;
 				if (common::sqDist(missile.origin, missile.frontPosition)
 					< common::sqDist(missile.origin, missile.backPosition)) {
 					missile.backPosition = missile.frontPosition;
@@ -106,12 +109,25 @@ void MissileManager::update(GameTime time) {
 			}
 			else {
 				missile.frontPosition = missileSegment.from;
-				auto possibleColliders = _map->checkCollision(missileSegment);
+				Segment extendedSegment(backPositionOld, missile.frontPosition);
+				auto possibleColliders = _map->checkCollision(extendedSegment);
+				
 				for (GameDynamicObject* entity : possibleColliders) {
-					if (entity->isSolid() && common::testCircleAndSegment(entity->getCollisionArea(), missileSegment)) {
-						missileHit(missile, missile.frontPosition, time);
+					if (entity->isSolid()) {
+						auto collisionResult = common::testCircleAndSegment(entity->getCollisionArea(), extendedSegment);
+						if (collisionResult.pointsFound == 1) {
+							missileHit(missile, collisionResult.first, time);
+						}
+						else if (collisionResult.pointsFound == 2) {
+							missileHit(missile, 
+								common::sqDist(backPositionOld, collisionResult.first)
+								< common::sqDist(backPositionOld, collisionResult.second)
+								? collisionResult.first
+								: collisionResult.second, time);
+						}
 					}
 				}
+
 				if (!missile.isTargetReached) {
 					Vector2 wallHitPoint;
 					if (_map->raycastStatic(Segment(missile.origin, missile.frontPosition), wallHitPoint)) {

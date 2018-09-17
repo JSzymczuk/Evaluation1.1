@@ -58,7 +58,7 @@ int Actor::getRemainingArmorShots() const { return _armorShotsRemaining; }
 
 std::vector<GameDynamicObject*> Actor::getSeenObjects() const { return _nearbyObjects; }
 
-bool Actor::isDead() const { return _health <= 0; }
+bool Actor::isDead() const { return _currentAction != nullptr && _currentAction->getActionType() == ActionType::DEAD; }
 
 float Actor::getMaxSpeed() const { return ActorSpeed; }
 
@@ -107,6 +107,13 @@ bool Actor::setCurrentAction(Action* action) {
 		_currentAction = action;
 		return true;
 	}	
+}
+
+void Actor::setNextAction(Action* action) {
+	if (_nextAction != nullptr) {
+		delete _nextAction;
+	}
+	_nextAction = action;
 }
 
 float Actor::damage(float dmg) {
@@ -209,6 +216,10 @@ bool Actor::updateCurrentAction(GameTime time) {
 		if (_currentAction->update(time)) {
 			_currentAction->finish(time);
 			clearCurrentAction();
+			if (_nextAction != nullptr) {
+				_currentAction = _nextAction;
+				_nextAction = nullptr;
+			}
 		}
 		return true;
 	}
