@@ -1,7 +1,11 @@
 #include "Actor.h"
 #include "Team.h"
 
+Team::Team(unsigned short number) : _teamNumber(number) {}
+
 unsigned short Team::getNumber() const { return _teamNumber; }
+
+size_t Team::getSize() const { return _members.size(); }
 
 SDL_Color Team::getColor() const { return _color; }
 

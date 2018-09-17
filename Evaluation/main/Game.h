@@ -12,6 +12,8 @@
 #include "entities/Trigger.h"
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "agents/Agent.h"
+#include "agents/LuaEnvironment.h"
 
 class Game {
 public:
@@ -40,18 +42,19 @@ private:
 	std::mutex _updateMutex;
 	std::condition_variable _updateHolder;
 
-	friend class Actor;
-
 	bool _isRunning;
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
 	
+	LuaEnv* _luaEnv;
 	GameMap* _gameMap;
 	MissileManager* _missileManager;
 	std::vector<Team*> _teams;
-	Actor* _actor;
 
-	void trySelectActor(const Vector2& point);
+	PlayerAgent* _playerAgent;
+	std::vector<Agent*> _agents;
+
+	void initializeTeams(const String& filename);
 
 	void drawTrigger(const Trigger& trigger) const;
 	void drawActor(const Actor& actor) const;
@@ -76,4 +79,7 @@ private:
 	void drawCircle(const Vector2& center, float radius, const SDL_Color& color) const;
 	void fillCircle(const Vector2& center, float radius, const SDL_Color& color) const;
 	void fillRing(const Vector2& center, float radius1, float radius2, const SDL_Color& color) const;
+
+	friend class Agent;
+
 };

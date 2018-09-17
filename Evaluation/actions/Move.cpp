@@ -62,7 +62,7 @@ void WanderAction::start(GameTime gameTime) {
 bool WanderAction::update(GameTime gameTime) {
 	Actor* actor = getActor();
 	Vector2 velocity = actor->isMoving() ? actor->getVelocity() : -actor->getVelocity();
-	float ang = common::angle(velocity) + Rng::getFloat(-AgentWanderSpread, AgentWanderSpread);
+	float ang = common::angle(velocity) + Rng::getFloat(-ActorWanderSpread, ActorWanderSpread);
 	Vector2 prefVelocity = Vector2(cosf(ang), sinf(ang));
 	Vector2 returnVel = _center - actor->getPosition();
 	float lth = returnVel.lengthSquared();

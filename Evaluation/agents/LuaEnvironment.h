@@ -12,17 +12,19 @@ extern "C" {
 
 #include "math/Vector2.h"
 #include "main/Configuration.h"
+#include "agents/Agent.h"
+#include "agents/ActorKnowledge.h"
 
 typedef lua_State LuaEnv;
 
-LuaEnv* createLuaEnv() {
+typedef std::vector<ActorInfo>::reference(std::vector<ActorInfo>:: *AtFunctionType)(std::vector<ActorInfo>::size_type);
+
+inline LuaEnv* createLuaEnv() {
 	LuaEnv * luaEnv = luaL_newstate();
 	luaL_openlibs(luaEnv);
 	luabind::open(luaEnv);
 	luabind::module(luaEnv)[
-		luabind::class_<LuaAgent>("LuaAgent")
-			.def("test", &LuaAgent::test),
-			luabind::class_<Vector2>("Vector2")
+		luabind::class_<Vector2>("Vector2")
 			.property("x", &Vector2::getX, &Vector2::setX)
 			.property("y", &Vector2::getY, &Vector2::setY)
 			.def(luabind::constructor<>())
@@ -39,11 +41,74 @@ LuaEnv* createLuaEnv() {
 			.def(luabind::self / luabind::other<float>())
 			.def(luabind::self + luabind::other<Vector2>())
 			.def(luabind::self - luabind::other<Vector2>())
-			.def(luabind::self == luabind::other<Vector2>())
+			.def(luabind::self == luabind::other<Vector2>()),
+
+		luabind::class_<LuaAgent>("LuaAgent")
+			.def("move", &LuaAgent::move)
+			.def("face", &LuaAgent::face)
+			.def("wait", &LuaAgent::wait)
+			.def("moveDirection", &LuaAgent::moveDirection)
+			.def("selectWeapon", &LuaAgent::selectWeapon)
+			.def("shoot", &LuaAgent::shoot)
+			.def("wander", &LuaAgent::wander),
+
+		luabind::class_<ActorKnowledge>("ActorKnowledge")
+			.def("getSelf", &ActorKnowledge::getSelf)
+			.def("getName", &ActorKnowledge::getName)
+			.def("getTeam", &ActorKnowledge::getTeam)
+			.def("getPosition", &ActorKnowledge::getPosition)
+			.def("getDestination", &ActorKnowledge::getDestination)
+			.def("isMoving", &ActorKnowledge::isMoving)
+			.def("getOrientation", &ActorKnowledge::getOrientation)
+			.def("getHealth", &ActorKnowledge::getHealth)
+			.def("getSeenFriends", &ActorKnowledge::getSeenFriends)
+			.def("getSeenFoes", &ActorKnowledge::getSeenFoes)
+			.def("getSeenActors", &ActorKnowledge::getSeenActors)
+			.def("getArmor", &ActorKnowledge::getArmor)
+			.def("getWeaponType", &ActorKnowledge::getWeaponType)
+			.def("isLoaded", &ActorKnowledge::isLoaded)
+			.def("getAmmo", &ActorKnowledge::getAmmo),
+
+		luabind::class_<ActorInfo>("ActorInfo")
+			.def("getName", &ActorInfo::getName)
+			.def("getTeam", &ActorInfo::getTeam)
+			.def("getPosition", &ActorInfo::getPosition)
+			.def("getOrientation", &ActorInfo::getOrientation)
+			.def("getHealth", &ActorInfo::getHealth)
+			.def("getArmor", &ActorInfo::getArmor)
+			.def("getWeaponType", &ActorInfo::getWeaponType),
+
+		/*luabind::class_<Enumerations>("Enumerations")
+			.enum_("ActionType")
+			[
+				value("Moving", 0),
+				value("Shooting", 1),
+				value("ChangingWeapon", 2),
+				value("Dying", 3),
+				value("Reloading", 4),
+				value("Waiting", 5)
+			]
+		.enum_("WeaponType")
+			[
+				value("Chaingun", 0),
+				value("Railgun", 1),
+				value("RocketLuncher", 2),
+				value("Shotgun", 3),
+				value("WeaponSize", 4)
+			]
+		,*/
+
+		luabind::class_<std::vector<ActorInfo>>("vectorOfActorInfo")
+			.def("size", &std::vector<ActorInfo>::size)
+			.def("at", (AtFunctionType)&std::vector<ActorInfo>::at),
+
+		luabind::class_<std::vector<int>>("vectorOfInt")
+			.def("size", &std::vector<int>::size)
+			.def("at", (int&(std::vector<int>::*)(size_t))&std::vector<int>::at)
 	];
 	return luaEnv;
 }
 
-static void destroyLuaEnv(LuaEnv* luaEnv) {
+inline static void destroyLuaEnv(LuaEnv* luaEnv) {
 	lua_close(luaEnv);
 }

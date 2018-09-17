@@ -4,6 +4,9 @@
 
 class ActorInfo {
 public:
+	ActorInfo(Actor* actor);
+	~ActorInfo();
+
 	const char* getName() const;
 	unsigned short getTeam() const;
 	Vector2 getPosition() const;
@@ -11,9 +14,6 @@ public:
 	int getHealth() const;
 	int getArmor() const;
 	String getWeaponType() const;
-
-	ActorInfo(Actor* actor);
-	~ActorInfo();
 	
 private:
 	String _name;

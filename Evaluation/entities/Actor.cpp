@@ -12,10 +12,9 @@
 #include "main/Game.h"
 #include "entities/Wall.h"
 
-Actor::Actor(const std::string& name, Team* team, const Vector2& position)
+Actor::Actor(const std::string& name, const Vector2& position)
 	: GameDynamicObject(position, common::PI_F / 2) {
 	_name = name;
-	if (team != nullptr) { team->addMember(name, this); }
 	_health = common::min(ActorMaxHealth, ActorMaxHealth * ActorInitialHealth);
 	_armor = 0;
 	_armorShotsRemaining = 0;
@@ -27,8 +26,6 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	_recalculations = 0;
 	_positionHistoryLength = 0;
 	_nextHistoryIdx = 0;
-	_lastUpdate = 0;
-	_hasStarted = false;
 
 	for (size_t i = 0; i < ActionPositionHistoryLength; ++i) {
 		_positionHistory.push_back(_position);
@@ -43,11 +40,7 @@ Actor::Actor(const std::string& name, Team* team, const Vector2& position)
 	}
 }
 
-Actor::~Actor() {
-	if (_hasStarted) {
-		_thread.join();
-	}
-}
+Actor::~Actor() { }
 
 float Actor::getHealth() const { return _health; }
 
@@ -222,63 +215,41 @@ bool Actor::updateCurrentAction(GameTime time) {
 	return false;
 }
 
-void Actor::run() {
-	_hasStarted = true;
-	_thread = std::thread(&Actor::update, this);
-	_lastUpdate = 0;
-}
-
-void Actor::update() {
-	if (_hasStarted) {
-		auto game = Game::getInstance();
-
-		while (!isDead()) {
-
-			actorLogs[this].clear();
-
-			std::unique_lock<std::mutex> lk(game->_updateMutex);
-			game->_updateHolder.wait(lk);
-			lk.unlock();
-			_lastUpdate = game->getTime();
-
+void Actor::update(GameTime time) {	
 #ifdef _DEBUG
-			GameTime from, to;
-			bool logIfSuccessful;
+	GameTime from, to;
+	bool logIfSuccessful;
 
-			from = SDL_GetPerformanceCounter();
-			logIfSuccessful = updateWeapons(_lastUpdate);
-			to = SDL_GetPerformanceCounter();
-			if (logIfSuccessful) {
-				Logger::logIfNotIgnored("updateWeapons", "Update Weapons:         " + std::to_string(to - from));
-			}
+	from = SDL_GetPerformanceCounter();
+	logIfSuccessful = updateWeapons(time);
+	to = SDL_GetPerformanceCounter();
+	if (logIfSuccessful) {
+		Logger::logIfNotIgnored("updateWeapons", "Update Weapons:         " + std::to_string(to - from));
+	}
 
-			from = SDL_GetPerformanceCounter();
-			logIfSuccessful = updateCurrentAction(_lastUpdate);
-			to = SDL_GetPerformanceCounter();
-			if (logIfSuccessful) {
-				Logger::logIfNotIgnored("updateCurrentAction", "Update Current Action:  " + std::to_string(to - from));
-			}
+	from = SDL_GetPerformanceCounter();
+	logIfSuccessful = updateCurrentAction(time);
+	to = SDL_GetPerformanceCounter();
+	if (logIfSuccessful) {
+		Logger::logIfNotIgnored("updateCurrentAction", "Update Current Action:  " + std::to_string(to - from));
+	}
 
-			updateMovement(_lastUpdate);
+	updateMovement(time);
 
-			from = SDL_GetPerformanceCounter();
-			logIfSuccessful = updateOrientation(_lastUpdate);
-			to = SDL_GetPerformanceCounter();
-			if (logIfSuccessful) {
-				Logger::logIfNotIgnored("updateOrientation", "Update Orientation:     " + std::to_string(to - from));
-			}
+	from = SDL_GetPerformanceCounter();
+	logIfSuccessful = updateOrientation(time);
+	to = SDL_GetPerformanceCounter();
+	if (logIfSuccessful) {
+		Logger::logIfNotIgnored("updateOrientation", "Update Orientation:     " + std::to_string(to - from));
+	}
 #else
-			updateWeapons(_lastUpdate);
-			updateCurrentAction(_lastUpdate);
-			updateMovement(_lastUpdate);
-			updateOrientation(_lastUpdate);
+	updateWeapons(time);
+	updateCurrentAction(time);
+	updateMovement(time);
+	updateOrientation(time);
 #endif 
 
-			GameDynamicObject::update(_lastUpdate);
-		}
-
-		_thread.join();
-	}
+	GameDynamicObject::update(time);
 }
 
 float Actor::calculateRotation() const {

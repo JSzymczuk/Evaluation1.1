@@ -20,7 +20,6 @@ class GameMap {
 public:
 	static GameMap* create(const char* filepath);
 	static void destroy(GameMap* game);
-	std::vector<GameDynamicObject*> initializeEntities(const std::vector<GameDynamicObject*>& entities);
 
 	float getWidth() const;
 	float getHeight() const;
@@ -37,15 +36,13 @@ public:
 	//std::vector<GameDynamicObject*> checkCollision(const Aabb& area) const;
 	bool isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const;
 	bool isPositionValid(const Vector2& point, float entityRadius) const;
+	bool canPlace(const GameDynamicObject* object) const;
+	bool place(GameDynamicObject* object);
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;
 	std::vector<Vector2> getNavigationNodes() const;
 	std::vector<Segment> getNavigationArcs() const;
-	/*std::vector<Aabb> getAabbs() const;
-	std::vector<Aabb> getRegionsContaining(const common::Circle& circle);
-	std::vector<Aabb> getRegionsContaining(const Segment& segment);
-	std::vector<Aabb> getRegionsContaining(const Vector2& from, const Vector2& to, float radius);*/
 #endif
 
 private:

@@ -147,6 +147,7 @@
     <ClCompile Include="actions\Face.cpp" />
     <ClCompile Include="agents\ActorInfo.cpp" />
     <ClCompile Include="agents\ActorKnowledge.cpp" />
+    <ClCompile Include="agents\Agent.cpp" />
     <ClCompile Include="engine\Logger.cpp" />
     <ClCompile Include="engine\MissileManager.cpp" />
     <ClCompile Include="engine\Navigation.cpp" />

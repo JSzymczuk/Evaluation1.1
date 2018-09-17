@@ -132,6 +132,9 @@
     <ClCompile Include="engine\RegularGrid.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="agents\Agent.cpp">
+      <Filter>Source Files\Agents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="agents\ActorInfo.h">

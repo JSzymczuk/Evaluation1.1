@@ -35,29 +35,29 @@ bool RegularGrid::isPositionValid(const GameDynamicObject* entity) const {
 	return position.x > radius && position.y > radius && position.x < _width - radius && position.y < _height - radius 
 		&& narrowphaseDynamic(entity).size() == 0 && narrowphaseStatic(entity).size() == 0;
 }
-
-EntitiesInitializeResult RegularGrid::initialize(const std::vector<GameDynamicObject*>& entities) {
-
-	std::vector<GameDynamicObject*> invalid;
-	std::vector<GameDynamicObject*> allowed;
-	allowed.reserve(entities.size());
-
-	for (auto entity : entities) {
-		if (isPositionValid(entity)) {
-			allowed.push_back(entity);
-		}
-		else {
-			invalid.push_back(entity);
-		}
-	}
-	
-	for (auto entity : allowed) {
-		add(entity);
-		entity->enableCollisions(this);
-	}
-	
-	return std::make_pair(allowed, invalid);
-}
+//
+//EntitiesInitializeResult RegularGrid::initialize(const std::vector<GameDynamicObject*>& entities) {
+//
+//	std::vector<GameDynamicObject*> invalid;
+//	std::vector<GameDynamicObject*> allowed;
+//	allowed.reserve(entities.size());
+//
+//	for (auto entity : entities) {
+//		if (isPositionValid(entity)) {
+//			allowed.push_back(entity);
+//		}
+//		else {
+//			invalid.push_back(entity);
+//		}
+//	}
+//	
+//	for (auto entity : allowed) {
+//		add(entity);
+//		entity->enableCollisions(this);
+//	}
+//	
+//	return std::make_pair(allowed, invalid);
+//}
 
 RegularGrid::Region* RegularGrid::getRegionById(size_t i, size_t j) {
 	if (i < _regionsX && j < _regionsY) {

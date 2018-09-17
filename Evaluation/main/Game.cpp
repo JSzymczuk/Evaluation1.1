@@ -12,6 +12,7 @@
 #include "actions/Face.h"
 #include "actions/Move.h"
 #include "actions/Shoot.h"
+#include "agents/LuaEnvironment.h"
 
 Game::Game() {
 	if (_instance != nullptr) {
@@ -21,9 +22,13 @@ Game::Game() {
 }
 
 Game::~Game() {
-	for (Actor* a : getActors()) {
+	for (Agent* a : _agents) {
 		delete a;
 	}
+
+	GameMap::destroy(_gameMap);
+	destroyLuaEnv(_luaEnv);
+
 	if (_instance == this) { _instance = nullptr; }
 }
 
@@ -63,14 +68,33 @@ std::vector<Trigger*> Game::getTriggers() const {
 	return result;
 }
 
-void Game::trySelectActor(const Vector2& point) {
-	_actor = nullptr;
-	for (GameDynamicObject* entity : _gameMap->checkCollision(point)) {
-		if (entity->getGameObjectType() == GameDynamicObjectType::ACTOR && entity->getCollisionArea().contains(point)) {
-			_actor = (Actor*)entity;
-			break;
-		}
+struct ActorLoadedData {
+	String name;
+	String script;
+	size_t team;
+	Vector2 position;
+};
+
+std::vector<ActorLoadedData> loadActorsData(String actorsFilename) {
+	std::ifstream reader;
+	std::vector<ActorLoadedData> actors;
+	reader.open(actorsFilename);
+
+	if (reader.fail()) {
+		Logger::log("Plik '" + actorsFilename + "' nie istnieje, jest niedostêpny lub uszkodzony.");
 	}
+	else {
+		String name, script;
+		size_t team;
+		float x, y;
+
+		while (reader >> name >> script >> team >> x >> y) {
+			actors.push_back(ActorLoadedData{ name, script, team, Vector2(x, y) });
+		}
+		reader.close();
+	}
+
+	return actors;
 }
 
 bool Game::initialize(const char* title, int width, int height) {
@@ -96,39 +120,82 @@ bool Game::initialize(const char* title, int width, int height) {
 	rm->loadImage(TriggerRingTextureKey, TriggerRingTexturePath);
 	rm->loadImage(HealthBarTextureKey, HealthBarTexturePath);
 
-	_actor = nullptr;
+	_playerAgent = nullptr;
 	_gameMap = GameMap::create("test.map");
 
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
 
-	std::vector<GameDynamicObject*> entities;
+	_gameMap->place(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
+	_gameMap->place(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
+	_gameMap->place(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
+	_gameMap->place(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
 		
-	int n = 1;
+	int n = 2;
 	float r = 300;
 	float angle = 2 * common::PI_F / n;
 	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
 
-	for (int i = 0; i < n; ++i) {
-		entities.push_back(new Actor("Actor" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r));
-	}
+	_luaEnv = createLuaEnv();
 
-	entities.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
-	entities.push_back(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
-	entities.push_back(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
-	entities.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
+	initializeTeams("actors.dat");
 
-	CollisionResolver* collisionResolver = new RegularGrid(_gameMap->getWidth(), _gameMap->getHeight(), RegularGridSize);
-
-	for (auto invalidEntity : _gameMap->initializeEntities(entities)) {
-		delete invalidEntity;
-	}
-
-	for (Actor* a : getActors()) {
-		a->run();
+	for (Agent* agent : _agents) {
+		agent->start();
 	}
 
 	return true;
+}
+
+void Game::initializeTeams(const String& filename) {
+	// Actor* actor = new Actor("test" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r);
+	std::map<size_t, Team*> teams;
+
+	for (auto actorData : loadActorsData(filename)) {
+		Team* team = nullptr;
+		auto teamIter = teams.find(actorData.team);
+		if (teamIter != teams.end()) {
+			team = teamIter->second;
+		}
+		else {
+			team = new Team(actorData.team);
+			teams[actorData.team] = team;
+		}
+
+		Actor* actor = new Actor(actorData.name, actorData.position);
+		size_t agentScriptPrefixLength = AgentScriptPrefix.length();
+		bool isValid = false;
+		Agent* agent;
+
+		if (_gameMap->place(actor)) {
+			if (actorData.script == AgentControlled && _playerAgent == nullptr) {
+				_playerAgent = new PlayerAgent(actor);
+				agent = _playerAgent;
+				isValid = true;
+			}
+			else if (actorData.script.substr(0, agentScriptPrefixLength) == AgentScriptPrefix) {
+				agent = new LuaAgent(actor, actorData.script.substr(agentScriptPrefixLength), _luaEnv);
+				isValid = true;
+			}
+		}
+
+		if (isValid) {
+			_agents.push_back(agent);
+			team->addMember(actorData.name, actor);
+		}
+		else {
+			delete actor;
+		}
+	}
+
+	for (auto entry : teams) {
+		if (entry.second->getSize() > 0) {
+			_teams.push_back(entry.second);
+		}
+		else {
+			delete entry.second;
+		}
+	}
 }
 
 bool Game::isRunning() { return _isRunning; }
@@ -143,79 +210,54 @@ void Game::handleEvents() {
 	case SDL_MOUSEMOTION:
 		SDL_GetMouseState(&mousePosX, &mousePosY);
 		break;
+
 	case SDL_MOUSEBUTTONUP:
 		SDL_GetMouseState(&mousePosX, &mousePosY);
+
 		if (event.button.button == SDL_BUTTON_LEFT) {
-			Actor* prevActor = _actor;
-			if (_actor == nullptr || keyboardState[SDL_SCANCODE_LCTRL]) {
-				trySelectActor(Vector2(mousePosX, mousePosY));
-				if (_actor == nullptr && prevActor != nullptr && keyboardState[SDL_SCANCODE_LALT]) {
-					Action* action = new WanderAction(prevActor);
-					if (!prevActor->setCurrentAction(action)) {
-						Logger::log("Failed");
-						delete action;
-					}
-				}
-			}
-			else if (_actor != nullptr) {
-				Action* action = new ShootAction(_actor, Vector2(mousePosX, mousePosY));
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
-				}
+			if (_playerAgent != nullptr) {
+				_playerAgent->shoot(Vector2(mousePosX, mousePosY));
 			}
 		}
 		else if (event.button.button == SDL_BUTTON_RIGHT) {
-			if (_actor != nullptr) {
-				Action* action;
+			if (_playerAgent != nullptr) {				
 				if (keyboardState[SDL_SCANCODE_LSHIFT]) {
-					action = new MoveAtAction(_actor, Vector2(mousePosX, mousePosY) - _actor->getPosition());
+					_playerAgent->moveDirection(Vector2(mousePosX, mousePosY) - _playerAgent->getActor()->getPosition());
 				}
 				else if (keyboardState[SDL_SCANCODE_LALT]) {
-					action = new FaceAction(_actor, Vector2(mousePosX, mousePosY));
+					_playerAgent->face(Vector2(mousePosX, mousePosY));
+				}
+				else if (keyboardState[SDL_SCANCODE_LCTRL]) {
+					_playerAgent->wait();
+				}
+				else if (keyboardState[SDL_SCANCODE_W]) {
+					_playerAgent->wander();
 				}
 				else {
-					action = new MoveAction(_actor, Vector2(mousePosX, mousePosY));
-				}
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
+					_playerAgent->move(Vector2(mousePosX, mousePosY));
 				}
 			}
 		}
 		break;
+
 	case SDL_KEYDOWN: {
 		const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
-		if (_actor != nullptr) {
+
+		if (_playerAgent != nullptr) {
 			if (keyboardState[SDL_SCANCODE_1]) { 
-				Action* action = new ChangeWeaponAction(_actor, "Shotgun");
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
-				}
+				_playerAgent->selectWeapon("Shotgun");
 			}
 			else if (keyboardState[SDL_SCANCODE_2]) {
-				Action* action = new ChangeWeaponAction(_actor, "Railgun");
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
-				}
+				_playerAgent->selectWeapon("Railgun");
 			}
 			else if (keyboardState[SDL_SCANCODE_3]) {
-				Action* action = new ChangeWeaponAction(_actor, "Chaingun");
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
-				}
+				_playerAgent->selectWeapon("Chaingun");
 			}
 			else if (keyboardState[SDL_SCANCODE_4]) {
-				Action* action = new ChangeWeaponAction(_actor, "RocketLauncher");
-				if (!_actor->setCurrentAction(action)) {
-					Logger::log("Failed");
-					delete action;
-				}
+				_playerAgent->selectWeapon("RocketLauncher");
 			}			
 		}
+
 		if (keyboardState[SDL_SCANCODE_SPACE]) {
 			if (_isNavigationMeshVisible) {
 				_isNavigationMeshVisible = false;
@@ -228,26 +270,14 @@ void Game::handleEvents() {
 				_iscurrentPathVisible = true;
 			}
 		}
+
 		if (keyboardState[SDL_SCANCODE_TAB]) {
 			_isUpdateEnabled = !_isUpdateEnabled;
 		}
-		if (keyboardState[SDL_SCANCODE_LCTRL]) {
-			if (keyboardState[SDL_SCANCODE_W]) {
-				for (GameDynamicObject* a : getMap()->getEntities()) {
-					if (a->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-						Actor* actor = (Actor*)a;
-						Action* action = new WanderAction(actor);
-						if (!actor->setCurrentAction(action)) {
-							Logger::log("Failed");
-							delete action;
-						}
-					}
-				}
-			}
-			else if (keyboardState[SDL_SCANCODE_L]) {
-				if (Logger::isLogging()) { Logger::stopLogging(); }
-				else { Logger::startLogging(); }
-			}
+
+		if (keyboardState[SDL_SCANCODE_LCTRL] && keyboardState[SDL_SCANCODE_L]) {
+			if (Logger::isLogging()) { Logger::stopLogging(); }
+			else { Logger::startLogging(); }			
 		}
 		break;
 	}
@@ -270,7 +300,7 @@ void Game::dispose() {
 void Game::update() {
 	if (_isUpdateEnabled) {
 		_gameTime = SDL_GetPerformanceCounter();
-
+		
 		_updateHolder.notify_all();
 		_missileManager->update(_gameTime);
 
@@ -280,6 +310,9 @@ void Game::update() {
 }
 
 void Game::render() {
+
+	Actor* currentActor = _playerAgent != nullptr ? _playerAgent->getActor() : nullptr;
+	if (currentActor != nullptr && currentActor->isDead()) { currentActor = nullptr; }
 	
 	SDL_SetRenderDrawColor(_renderer, 128, 144, 192, 255);
 	SDL_RenderClear(_renderer);
@@ -330,10 +363,10 @@ void Game::render() {
 	//}
 	//drawCircle(mousePos, 20, colors::darkRed);
 
-	if (_iscurrentPathVisible && _actor != nullptr) {
-		auto pathCopy = std::queue<Vector2>(_actor->getCurrentPath());
+	if (_iscurrentPathVisible && currentActor != nullptr) {
+		auto pathCopy = std::queue<Vector2>(currentActor->getCurrentPath());
 		if (pathCopy.size() > 0) {
-			Vector2 prev = _actor->getPosition();
+			Vector2 prev = currentActor->getPosition();
 			drawPoint(prev, colors::yellow);
 			while (!pathCopy.empty()) {
 				Vector2 next = pathCopy.front();
@@ -365,10 +398,10 @@ void Game::render() {
 	}
 	*/
 
-	if (_actor != nullptr) { 
-		fillRing(_actor->getPosition(), ActorSelectionRing, ActorSelectionRing + 1, colors::green);
+	if (currentActor != nullptr) {
+		fillRing(currentActor->getPosition(), ActorSelectionRing, ActorSelectionRing + 1, colors::green);
 
-		for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+		for (GameDynamicObject* seenObject : currentActor->getSeenObjects()) {
 			fillRing(seenObject->getPosition(), ActorSelectionRing, ActorSelectionRing, colors::cyan);
 		}
 	}
@@ -401,33 +434,33 @@ void Game::render() {
 	}
 
 #ifdef _DEBUG
-	if (_actor != nullptr) {
+	if (currentActor != nullptr) {
 
 		if (_iscurrentPathVisible) {
-			auto viewBorders = _actor->getViewBorders();
-			Vector2 pos = _actor->getPosition();
+			auto viewBorders = currentActor->getViewBorders();
+			Vector2 pos = currentActor->getPosition();
 			drawSegment(Segment(pos, pos + viewBorders.first * ActorSightRadius), colors::pink);
 			drawSegment(Segment(pos, pos + viewBorders.second * ActorSightRadius), colors::pink);
 
-			auto vos = _actor->getVelocityObstacles(_actor->getObjectsInViewAngle());
+			auto vos = currentActor->getVelocityObstacles(currentActor->getObjectsInViewAngle());
 			for (VelocityObstacle vo : vos) {
 				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
 				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * ActorSightRadius), colors::yellow);
 				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * ActorSightRadius), colors::yellow);
 			}
 
-			for (auto candidate : _actor->computeCandidates(vos)) {
+			for (auto candidate : currentActor->computeCandidates(vos)) {
 				drawSegment(Segment(pos, pos + candidate.velocity * 50), colors::darkRed);
 			}
 	
-			auto walls = _actor->getWallsNearGoal();
+			auto walls = currentActor->getWallsNearGoal();
 			for (auto wall : walls) {
 				drawSegment(wall->getSegment(), colors::pink);
 			}
 
-			drawSegment(Segment(_actor->getPosition(), _actor->getLongGoal()), colors::cyan);
-			drawPoint(_actor->getShortGoal(), colors::yellow);
-			drawPoint(_actor->getLongGoal(), colors::cyan);
+			drawSegment(Segment(currentActor->getPosition(), currentActor->getLongGoal()), colors::cyan);
+			drawPoint(currentActor->getShortGoal(), colors::yellow);
+			drawPoint(currentActor->getLongGoal(), colors::cyan);
 		}
 	}
 
@@ -443,8 +476,6 @@ void Game::render() {
 	for (common::Ring& ring : _missileManager->getExplosions(time)) {
 		fillRing(ring.center, ring.radius1, ring.radius2, colors::red);
 	}
-
-
 
 	SDL_RenderPresent(_renderer);
 }

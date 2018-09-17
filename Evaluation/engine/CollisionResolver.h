@@ -7,7 +7,8 @@ typedef std::pair<std::vector<GameDynamicObject*>, std::vector<GameDynamicObject
 
 class CollisionResolver {
 public:
-	virtual EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) = 0;
+	//virtual EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) = 0;
+	virtual bool isPositionValid(const GameDynamicObject* entity) const = 0;
 
 	virtual void add(GameDynamicObject* element) = 0;
 	virtual void remove(GameDynamicObject* element) = 0;

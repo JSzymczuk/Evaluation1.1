@@ -32,7 +32,7 @@ public:
 	RegularGrid(float width, float height, size_t regionSize);
 	~RegularGrid();
 
-	EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) override;
+	//EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) override;
 
 	void add(GameStaticObject* element) override;
 	void add(GameDynamicObject* element) override;

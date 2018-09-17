@@ -11,12 +11,13 @@ float GameMap::getHeight() const { return _height; }
 
 GameMap* GameMap::create(const char* filepath) { return Loader().load(filepath); }
 
-void GameMap::destroy(GameMap* game) { 
-	std::vector<GameDynamicObject*> entities = game->getEntities();
-	for (auto entityPtr : entities) {
-		delete entityPtr;
+void GameMap::destroy(GameMap* map) {
+	auto walls = map->_walls;
+	for (auto wallPtr : walls) {
+		delete wallPtr;
 	}
-	delete game;
+	delete map->_collisionResolver;
+	delete map;
 }
 
 std::vector<GameStaticObject*> GameMap::getWalls() const { return _walls; }
@@ -47,10 +48,14 @@ const int GameMap::NULL_IDX = -1;
 
 GameMap::NavigationNode::NavigationNode(float x, float y, int index) : position(x, y), index(index) { }
 
-std::vector<GameDynamicObject*> GameMap::initializeEntities(const std::vector<GameDynamicObject*>& entities) {
-	auto initializeResult = _collisionResolver->initialize(entities);
-	_entities = initializeResult.first;
-	return initializeResult.second;
+bool GameMap::place(GameDynamicObject* object) {
+	if (canPlace(object)) {
+		_collisionResolver->add(object);
+		object->enableCollisions(_collisionResolver);
+		_entities.push_back(object);
+		return true;
+	}
+	return false;
 }
 
 int GameMap::getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const {
@@ -350,6 +355,10 @@ bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movemen
 	return true;
 }
 
+bool GameMap::canPlace(const GameDynamicObject* object) const {
+	return _collisionResolver->isPositionValid(object);
+}
+
 bool GameMap::isPositionValid(const Vector2& point, float entityRadius) const {
 	float r = entityRadius + common::EPSILON + MovementSafetyMargin;
 	for (auto staticObj : _collisionResolver->broadphaseStatic(point, r)) {
@@ -467,39 +476,6 @@ std::vector<Segment> GameMap::getNavigationArcs() const {
 	}
 	return result;
 }
-
-//std::vector<Aabb> GameMap::getAabbs() const { return _entities.getAabbs(); }
-//
-//std::vector<Aabb> GameMap::getRegionsContaining(const common::Circle& circle) {
-//	auto regions = _grid.getRegionsContaining(circle.center, circle.radius);
-//	std::vector<Aabb> result;
-//	result.reserve(regions.size());
-//	for (auto region : regions) {
-//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-//	}
-//	return result;
-//}
-
-//std::vector<Aabb> GameMap::getRegionsContaining(const Segment& segment) {
-//	auto regions = _grid.getRegionsContaining(segment);
-//	std::vector<Aabb> result;
-//	result.reserve(regions.size());
-//	for (auto region : regions) {
-//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-//	}
-//	return result;
-//}
-//
-//std::vector<Aabb> GameMap::getRegionsContaining(const Vector2& from, const Vector2& to, float radius) {
-//	auto regions = _grid.getRegionsForMovement(from, to, radius);
-//	std::vector<Aabb> result;
-//	result.reserve(regions.size());
-//	for (auto region : regions) {
-//		result.push_back(Aabb(region->idX * RegularGridSize, region->idY * RegularGridSize, RegularGridSize, RegularGridSize));
-//	}
-//	return result;
-//}
-
 
 /*
 void GameMap::Loader::appendIfNotContains(std::vector<GameMap::NavigationNode>& collection, const Vector2& point) const {
