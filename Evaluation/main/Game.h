@@ -33,7 +33,7 @@ class Game {
 public:
 	Game();
 	~Game();
-	bool initialize();
+	bool initialize(const String& settings);
 	bool isRunning();
 	void handleEvents();
 	void update();

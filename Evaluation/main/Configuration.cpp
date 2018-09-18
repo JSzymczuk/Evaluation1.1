@@ -44,6 +44,9 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ActorRingTexturePath(parameters.at("ActorRingTexturePath")),
 	TriggerRingTextureKey(parameters.at("TriggerRingTextureKey")),
 	TriggerRingTexturePath(parameters.at("TriggerRingTexturePath")),
+	MedPackName(parameters.at("MedPackName")),
+	ArmorPackName(parameters.at("ArmorPackName")),
+	DefaultSettings(parameters.at("DefaultSettings")),
 	WeaponsDataFile(parameters.at("WeaponsDataFile")),
 
 	AreLogsVisible(readAsBool(parameters.at("AreLogsVisible"))),
@@ -74,6 +77,7 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ArmorTriggerBonus(readAsInt(parameters.at("ArmorTriggerBonus"))),
 	ActionPositionHistoryLength(readAsInt(parameters.at("ActionPositionHistoryLength"))),
 	ActorUpdateFrequency(readAsInt(parameters.at("ActorUpdateFrequency"))),
+	MaxNotifications(readAsInt(parameters.at("MaxNotifications"))),
 
 	VOSideVelocityMargin(readAsFloat(parameters.at("VOSideVelocityMargin"))),
 	MaxMovementWaitingTime(readAsFloat(parameters.at("MaxMovementWaitingTime"))),

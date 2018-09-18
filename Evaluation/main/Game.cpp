@@ -82,7 +82,7 @@ GameSettings loadActorsData(String actorsFilename) {
 	return settings;
 }
 
-bool Game::initialize() {
+bool Game::initialize(const String& settingsFilename) {
 	if (!SDL_Init(SDL_INIT_EVERYTHING)) {
 		_window = SDL_CreateWindow(Config.WindowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 			Config.DisplayWidth, Config.DisplayHeight, SDL_WINDOW_SHOWN);
@@ -97,7 +97,7 @@ bool Game::initialize() {
 		_isRunning = false;
 	}
 	
-	auto settings = loadActorsData("actors.dat");
+	auto settings = loadActorsData(settingsFilename);
 	
 	if (!ResourceManager::initialize()) { return false; }
 	TriggerFactory::initialize();
@@ -118,12 +118,7 @@ bool Game::initialize() {
 	rm->loadImage(Config.HealthBarTextureKey, Config.HealthBarTexturePath);
 
 	_gameMap = GameMap::create(settings.map.c_str());
-
-	_gameMap->place(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
-	//_gameMap->place(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
-	//_gameMap->place(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
-	//_gameMap->place(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
-
+	
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
 
@@ -146,6 +141,7 @@ void Game::start(size_t durationInSeconds) {
 void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 	// Actor* actor = new Actor("test" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r);
 	std::map<size_t, Team*> teams;
+	std::map<Team*, std::vector<Agent*>> teamAgents;
 
 	for (auto actorData : actorsData) {
 		Team* team = nullptr;
@@ -156,6 +152,7 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 		else {
 			team = new Team(actorData.team);
 			teams[actorData.team] = team;
+			teamAgents[team] = std::vector<Agent*>();
 		}
 
 		Actor* actor = new Actor(actorData.name, actorData.position);
@@ -178,6 +175,7 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 		if (isValid) {
 			_agents.push_back(agent);
 			team->addMember(actorData.name, actor);
+			teamAgents[team].push_back(agent);
 		}
 		else {
 			delete actor;
@@ -190,6 +188,18 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 		}
 		else {
 			delete entry.second;
+		}
+	}
+
+	for (Team* team : _teams) {
+		std::vector<Agent*> agents = teamAgents.at(team);
+		for (Agent* a1 : agents) {
+			for (Agent* a2 : agents) {
+				if (a1 != a2) {
+					a1->addNotificationListener(a2);
+					a2->addNotificationSender(a1);
+				}
+			}
 		}
 	}
 }
@@ -326,6 +336,12 @@ void Game::update() {
 					common::swapLastAndRemove(_agents, idx);
 					agent->_thread.join();
 					_threadsToDispose.pop();
+					for (auto sender : agent->getNotificationSenders()) {
+						sender->removeNotificationListener(agent);
+					}
+					for (auto listener : agent->getNotificationListeners()) {
+						listener->removeNotificationSender(agent);
+					}
 					delete agent;
 				}
 			}

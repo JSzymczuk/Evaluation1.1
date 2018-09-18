@@ -14,10 +14,12 @@ extern "C" {
 #include "main/Configuration.h"
 #include "agents/Agent.h"
 #include "agents/ActorKnowledge.h"
+#include "agents/Notification.h"
 
 typedef lua_State LuaEnv;
 
-typedef std::vector<ActorInfo>::reference(std::vector<ActorInfo>:: *AtFunctionType)(std::vector<ActorInfo>::size_type);
+typedef std::vector<ActorInfo>::reference(std::vector<ActorInfo>::*ActorInfoReference)(std::vector<ActorInfo>::size_type);
+typedef std::vector<Notification>::reference(std::vector<Notification>::*NotificationReference)(std::vector<Notification>::size_type);
 
 inline LuaEnv* createLuaEnv() {
 	LuaEnv * luaEnv = luaL_newstate();
@@ -50,7 +52,10 @@ inline LuaEnv* createLuaEnv() {
 			.def("moveDirection", &LuaAgent::moveDirection)
 			.def("selectWeapon", &LuaAgent::selectWeapon)
 			.def("shoot", &LuaAgent::shoot)
-			.def("wander", &LuaAgent::wander),
+			.def("wander", &LuaAgent::wander)
+			.def("notify", &LuaAgent::notify)
+			.def("notifyAll", &LuaAgent::notifyAll)
+			.def("getNotifications", &LuaAgent::getNotifications),
 
 		luabind::class_<ActorKnowledge>("ActorKnowledge")
 			.def("getSelf", &ActorKnowledge::getSelf)
@@ -78,6 +83,12 @@ inline LuaEnv* createLuaEnv() {
 			.def("getArmor", &ActorInfo::getArmor)
 			.def("getWeaponType", &ActorInfo::getWeaponType),
 
+		luabind::class_<Notification>("Notification")
+			.def("getCode", &Notification::getCode)
+			.def("getMessage", &Notification::getMessage)
+			.def("getTime", &Notification::getTime)
+			.def("getSender", &Notification::getSender),
+
 		/*luabind::class_<Enumerations>("Enumerations")
 			.enum_("ActionType")
 			[
@@ -98,9 +109,13 @@ inline LuaEnv* createLuaEnv() {
 			]
 		,*/
 
+		luabind::class_<std::vector<Notification>>("Notifications")
+			.def("size", &std::vector<Notification>::size)
+			.def("at", (NotificationReference)&std::vector<Notification>::at),
+
 		luabind::class_<std::vector<ActorInfo>>("vectorOfActorInfo")
 			.def("size", &std::vector<ActorInfo>::size)
-			.def("at", (AtFunctionType)&std::vector<ActorInfo>::at),
+			.def("at", (ActorInfoReference)&std::vector<ActorInfo>::at),
 
 		luabind::class_<std::vector<int>>("vectorOfInt")
 			.def("size", &std::vector<int>::size)

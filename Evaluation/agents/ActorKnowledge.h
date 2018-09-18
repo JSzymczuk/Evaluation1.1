@@ -1,6 +1,8 @@
 #pragma once
 
-#include "ActorInfo.h"
+class ActorInfo;
+class TriggerInfo;
+class Notification;
 
 class ActorKnowledge {
 public:
@@ -8,7 +10,7 @@ public:
 	~ActorKnowledge();
 
 	ActorInfo getSelf() const;
-	const char* getName() const;
+	String getName() const;
 	unsigned short getTeam() const;
 	Vector2 getPosition() const;
 	Vector2 getDestination() const;
@@ -22,6 +24,7 @@ public:
 	std::vector<ActorInfo> getSeenFriends() const;
 	std::vector<ActorInfo> getSeenFoes() const;
 	std::vector<ActorInfo> getSeenActors() const;
+	std::vector<TriggerInfo> getSeenTriggers() const;
 
 private:
 	Actor* _actor;

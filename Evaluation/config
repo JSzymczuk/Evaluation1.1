@@ -3,6 +3,7 @@ WindowTitle                      Evaluation1.1
 DisplayWidth                     960
 DisplayHeight                    720
 WeaponsDataFile                  data/weapons.dat
+DefaultSettings                  settings.esf
 FPS                              30
 AreLogsVisible                   true
 CollisionMethodAabbTree          false
@@ -12,6 +13,7 @@ LuaInitializeFunctionName        Initialize
 LuaUpdateFunctionName            Update
 AgentControlled                  ms
 AgentScriptPrefix                sc:
+MaxNotifications                 10
 TriggerRadius                    20
 ActorRadius                      15
 ActorSelectionRing               19
@@ -48,6 +50,8 @@ MedpackHealthBonus               15
 MaxArmor                         50
 HealthBarWidth                   80
 HealthBarHeight                  5
+MedPackName                      Medpack
+ArmorPackName                    Armor
 HealthBarTextureKey              health_bar 
 HealthBarTexturePath             content/health_bar.png 
 ActorRingTextureKey              actor_ring 

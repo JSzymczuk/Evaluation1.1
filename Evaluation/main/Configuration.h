@@ -41,6 +41,7 @@ struct ConfigurationParameters {
 	const float MaxRecalculatedWaitingTime;
 	const int MaxRecalculations;
 	const size_t ActionPositionHistoryLength;
+	const size_t MaxNotifications;
 	const float ActorOscilationRadius;
 	const float TriggerRotationSpeed;
 	const float ActorRotationSpeed;
@@ -60,6 +61,9 @@ struct ConfigurationParameters {
 	const int HealthBarWidth;
 	const int HealthBarHeight;
 	const String WeaponsDataFile;
+	const String DefaultSettings;
+	const String MedPackName;
+	const String ArmorPackName;
 	const String HealthBarTextureKey;
 	const String HealthBarTexturePath;
 	const String ActorRingTextureKey;

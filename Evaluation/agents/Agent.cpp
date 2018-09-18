@@ -9,6 +9,7 @@
 #include "agents/ActorKnowledge.h"
 #include <iostream>
 #include "main/Game.h"
+#include "engine/CommonFunctions.h"
 
 
 void Agent::start() {
@@ -34,6 +35,74 @@ void Agent::run() {
 		}
 
 		Game::getInstance()->registerAgentToDispose(this);
+	}
+}
+
+void Agent::recieveNotification(Actor* sender, int code, const String& message, GameTime time) {
+	_notifications.push_back(Notification(sender, code, message, time));
+}
+
+void Agent::addNotificationSender(NotificationSender* sender) {
+	_notificationSenders.push_back(sender);
+}
+
+std::vector<NotificationSender*> Agent::getNotificationSenders() const {
+	return _notificationSenders;
+}
+
+std::vector<NotificationListener*> Agent::getNotificationListeners() const {
+	return _notificationListeners;
+}
+
+void Agent::notify(const String& name, int code, const String& message) {
+	GameTime time = Game::getInstance()->getTime();
+	for (auto listener : _notificationListeners) {
+		if (listener->isRecievingNotifications() && listener->getName() == name) {
+			listener->recieveNotification(_actor, code, message, time);
+		}
+	}
+}
+
+void Agent::notifyAll(int code, const String& message) {
+	GameTime time = Game::getInstance()->getTime();
+	for (auto listener : _notificationListeners) {
+		if (listener->isRecievingNotifications()) {
+			listener->recieveNotification(_actor, code, message, time);
+		}
+	}
+}
+
+std::vector<Notification> Agent::getNotifications() const {
+	int n = _notifications.size() - 1;
+	int N = Config.MaxNotifications;
+	std::vector<Notification> result;
+
+	for (int i = 0; i < N && n >= 0; ++i, --n) {
+		result.push_back(_notifications.at(n));
+	}
+
+	return result;
+}
+
+String Agent::getName() const { return _actor->getName().c_str(); }
+
+bool Agent::isRecievingNotifications() const { return !_actor->isDead(); }
+
+void Agent::addNotificationListener(NotificationListener* listener) { 
+	_notificationListeners.push_back(listener);
+}
+
+void Agent::removeNotificationListener(NotificationListener* listener) { 
+	size_t idx = common::indexOf(_notificationListeners, listener);
+	if (idx != _notificationListeners.size()) {
+		common::swapLastAndRemove(_notificationListeners, idx);
+	}
+}
+
+void Agent::removeNotificationSender(NotificationSender* sender) {
+	size_t idx = common::indexOf(_notificationSenders, sender);
+	if (idx != _notificationSenders.size()) {
+		common::swapLastAndRemove(_notificationSenders, idx);
 	}
 }
 
@@ -73,12 +142,16 @@ void Agent::wander() {
 	trySetAction(new WanderAction(_actor));
 }
 
+std::map<String, std::mutex*> luaMtx;
 
 void LuaAgent::initialize(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luabind::call_function<void>(_luaEnv, (_name + Config.LuaInitializeFunctionName).c_str(), this, actorKnowledge, time);
+		luaMtx.at(_initializeScriptName)->lock();
+		luabind::call_function<void>(_luaEnv, _initializeScriptName.c_str(), this, actorKnowledge, time);
+		luaMtx.at(_initializeScriptName)->unlock();
 	}
 	catch (luabind::error& e) {
+		luaMtx.at(_initializeScriptName)->unlock();
 		std::cerr << e.what() << std::endl;
 		char n;
 		std::cin >> n;
@@ -87,13 +160,28 @@ void LuaAgent::initialize(const ActorKnowledge& actorKnowledge, GameTime time) {
 
 void LuaAgent::update(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luabind::call_function<void>(_luaEnv, (_name + Config.LuaUpdateFunctionName).c_str(), this, actorKnowledge, time);
+		luaMtx.at(_updateScriptName)->lock();
+		luabind::call_function<void>(_luaEnv, _updateScriptName.c_str(), this, actorKnowledge, time);
+		luaMtx.at(_updateScriptName)->unlock();
 	}
 	catch (luabind::error& e) {
+		luaMtx.at(_updateScriptName)->unlock();
 		std::cerr << e.what() << std::endl;
 		char n;
 		std::cin >> n;
 	}
+}
+
+String trimFileName(const String& filename) {
+	size_t n = filename.length();
+	int slashPos = n - 1;
+	int dotPos = n - 1;
+	while (dotPos >= 0 && filename.at(dotPos) != '.') { --dotPos; }
+	while (slashPos >= 0 && filename.at(slashPos) != '/') { --slashPos; }
+	if (dotPos >= 0 && slashPos >= 0 && dotPos - slashPos > 1) {
+		return filename.substr(slashPos + 1, dotPos - slashPos - 1);
+	}
+	throw "Script name '" + filename + "' is invalid.";
 }
 
 LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor) {
@@ -103,5 +191,9 @@ LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor)
 		lua_pop(luaEnv, 1);
 	}
 	this->_luaEnv = luaEnv;
-	_name = actor->getName();
+	String scriptName = trimFileName(filename);
+	_initializeScriptName = (scriptName + Config.LuaInitializeFunctionName);
+	_updateScriptName = (scriptName + Config.LuaUpdateFunctionName);
+	luaMtx.emplace(_initializeScriptName, new std::mutex());
+	luaMtx.emplace(_updateScriptName, new std::mutex());
 }

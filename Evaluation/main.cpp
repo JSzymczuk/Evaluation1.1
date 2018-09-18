@@ -7,8 +7,10 @@ int main(int argc, char** argv) {
 	int initialFrame;
 	int frameDuration;
 
+	String settings = argc > 1 ? String(argv[1]) : Config.DefaultSettings;
+
 	Game* game = new Game();
-	if (game->initialize()) {
+	if (game->initialize(settings)) {
 		while (game->isRunning()) {
 
 			initialFrame = SDL_GetTicks();

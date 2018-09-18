@@ -148,6 +148,7 @@
     <ClCompile Include="agents\ActorInfo.cpp" />
     <ClCompile Include="agents\ActorKnowledge.cpp" />
     <ClCompile Include="agents\Agent.cpp" />
+    <ClCompile Include="agents\Notification.cpp" />
     <ClCompile Include="agents\SharedKnowledge.cpp" />
     <ClCompile Include="engine\Logger.cpp" />
     <ClCompile Include="engine\MissileManager.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="agents\ActorKnowledge.h" />
     <ClInclude Include="agents\Agent.h" />
     <ClInclude Include="agents\LuaEnvironment.h" />
+    <ClInclude Include="agents\Notification.h" />
     <ClInclude Include="agents\SharedKnowledge.h" />
     <ClInclude Include="engine\AabbTree.h" />
     <ClInclude Include="engine\CollisionResolver.h" />

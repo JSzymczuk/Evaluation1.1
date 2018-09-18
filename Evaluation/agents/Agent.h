@@ -10,16 +10,18 @@ extern "C" {
 #include <luabind/luabind.hpp>
 #include <luabind/operator.hpp>
 #include "main/Configuration.h"
+#include "agents/Notification.h"
 
 class Action;
 class Actor;
 class ActorKnowledge;
 class Vector2;
 class Game;
+class Notification;
 typedef lua_State LuaEnv;
 
 
-class Agent {
+class Agent : public NotificationListener, public NotificationSender {
 public:
 	Agent(Actor* actor);
 	virtual ~Agent() = default;
@@ -38,6 +40,21 @@ public:
 	void wander();
 	void wait();
 
+	std::vector<Notification> getNotifications() const;
+
+	void addNotificationListener(NotificationListener* listener) override;
+	void removeNotificationListener(NotificationListener* listener) override;
+	std::vector<NotificationListener*> getNotificationListeners() const override;
+	void notify(const String& name, int code, const String& message) override;
+	void notifyAll(int code, const String& message) override;
+
+	String getName() const override;
+	bool isRecievingNotifications() const override;
+	void addNotificationSender(NotificationSender* sender) override;
+	void removeNotificationSender(NotificationSender* sender) override;
+	std::vector<NotificationSender*> getNotificationSenders() const override;
+	void recieveNotification(Actor* sender, int code, const String& message, GameTime time) override;
+
 protected:
 	virtual void initialize(const ActorKnowledge& actorKnowledge, GameTime time) = 0;
 	virtual void update(const ActorKnowledge& actorKnowledge, GameTime time) = 0;
@@ -46,6 +63,12 @@ private:
 	Actor* _actor;
 	std::thread _thread;
 	bool _hasStarted;
+
+	std::vector<NotificationSender*> _notificationSenders;
+	std::vector<NotificationListener*> _notificationListeners;
+
+	std::vector<Notification> _notifications;
+	std::vector<ObjectInfo> _seenObjects;
 
 	bool trySetAction(Action* action);
 
@@ -73,5 +96,6 @@ protected:
 
 private:
 	LuaEnv* _luaEnv;
-	String _name;
+	String _initializeScriptName;
+	String _updateScriptName;
 };

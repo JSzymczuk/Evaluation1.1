@@ -141,6 +141,9 @@
     <ClCompile Include="main\Configuration.cpp">
       <Filter>Source Files\Main</Filter>
     </ClCompile>
+    <ClCompile Include="agents\Notification.cpp">
+      <Filter>Source Files\Agents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="agents\ActorInfo.h">
@@ -258,6 +261,9 @@
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="agents\SharedKnowledge.h">
+      <Filter>Header Files\Agents</Filter>
+    </ClInclude>
+    <ClInclude Include="agents\Notification.h">
       <Filter>Header Files\Agents</Filter>
     </ClInclude>
   </ItemGroup>

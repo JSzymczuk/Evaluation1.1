@@ -1,3 +1,0 @@
-data/maps/test.map 60
-player	ms		1	760 320
-test1	sc:data/ai/test1.lua	2	200 320

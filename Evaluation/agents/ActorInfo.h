@@ -1,10 +1,42 @@
 #pragma once
 
-#include "entities/Actor.h"
+#include "main/Configuration.h"
+#include "math/Vector2.h"
 
-class ActorInfo {
+class Actor;
+class Trigger;
+
+
+class ObjectInfo {
 public:
-	ActorInfo(Actor* actor);
+	ObjectInfo(GameTime time);
+	virtual ~ObjectInfo();
+	GameTime getObservationTime() const;
+
+private:
+	GameTime _time;
+};
+
+
+class TriggerInfo : public ObjectInfo {
+public:
+	TriggerInfo(Trigger* trigger, GameTime time);
+	~TriggerInfo();
+
+	const char* getName() const;
+	Vector2 getPosition() const;
+	bool isActive() const;
+
+private:
+	String _name;
+	Vector2 _position;
+	bool _isActive;
+};
+
+
+class ActorInfo : public ObjectInfo {
+public:
+	ActorInfo(Actor* actor, GameTime time);
 	~ActorInfo();
 
 	const char* getName() const;
@@ -13,7 +45,7 @@ public:
 	float getOrientation() const;
 	int getHealth() const;
 	int getArmor() const;
-	String getWeaponType() const;
+	const char* getWeaponType() const;
 	
 private:
 	String _name;

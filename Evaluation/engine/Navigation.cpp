@@ -490,10 +490,10 @@ std::vector<GameDynamicObject*> GameMap::Loader::loadTriggers() {
 
 	for (size_t i = 0; i < dynamicObjectsSize; ++i) {
 		_reader >> objectType >> x >> y;
-		if (objectType == "Medpack") {
+		if (objectType == Config.MedPackName) {
 			dynamicObjects.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(x, y)));
 		}
-		else if (objectType == "Armor") {
+		else if (objectType == Config.ArmorPackName) {
 			dynamicObjects.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(x, y)));
 		}
 		else {

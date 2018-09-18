@@ -1,9 +1,19 @@
 #pragma once
 
-#include "ActorInfo.h"
+#include "agents/ActorInfo.h"
+#include "entities/Actor.h"
+#include "entities/Trigger.h"
 #include "entities/Team.h"
 
-ActorInfo::ActorInfo(Actor* actor) {
+
+ObjectInfo::ObjectInfo(GameTime time) : _time(time) {}
+
+ObjectInfo::~ObjectInfo() {}
+
+GameTime ObjectInfo::getObservationTime() const { return _time; }
+
+
+ActorInfo::ActorInfo(Actor* actor, GameTime time) : ObjectInfo(time) {
 	_name = actor->getName();
 	_team = actor->getTeam()->getNumber();
 	_position = actor->getPosition();
@@ -27,4 +37,28 @@ int ActorInfo::getHealth() const { return _health; }
 
 int ActorInfo::getArmor() const { return _armor; }
 
-String ActorInfo::getWeaponType() const { return _weapon; }
+const char* ActorInfo::getWeaponType() const { return _weapon.c_str(); }
+
+
+TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
+	if (trigger != nullptr) {
+		TriggerType type = trigger->getTriggerType();
+		if (type == TriggerType::HEALTH) {
+			_name = Config.MedPackName;
+		}
+		else if (type == TriggerType::ARMOR) {
+			_name = Config.ArmorPackName;
+		}
+		else {
+			_name = ((AmmoPack*)trigger)->getWeaponType();
+		}
+	}
+}
+
+TriggerInfo::~TriggerInfo() {}
+
+const char* TriggerInfo::getName() const { return _name.c_str(); }
+
+Vector2 TriggerInfo::getPosition() const { return _position; }
+
+bool TriggerInfo::isActive() const { return _isActive; }

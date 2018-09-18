@@ -1,9 +1,33 @@
 --dumb1.lua
-counter = 0
+last = 0;
+interval = 1000;
 
 function test1Update(agent, actorKnowledge, time)
-   --io.write(counter, "\n")
-   --counter = counter + 1
+    --io.write(counter, "\n")
+    --counter = counter + 1
+    name = actorKnowledge:getName()
+   
+    if name == "team1_2" then
+	    io.write("\n")
+	    notifications = agent:getNotifications()
+	    n = notifications:size()
+	    for i = 0, n - 1, 1 do
+		    notification = notifications:at(i)
+		    io.write(name, " to ", notification:getSender():getName(), ": ", notification:getMessage(), "\n")
+	    end
+	end
+   
+   if time - last > interval then
+       last = time
+	   --io.write(actorKnowledge:getName(), " updated: ", time, "\n")
+	   	   	  
+	   if name == "team1_3" then
+	      agent:notify("team1_2", 200, "OK")
+	   end
+   end
+   
+   
+   
 end;
 
 function test1Initialize(agent, actorKnowledge, time)
