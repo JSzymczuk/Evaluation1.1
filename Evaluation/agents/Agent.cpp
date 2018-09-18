@@ -10,7 +10,8 @@
 #include <iostream>
 #include "main/Game.h"
 #include "engine/CommonFunctions.h"
-
+#include "entities/Team.h"
+#include "agents/SharedKnowledge.h"
 
 void Agent::start() {
 	_hasStarted = true;
@@ -84,7 +85,11 @@ std::vector<Notification> Agent::getNotifications() const {
 	return result;
 }
 
-String Agent::getName() const { return _actor->getName().c_str(); }
+SharedKnowledge Agent::getSharedKnowledge() const { 
+	return SharedKnowledge(_actor->getTeam()); 
+}
+
+String Agent::getName() const { return _actor->getName(); }
 
 bool Agent::isRecievingNotifications() const { return !_actor->isDead(); }
 
@@ -181,7 +186,7 @@ String trimFileName(const String& filename) {
 	if (dotPos >= 0 && slashPos >= 0 && dotPos - slashPos > 1) {
 		return filename.substr(slashPos + 1, dotPos - slashPos - 1);
 	}
-	throw "Script name '" + filename + "' is invalid.";
+	std::cerr << "Script name '" << filename << "' is invalid.\n";
 }
 
 LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor) {

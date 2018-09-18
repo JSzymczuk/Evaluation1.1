@@ -15,6 +15,7 @@ extern "C" {
 class Action;
 class Actor;
 class ActorKnowledge;
+class SharedKnowledge;
 class Vector2;
 class Game;
 class Notification;
@@ -41,6 +42,7 @@ public:
 	void wait();
 
 	std::vector<Notification> getNotifications() const;
+	SharedKnowledge getSharedKnowledge() const;
 
 	void addNotificationListener(NotificationListener* listener) override;
 	void removeNotificationListener(NotificationListener* listener) override;

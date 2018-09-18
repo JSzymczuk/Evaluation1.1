@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "engine/ResourceManager.h"
+#include "engine/Rng.h"
 #include <iostream>
 #include <SDL_image.h>
 #include "actions/Action.h"
@@ -115,7 +116,6 @@ bool Game::initialize(const String& settingsFilename) {
 	rm->loadFont("mainfont", "content/CourierNew.ttf", 14);
 	rm->loadImage(Config.ActorRingTextureKey, Config.ActorRingTexturePath);
 	rm->loadImage(Config.TriggerRingTextureKey, Config.TriggerRingTexturePath);
-	rm->loadImage(Config.HealthBarTextureKey, Config.HealthBarTexturePath);
 
 	_gameMap = GameMap::create(settings.map.c_str());
 	
@@ -182,9 +182,32 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 		}
 	}
 
+	std::vector<SDL_Color> teamColors = { 
+		{ 47, 63, 191 }, // niebieski
+		{ 191, 31, 31 }, // czerwony
+		{ 47, 143, 47 }, // zielony
+		{ 191, 191, 47 }, // ¿ó³ty
+		{ 160, 32, 208 }, // fioletowy
+		{ 96, 180, 180 }, // turkusowy
+		{ 96, 180, 180 }, // turkusowy
+	};
+
+	int i = 0;
+	Uint8 r, g, b;
+
 	for (auto entry : teams) {
 		if (entry.second->getSize() > 0) {
 			_teams.push_back(entry.second);
+			if (i < teamColors.size()) {
+				entry.second->setColor(teamColors[i]);
+				++i;
+			} 
+			else {
+				r = Rng::getInteger(0, 255);
+				g = Rng::getInteger(0, 255);
+				b = Rng::getInteger(0, 255);
+				entry.second->setColor({ r, g, b });
+			};
 		}
 		else {
 			delete entry.second;
@@ -201,7 +224,7 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 				}
 			}
 		}
-	}
+	}	
 }
 
 bool Game::isRunning() { return _isRunning; }
@@ -347,12 +370,12 @@ void Game::update() {
 			}
 		}
 		else if (state == GameState::ENDED_WIN) {
-			Logger::log("Team " + std::to_string(winners.at(0)->getNumber()) + " won!");
+			std::cout << "Team " << winners.at(0)->getNumber() << " won!\n";
 			_isUpdateEnabled = false;
 		}
 		else if (state == GameState::TIME_OUT) {
 			if (winners.size() == 1) {
-				Logger::log("Time's out. Team " + std::to_string(winners.at(0)->getNumber()) + " won.");
+				std::cout << "Time's out. Team " << winners.at(0)->getNumber() << " won.\n";
 			}
 			else {
 				String message = "Time's out. It's a draw between teams: ";
@@ -362,19 +385,23 @@ void Game::update() {
 					else { addComma = true; }
 					message += std::to_string(team->getNumber());
 				}
-				message += ".";
-				Logger::log(message);
+				message += ".\n";
+				std::cout << message;
 			} 
 			_isUpdateEnabled = false;
 		}
 		else if (state == GameState::ENDED_DRAW) {
-			Logger::log("Draw: all teams were eliminated!");
+			std::cout << "Draw: all teams were eliminated!";
 			_isUpdateEnabled = false;
 		}		
 
 		Logger::printLogs();
 		Logger::clear();
 	}
+}
+
+String toTimeString(size_t time) {
+	return time < 10 ? "0" + std::to_string(time) : std::to_string(time);
 }
 
 void Game::render() {
@@ -469,14 +496,6 @@ void Game::render() {
 	}
 	*/
 
-	if (currentActor != nullptr) {
-		fillRing(currentActor->getPosition(), Config.ActorSelectionRing, Config.ActorSelectionRing + 1, colors::green);
-
-		/*for (GameDynamicObject* seenObject : currentActor->getSeenObjects()) {
-			fillRing(seenObject->getPosition(), Config.ActorSelectionRing, Config.ActorSelectionRing, colors::cyan);
-		}*/
-	}
-
 	int actorRadius = Config.ActorRadius;
 
 	for (Trigger* trigger : _gameMap->getTriggers()) {
@@ -545,6 +564,11 @@ void Game::render() {
 		fillRing(ring.center, ring.radius1, ring.radius2, colors::red);
 	}
 
+	size_t seconds = (size_t)(getRemainingTime() / 10000000);
+	size_t minutes = seconds / 60;
+	seconds %= 60;
+	drawString((toTimeString(minutes) + ":" + toTimeString(seconds)).c_str(), Config.DisplayWidth / 2, Config.TimerPosition, colors::white);
+
 	SDL_RenderPresent(_renderer);
 }
 
@@ -568,8 +592,9 @@ void Game::drawTexture(SDL_Texture* texture, const Vector2& center, float orient
 
 void Game::drawString(const char* string, int x, int y, const SDL_Color& color) const {
 	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(ResourceManager::get()->getFont("mainfont"), string, color);
-	SDL_Texture* Message = SDL_CreateTextureFromSurface(_renderer, surfaceMessage); 
-	SDL_Rect Message_rect = { x, y, surfaceMessage->w, surfaceMessage->h };
+	SDL_Texture* Message = SDL_CreateTextureFromSurface(_renderer, surfaceMessage);
+	int w = surfaceMessage->w, h = surfaceMessage->h;
+	SDL_Rect Message_rect = { x - w / 2, y - h / 2, w, h};
 	SDL_RenderCopy(_renderer, Message, nullptr, &Message_rect); 
 	SDL_DestroyTexture(Message);
 	SDL_FreeSurface(surfaceMessage);
@@ -659,13 +684,19 @@ void Game::drawActor(const Actor& actor) const {
 		if (!actor.isDead()) {
 			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.ActorRingTextureKey));
 			Vector2 actorPos = actor.getPosition();
+			fillCircle(actorPos, Config.ActorRadius, actor.getTeam()->getColor());
+
+			if (_playerAgent->getActor() == &actor) {
+				fillRing(actorPos, Config.ActorSelectionRing, Config.ActorSelectionRing + 1, colors::green);
+			}
+
 			drawTexture(texture, actorPos, actor.getOrientation(), false);
 			SDL_DestroyTexture(texture);
 
 			if (_areHealthBarsVisible) {
 				SDL_Rect rect = { 
 					actorPos.x - Config.HealthBarWidth / 2, 
-					actorPos.y + Config.ActorRadius + 15, 
+					actorPos.y + Config.ActorRadius + Config.HealthBarPosition, 
 					Config.HealthBarWidth, 
 					Config.HealthBarHeight 
 				};
@@ -675,6 +706,16 @@ void Game::drawActor(const Actor& actor) const {
 					Config.HealthBarBackColor.b, 255
 				);
 				SDL_RenderFillRect(_renderer, &rect);
+
+				--rect.x; --rect.y;
+				rect.w += 2; rect.h += 2;
+				SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
+				SDL_RenderDrawRect(_renderer, &rect);
+
+				drawString(actor.getName().c_str(), actorPos.x, actorPos.y + Config.ActorNamePosition, colors::white);
+
+				++rect.x; ++rect.y;
+				rect.w -= 2; rect.h -= 2;
 				float hpPerc = common::clamp((float)actor.getHealth() / Config.ActorMaxHealth, 0, 1);
 				SDL_Color color = hpPerc > 0.5f ? blendColors(
 						Config.HealthBarFullColor, 
@@ -688,9 +729,10 @@ void Game::drawActor(const Actor& actor) const {
 				rect.w *= hpPerc;
 				SDL_RenderFillRect(_renderer, &rect);
 
-				texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.HealthBarTextureKey));
-				drawTexture(texture, Vector2(actorPos.x, actorPos.y + Config.ActorRadius + 15 + Config.HealthBarHeight / 2), 0, false);
-				SDL_DestroyTexture(texture);
+
+				//texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.HealthBarTextureKey));
+				//drawTexture(texture, Vector2(actorPos.x, actorPos.y + Config.ActorRadius + 15 + Config.HealthBarHeight / 2), 0, false);
+				//SDL_DestroyTexture(texture);
 			}
 		}
 	}
@@ -702,7 +744,7 @@ void Game::registerAgentToDispose(Agent* agent) {
 	Actor* actor = agent->getActor();
 	getMap()->remove(actor);
 	if (actor->getTeam()->getRemainingActors() == 0) {
-		Logger::log("Team " + std::to_string(actor->getTeam()->getNumber()) + " was eliminated!");
+		std::cout << "Team " << actor->getTeam()->getNumber() << " was eliminated!\n";
 	}
 }
 

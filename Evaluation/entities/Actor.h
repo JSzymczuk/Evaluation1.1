@@ -32,7 +32,8 @@ public:
 	Vector2 getPreferredVelocity() const;
 	Vector2 getVelocity() const;
 	Vector2 getShortGoal() const;
-	Vector2 getLongGoal() const;
+	Vector2 getLongGoal() const; 
+	float estimateRemainingDistance() const;
 
 	Action* getCurrentAction() const;
 	bool setCurrentAction(Action* action);

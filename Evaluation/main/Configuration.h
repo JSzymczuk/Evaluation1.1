@@ -60,12 +60,13 @@ struct ConfigurationParameters {
 	const float MaxArmor;
 	const int HealthBarWidth;
 	const int HealthBarHeight;
+	const int HealthBarPosition;
+	const int ActorNamePosition;
+	const int TimerPosition;
 	const String WeaponsDataFile;
 	const String DefaultSettings;
 	const String MedPackName;
 	const String ArmorPackName;
-	const String HealthBarTextureKey;
-	const String HealthBarTexturePath;
 	const String ActorRingTextureKey;
 	const String ActorRingTexturePath;
 	const String TriggerRingTextureKey;

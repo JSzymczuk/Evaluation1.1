@@ -18,7 +18,7 @@ std::map<String, String> loadConfigurationParameters(const String& filename) {
 	return parameters;
 }
 
-ConfigurationParameters Config(loadConfigurationParameters("config"));
+ConfigurationParameters Config(loadConfigurationParameters("Evaluation.config"));
 
 int readAsInt(const String& str) { return std::stoi(str); }
 float readAsFloat(const String& str) { return std::stof(str); }
@@ -38,8 +38,6 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	AgentControlled(parameters.at("AgentControlled")),
 	AgentScriptPrefix(parameters.at("AgentScriptPrefix")),
 	DefaultWeapon(parameters.at("DefaultWeapon")),
-	HealthBarTextureKey(parameters.at("HealthBarTextureKey")),
-	HealthBarTexturePath(parameters.at("HealthBarTexturePath")),
 	ActorRingTextureKey(parameters.at("ActorRingTextureKey")),
 	ActorRingTexturePath(parameters.at("ActorRingTexturePath")),
 	TriggerRingTextureKey(parameters.at("TriggerRingTextureKey")),
@@ -78,6 +76,9 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ActionPositionHistoryLength(readAsInt(parameters.at("ActionPositionHistoryLength"))),
 	ActorUpdateFrequency(readAsInt(parameters.at("ActorUpdateFrequency"))),
 	MaxNotifications(readAsInt(parameters.at("MaxNotifications"))),
+	HealthBarPosition(readAsInt(parameters.at("HealthBarPosition"))),
+	ActorNamePosition(readAsInt(parameters.at("ActorNamePosition"))),
+	TimerPosition(readAsInt(parameters.at("TimerPosition"))),
 
 	VOSideVelocityMargin(readAsFloat(parameters.at("VOSideVelocityMargin"))),
 	MaxMovementWaitingTime(readAsFloat(parameters.at("MaxMovementWaitingTime"))),

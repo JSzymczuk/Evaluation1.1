@@ -86,6 +86,23 @@ Vector2 Actor::getShortGoal() const { return _nextSafeGoal; }
 
 Vector2 Actor::getLongGoal() const { return _path.empty() ? _position : _path.back(); }
 
+float Actor::estimateRemainingDistance() const {
+	auto path = this->getCurrentPath();
+	float distance = 0;
+	if (!path.empty()) {
+		Vector2 last = path.front();
+		path.pop(); 
+		Vector2 next;
+		while (!path.empty()) {
+			next = path.front();
+			path.pop();
+			distance += common::distance(last, next);
+			next = last;
+		}
+	}
+	return distance;
+}
+
 void Actor::clearCurrentAction() {
 	if (_currentAction != nullptr) {
 		delete _currentAction; 
@@ -188,7 +205,7 @@ bool Actor::isSolid() const { return true; }
 void Actor::registerKill(Actor* actor) {
 	if (actor->_team != this->_team) { this->_kills++; }
 	else { this->_friendkills++; }
-	Logger::log("Actor " + actor->_name + " was killed by actor " + _name + ".");
+	std::cout << "Actor " << actor->_name << " was killed by actor " << _name << ".\n";
 }
 
 void Actor::setCurrentWeapon(const String& weaponName) {

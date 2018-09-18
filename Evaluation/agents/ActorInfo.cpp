@@ -25,7 +25,7 @@ ActorInfo::ActorInfo(Actor* actor, GameTime time) : ObjectInfo(time) {
 
 ActorInfo::~ActorInfo() {}
 
-const char* ActorInfo::getName() const { return _name.c_str(); }
+String ActorInfo::getName() const { return _name.c_str(); }
 
 unsigned short ActorInfo::getTeam() const { return _team; }
 
@@ -37,7 +37,9 @@ int ActorInfo::getHealth() const { return _health; }
 
 int ActorInfo::getArmor() const { return _armor; }
 
-const char* ActorInfo::getWeaponType() const { return _weapon.c_str(); }
+String ActorInfo::getWeaponType() const { return _weapon; }
+
+bool ActorInfo::isDead() const { return _health <= 0; }
 
 
 TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {

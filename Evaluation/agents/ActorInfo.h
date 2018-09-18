@@ -39,13 +39,14 @@ public:
 	ActorInfo(Actor* actor, GameTime time);
 	~ActorInfo();
 
-	const char* getName() const;
+	String getName() const;
 	unsigned short getTeam() const;
 	Vector2 getPosition() const;
 	float getOrientation() const;
 	int getHealth() const;
 	int getArmor() const;
-	const char* getWeaponType() const;
+	String getWeaponType() const;
+	bool isDead() const;
 	
 private:
 	String _name;
