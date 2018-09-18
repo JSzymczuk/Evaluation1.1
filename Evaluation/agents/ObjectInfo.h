@@ -23,7 +23,7 @@ public:
 	TriggerInfo(Trigger* trigger, GameTime time);
 	~TriggerInfo();
 
-	const char* getName() const;
+	String getName() const;
 	Vector2 getPosition() const;
 	bool isActive() const;
 

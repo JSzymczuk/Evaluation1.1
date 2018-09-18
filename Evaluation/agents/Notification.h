@@ -1,7 +1,7 @@
 #pragma once
 
 #include "main/Configuration.h"
-#include "agents/ActorInfo.h"
+#include "agents/ObjectInfo.h"
 #include <vector>
 
 

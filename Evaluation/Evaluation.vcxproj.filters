@@ -96,9 +96,6 @@
     <ClCompile Include="engine\TriggerFactory.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="agents\ActorInfo.cpp">
-      <Filter>Source Files\Agents</Filter>
-    </ClCompile>
     <ClCompile Include="agents\ActorKnowledge.cpp">
       <Filter>Source Files\Agents</Filter>
     </ClCompile>
@@ -144,11 +141,11 @@
     <ClCompile Include="agents\Notification.cpp">
       <Filter>Source Files\Agents</Filter>
     </ClCompile>
+    <ClCompile Include="agents\ObjectInfo.cpp">
+      <Filter>Source Files\Agents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="agents\ActorInfo.h">
-      <Filter>Header Files\Agents</Filter>
-    </ClInclude>
     <ClInclude Include="agents\ActorKnowledge.h">
       <Filter>Header Files\Agents</Filter>
     </ClInclude>
@@ -264,6 +261,9 @@
       <Filter>Header Files\Agents</Filter>
     </ClInclude>
     <ClInclude Include="agents\Notification.h">
+      <Filter>Header Files\Agents</Filter>
+    </ClInclude>
+    <ClInclude Include="agents\ObjectInfo.h">
       <Filter>Header Files\Agents</Filter>
     </ClInclude>
   </ItemGroup>

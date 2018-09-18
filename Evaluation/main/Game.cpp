@@ -38,6 +38,8 @@ Game* Game::_instance = nullptr;
 
 Game* Game::getInstance() { return _instance; }
 
+GameTime Game::getCurrentTime() { return _instance->_gameTime; }
+
 MissileManager* Game::getMissileManager() const { return _missileManager; }
 
 GameTime Game::getTime() const { return _gameTime; }

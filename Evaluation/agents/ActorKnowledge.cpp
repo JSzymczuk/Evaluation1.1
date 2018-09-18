@@ -1,7 +1,8 @@
 #include "entities/Team.h"
 #include "entities/Actor.h"
-#include "agents/ActorInfo.h"
+#include "agents/ObjectInfo.h"
 #include "agents/ActorKnowledge.h"
+#include "main/Game.h"
 
 ActorKnowledge::ActorKnowledge(Actor* actor) : _actor(actor) {}
 ActorKnowledge::~ActorKnowledge() {}
@@ -26,44 +27,55 @@ bool ActorKnowledge::hasPositionChanged() const { return _actor->hasPositionChan
 
 std::vector<ActorInfo> ActorKnowledge::getSeenActors() const { 
 	std::vector<ActorInfo> result;
-	/*for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+	GameTime time = Game::getCurrentTime();
+	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
 		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-			result.push_back(ActorInfo((Actor*)seenObject));
+			result.push_back(ActorInfo((Actor*)seenObject, time));
 		}
-	}*/
+	}
 	return result;
 }
 
 std::vector<ActorInfo> ActorKnowledge::getSeenFriends() const {
 	std::vector<ActorInfo> result;
-	/*Team* team = _actor->getTeam();
+	GameTime time = Game::getCurrentTime();
+	Team* team = _actor->getTeam();
 	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
 		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
 			Actor* other = (Actor*)seenObject;
 			if (other->getTeam() == team) {
-				result.push_back(ActorInfo(other));
+				result.push_back(ActorInfo(other, time));
 			}
 		}
-	}*/
+	}
 	return result;
 }
 
 std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const {
 	std::vector<ActorInfo> result;
-	/*Team* team = _actor->getTeam();
+	GameTime time = Game::getCurrentTime();
+	Team* team = _actor->getTeam();
 	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
 		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
 			Actor* other = (Actor*)seenObject;
 			if (other->getTeam() != team) {
-				result.push_back(ActorInfo(other));
+				result.push_back(ActorInfo(other, time));
 			}
 		}
-	}*/
+	}
 	return result;
 }
 
-
 std::vector<TriggerInfo> ActorKnowledge::getSeenTriggers() const {
 	std::vector<TriggerInfo> result;
+	GameTime time = Game::getCurrentTime();
+	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
+		if (seenObject->getGameObjectType() == GameDynamicObjectType::TRIGGER) {
+			Trigger* trigger = (Trigger*)seenObject;
+			if (trigger->isActive()) {
+				result.push_back(TriggerInfo(trigger, time));
+			}
+		}
+	}
 	return result;
 }

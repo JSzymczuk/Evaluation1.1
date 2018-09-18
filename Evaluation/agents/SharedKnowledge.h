@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 #include "main/Configuration.h"
-#include "agents/ActorInfo.h"
+#include "agents/ObjectInfo.h"
 
 class Team;
 

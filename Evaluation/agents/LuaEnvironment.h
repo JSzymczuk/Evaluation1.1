@@ -58,28 +58,6 @@ inline LuaEnv* createLuaEnv() {
 			.def("isDead", &ActorInfo::isDead)
 			.def("getObservationTime", &TriggerInfo::getObservationTime),
 
-		luabind::class_<ActorKnowledge>("ActorKnowledge")
-			.def("getSelf", &ActorKnowledge::getSelf)
-			.def("getName", &ActorKnowledge::getName)
-			.def("getTeam", &ActorKnowledge::getTeam)
-			.def("getPosition", &ActorKnowledge::getPosition)
-			.def("isMoving", &ActorKnowledge::isMoving)
-			.def("isDead", &ActorInfo::isDead)
-			.def("hasPositionChanged", &ActorKnowledge::hasPositionChanged)
-			.def("getAmmo", &ActorKnowledge::getAmmo)
-			.def("getOrientation", &ActorKnowledge::getOrientation)
-			.def("getHealth", &ActorKnowledge::getHealth)
-			.def("getArmor", &ActorKnowledge::getArmor)
-			.def("getWeaponType", &ActorKnowledge::getWeaponType)
-			.def("isLoaded", &ActorKnowledge::isLoaded)
-			.def("getSeenFriends", &ActorKnowledge::getSeenFriends)
-			.def("getSeenFoes", &ActorKnowledge::getSeenFoes)
-			.def("getSeenActors", &ActorKnowledge::getSeenActors)
-			.def("getVelocity", &ActorKnowledge::getVelocity)
-			.def("getShortDestination", &ActorKnowledge::getShortDestination)
-			.def("getLongDestination", &ActorKnowledge::getLongDestination)
-			.def("getEstimatedRemainingDistance", &ActorKnowledge::getEstimatedRemainingDistance),
-
 		luabind::class_<TriggerInfo>("TriggerInfo")
 			.def("getName", &TriggerInfo::getName)
 			.def("getPosition", &TriggerInfo::getPosition)
@@ -103,11 +81,7 @@ inline LuaEnv* createLuaEnv() {
 		luabind::class_<std::vector<TriggerInfo>>("VectorOfTriggerInfo")
 			.def("size", &std::vector<TriggerInfo>::size)
 			.def("at", (TriggerInfoReference)&std::vector<TriggerInfo>::at),
-
-		luabind::class_<std::vector<int>>("VectorOfInt")
-			.def("size", &std::vector<int>::size)
-			.def("at", (int&(std::vector<int>::*)(size_t))&std::vector<int>::at),
-
+			
 		luabind::class_<SharedKnowledge>("SharedKnowledge")
 			.def("getTeamMember", &SharedKnowledge::getTeamMember)
 			.def("getTeamMembers", &SharedKnowledge::getTeamMembers)
@@ -135,7 +109,30 @@ inline LuaEnv* createLuaEnv() {
 			.def("notify", &LuaAgent::notify)
 			.def("notifyAll", &LuaAgent::notifyAll)
 			.def("getNotifications", &LuaAgent::getNotifications)
-			.def("getSharedKnowledge", &LuaAgent::getSharedKnowledge)
+			.def("getSharedKnowledge", &LuaAgent::getSharedKnowledge),
+
+		luabind::class_<ActorKnowledge>("ActorKnowledge")
+			.def("getSelf", &ActorKnowledge::getSelf)
+			.def("getName", &ActorKnowledge::getName)
+			.def("getTeam", &ActorKnowledge::getTeam)
+			.def("getPosition", &ActorKnowledge::getPosition)
+			.def("isMoving", &ActorKnowledge::isMoving)
+			.def("isDead", &ActorInfo::isDead)
+			.def("hasPositionChanged", &ActorKnowledge::hasPositionChanged)
+			.def("getAmmo", &ActorKnowledge::getAmmo)
+			.def("getOrientation", &ActorKnowledge::getOrientation)
+			.def("getHealth", &ActorKnowledge::getHealth)
+			.def("getArmor", &ActorKnowledge::getArmor)
+			.def("getWeaponType", &ActorKnowledge::getWeaponType)
+			.def("isLoaded", &ActorKnowledge::isLoaded)
+			.def("getSeenFriends", &ActorKnowledge::getSeenFriends)
+			.def("getSeenFoes", &ActorKnowledge::getSeenFoes)
+			.def("getSeenActors", &ActorKnowledge::getSeenActors)
+			.def("getSeenTriggers", &ActorKnowledge::getSeenTriggers)
+			.def("getVelocity", &ActorKnowledge::getVelocity)
+			.def("getShortDestination", &ActorKnowledge::getShortDestination)
+			.def("getLongDestination", &ActorKnowledge::getLongDestination)
+			.def("getEstimatedRemainingDistance", &ActorKnowledge::getEstimatedRemainingDistance)
 
 	];
 	return luaEnv;

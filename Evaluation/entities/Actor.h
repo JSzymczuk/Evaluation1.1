@@ -63,10 +63,6 @@ public:
 	void spot(GameDynamicObject* object) override;
 	void unspot(GameDynamicObject* object) override;
 
-#ifdef _DEBUG
-	std::queue<Vector2> getCurrentPath() const { return _path; }
-#endif
-	
 private:
 	Team* _team;
 	std::string _name;
@@ -123,6 +119,7 @@ public:
 		float collisionFreeDistance;
 	};
 
+	std::queue<Vector2> getCurrentPath() const { return _path; }
 	std::pair<Vector2, Vector2> getViewBorders() const;
 	std::vector<GameDynamicObject*> getObjectsInViewAngle() const;
 	std::vector<VelocityObstacle> getVelocityObstacles(const std::vector<GameDynamicObject*>& obstacles) const;

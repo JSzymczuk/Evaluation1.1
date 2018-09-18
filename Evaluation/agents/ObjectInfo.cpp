@@ -1,6 +1,6 @@
 #pragma once
 
-#include "agents/ActorInfo.h"
+#include "agents/ObjectInfo.h"
 #include "entities/Actor.h"
 #include "entities/Trigger.h"
 #include "entities/Team.h"
@@ -54,12 +54,15 @@ TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
 		else {
 			_name = ((AmmoPack*)trigger)->getWeaponType();
 		}
+
+		_isActive = trigger->isActive();
+		_position = trigger->getPosition();
 	}
 }
 
 TriggerInfo::~TriggerInfo() {}
 
-const char* TriggerInfo::getName() const { return _name.c_str(); }
+String TriggerInfo::getName() const { return _name; }
 
 Vector2 TriggerInfo::getPosition() const { return _position; }
 

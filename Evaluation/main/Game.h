@@ -41,6 +41,7 @@ public:
 	void dispose();
 
 	static Game* getInstance();
+	static GameTime getCurrentTime();
 	
 	GameTime getTime() const;
 	GameMap* getMap() const;

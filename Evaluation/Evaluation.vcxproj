@@ -113,12 +113,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>C:\libs\SDL2_image-2.0.3\lib\x86;C:\libs\SDL2_ttf-2.0.14\lib\x86;C:\libs\SDL2-2.0.8\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.8\lib\x86;C:\libs\SDL2_ttf-2.0.14\lib\x86;C:\libs\SDL2_image-2.0.3\lib\x86;C:\libs\luabind\lib\release;C:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;lua53.lib;luabind.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -130,10 +131,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;lua53.lib;luabind.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.8\lib\x64;C:\libs\SDL2_ttf-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.3\lib\x64;C:\libs\luabind\lib\release;C:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -145,7 +150,7 @@
     <ClCompile Include="actions\Move.cpp" />
     <ClCompile Include="actions\Shoot.cpp" />
     <ClCompile Include="actions\Face.cpp" />
-    <ClCompile Include="agents\ActorInfo.cpp" />
+    <ClCompile Include="agents\ObjectInfo.cpp" />
     <ClCompile Include="agents\ActorKnowledge.cpp" />
     <ClCompile Include="agents\Agent.cpp" />
     <ClCompile Include="agents\Notification.cpp" />
@@ -178,7 +183,7 @@
     <ClInclude Include="actions\Move.h" />
     <ClInclude Include="actions\Shoot.h" />
     <ClInclude Include="actions\Face.h" />
-    <ClInclude Include="agents\ActorInfo.h" />
+    <ClInclude Include="agents\ObjectInfo.h" />
     <ClInclude Include="agents\ActorKnowledge.h" />
     <ClInclude Include="agents\Agent.h" />
     <ClInclude Include="agents\LuaEnvironment.h" />

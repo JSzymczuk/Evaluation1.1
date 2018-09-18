@@ -380,13 +380,10 @@ void Actor::updateMovement(GameTime time) {
 #else		
 		setPreferredVelocityAndSafeGoal();
 		updateSpotting();
-		getObjectsInViewAngle();
-		getVelocityObstacles(actorsInViewAngle);
-		computeCandidates(velocityObstacles);
-		selectVelocity(candidates);
+		selectVelocity(computeCandidates(getVelocityObstacles(getObjectsInViewAngle())));
 		
 		if (_velocity.lengthSquared() > common::EPSILON) {
-			_velocity = _velocity.normal() * ActorSpeed;
+			_velocity = _velocity.normal() * getMaxSpeed();
 		}
 
 		MovementCheckResult movementCheckResult = checkMovement();
@@ -797,8 +794,7 @@ std::vector<GameDynamicObject*> Actor::getNearbyObjects() const {
 	float maxDist = common::sqr(Config.ActorSightRadius);
 
 	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, Config.ActorSightRadius)) {
-		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
-			&& common::sqDist(entity->getPosition(), pos) < maxDist
+		if (entity != this && common::sqDist(entity->getPosition(), pos) < maxDist
 			&& getStaticObjectsOnLine(Segment(pos, entity->getPosition())).empty()) {
 			result.push_back((Actor*)entity);
 		}
