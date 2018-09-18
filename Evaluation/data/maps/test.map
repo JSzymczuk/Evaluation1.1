@@ -797,7 +797,7 @@ wall: 590 625 620 625 id: 94 priority: 0
 wall: 620 595 620 625 id: 95 priority: 0
 
 triggers: 4
-trigger: medpack 100 100
-trigger: railgun 860 100
-trigger: shotgun 100 540
-trigger: armor 860 540
+Medpack 100 100
+Railgun 860 100
+Shotgun 100 620
+Armor 860 620

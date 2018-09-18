@@ -7,6 +7,7 @@
 #include "engine/CommonFunctions.h"
 #include "entities/Actor.h"
 #include "entities/Trigger.h"
+#include "engine/TriggerFactory.h"
 
 float GameMap::getWidth() const { return _width; }
 float GameMap::getHeight() const { return _height; }
@@ -408,6 +409,12 @@ GameMap* GameMap::Loader::load(const char* mapFilename) {
 		_map->_collisionResolver->add(staticObj);
 	}
 
+	for (auto dynamicObj : loadTriggers()) {
+		if (!_map->place(dynamicObj)) {
+			delete dynamicObj;
+		}
+	}
+
 	_reader.close();
 
 	return _map;
@@ -452,11 +459,15 @@ void GameMap::Loader::loadNavigationMesh() {
 }
 
 std::vector<GameStaticObject*> GameMap::Loader::loadStaticObjects() {
+	size_t staticObjectsSize;
 	float x1, y1, x2, y2, id, p;
 	std::string objectType, s;
 	std::vector<GameStaticObject*> staticObjects;
+	_reader >> s >> staticObjectsSize;
+	staticObjects.reserve(staticObjectsSize);
 
-	while (_reader >> objectType) {
+	for (size_t i = 0; i < staticObjectsSize; i++) {
+		_reader >> objectType;
 		if (objectType == "wall:") {
 			_reader >> x1 >> y1 >> x2 >> y2 >> s >> id >> s >> p;
 			staticObjects.push_back(new Wall(id, Vector2(x1, y1), Vector2(x2, y2), p));
@@ -467,6 +478,30 @@ std::vector<GameStaticObject*> GameMap::Loader::loadStaticObjects() {
 	}
 
 	return staticObjects;
+}
+
+std::vector<GameDynamicObject*> GameMap::Loader::loadTriggers() {
+	size_t dynamicObjectsSize;
+	float x, y;
+	std::string objectType, s;
+	std::vector<GameDynamicObject*> dynamicObjects;
+	_reader >> s >> dynamicObjectsSize;
+	dynamicObjects.reserve(dynamicObjectsSize);
+
+	for (size_t i = 0; i < dynamicObjectsSize; ++i) {
+		_reader >> objectType >> x >> y;
+		if (objectType == "Medpack") {
+			dynamicObjects.push_back(TriggerFactory::create(TriggerType::HEALTH, Vector2(x, y)));
+		}
+		else if (objectType == "Armor") {
+			dynamicObjects.push_back(TriggerFactory::create(TriggerType::ARMOR, Vector2(x, y)));
+		}
+		else {
+			dynamicObjects.push_back(TriggerFactory::create(objectType, Vector2(x, y)));
+		}
+	}
+
+	return dynamicObjects;
 }
 
 #ifdef _DEBUG

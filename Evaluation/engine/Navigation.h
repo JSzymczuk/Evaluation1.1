@@ -90,6 +90,7 @@ public:
 		void loadNavigationPoints();
 		void loadNavigationMesh();
 		std::vector<GameStaticObject*> loadStaticObjects();
+		std::vector<GameDynamicObject*> loadTriggers();
 		
 		GameMap* _map;
 		std::ifstream _reader;
