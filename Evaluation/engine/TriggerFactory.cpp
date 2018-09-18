@@ -11,7 +11,7 @@ Trigger* TriggerFactory::create(TriggerType type, const Vector2& position) {
 		trigger = new MedPack(position, "MedPack" + ++_created[HEALTH]);
 		break;
 	case WEAPON:
-		trigger = new AmmoPack(DefaultWeapon, position, "AmmoPack" + ++_created[WEAPON]);
+		trigger = new AmmoPack(Config.DefaultWeapon, position, "AmmoPack" + ++_created[WEAPON]);
 		break;
 	case ARMOR:
 		trigger = new ArmorPack(position, "ArmorPack" + ++_created[ARMOR]);

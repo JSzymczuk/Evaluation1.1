@@ -62,11 +62,11 @@ void WanderAction::start(GameTime gameTime) {
 bool WanderAction::update(GameTime gameTime) {
 	Actor* actor = getActor();
 	Vector2 velocity = actor->isMoving() ? actor->getVelocity() : -actor->getVelocity();
-	float ang = common::angle(velocity) + Rng::getFloat(-ActorWanderSpread, ActorWanderSpread);
+	float ang = common::angle(velocity) + Rng::getFloat(-Config.ActorWanderSpread, Config.ActorWanderSpread);
 	Vector2 prefVelocity = Vector2(cosf(ang), sinf(ang));
 	Vector2 returnVel = _center - actor->getPosition();
 	float lth = returnVel.lengthSquared();
-	float k = common::max(0, common::min(1, lth / (WanderCentripetalForce * WanderCentripetalForce)));
-	actor->setPreferredVelocity((returnVel * k + prefVelocity * (1 - k)) * ActorSpeed);
+	float k = common::max(0, common::min(1, lth / (common::sqr(Config.WanderCentripetalForce))));
+	actor->setPreferredVelocity((returnVel * k + prefVelocity * (1 - k)) * getActor()->getMaxSpeed());
 	return false;
 }

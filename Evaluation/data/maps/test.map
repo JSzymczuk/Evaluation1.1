@@ -698,6 +698,7 @@ from: 91 to: 92 mul: 1.0 inv: 1
 from: 91 to: 93 mul: 1.0 inv: 1
 from: 93 to: 94 mul: 1.0 inv: 1
 
+walls: 96
 wall: 25 25 315 25 id: 0 priority: 0
 wall: 330 25 580 25 id: 1 priority: 0
 wall: 595 25 935 25 id: 2 priority: 0
@@ -794,3 +795,9 @@ wall: 590 595 590 625 id: 92 priority: 0
 wall: 590 595 620 595 id: 93 priority: 0
 wall: 590 625 620 625 id: 94 priority: 0
 wall: 620 595 620 625 id: 95 priority: 0
+
+triggers: 4
+trigger: medpack 100 100
+trigger: railgun 860 100
+trigger: shotgun 100 540
+trigger: armor 860 540

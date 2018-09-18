@@ -45,40 +45,19 @@ GameMap* Game::getMap() const { return _gameMap; }
 
 std::vector<Team*> Game::getTeams() const { return _instance->_teams; }
 
-std::vector<Actor*> Game::getActors() const {
-	std::vector<Actor*> result;
-	if (_instance != nullptr) {
-		for (GameDynamicObject* entity : _instance->_gameMap->getEntities()) {
-			if (entity->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-				result.push_back((Actor*)entity);
-			}
-		}
-	}
-	return result;
-}
+std::vector<Actor*> Game::getActors() const { return _instance->_gameMap->getActors(); }
 
-std::vector<Trigger*> Game::getTriggers() const {
-	std::vector<Trigger*> result;
-	if (_instance != nullptr) {
-		for (GameDynamicObject* entity : _instance->_gameMap->getEntities()) {
-			if (entity->getGameObjectType() == GameDynamicObjectType::TRIGGER) {
-				result.push_back((Trigger*)entity);
-			}
-		}
-	}
-	return result;
-}
+std::vector<Trigger*> Game::getTriggers() const { return _instance->_gameMap->getTriggers(); }
 
-struct ActorLoadedData {
-	String name;
-	String script;
-	size_t team;
-	Vector2 position;
+struct GameSettings {
+	size_t duration;
+	String map;
+	std::vector<ActorLoadedData> actors;
 };
 
-std::vector<ActorLoadedData> loadActorsData(String actorsFilename) {
+GameSettings loadActorsData(String actorsFilename) {
 	std::ifstream reader;
-	std::vector<ActorLoadedData> actors;
+	GameSettings settings;
 	reader.open(actorsFilename);
 
 	if (reader.fail()) {
@@ -89,18 +68,24 @@ std::vector<ActorLoadedData> loadActorsData(String actorsFilename) {
 		size_t team;
 		float x, y;
 
+		if (reader >> name >> team) {
+			settings.map = name;
+			settings.duration = team;
+		}
+
 		while (reader >> name >> script >> team >> x >> y) {
-			actors.push_back(ActorLoadedData{ name, script, team, Vector2(x, y) });
+			settings.actors.push_back(ActorLoadedData{ name, script, team, Vector2(x, y) });
 		}
 		reader.close();
 	}
 
-	return actors;
+	return settings;
 }
 
-bool Game::initialize(const char* title, int width, int height) {
+bool Game::initialize() {
 	if (!SDL_Init(SDL_INIT_EVERYTHING)) {
-		_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+		_window = SDL_CreateWindow(Config.WindowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+			Config.DisplayWidth, Config.DisplayHeight, SDL_WINDOW_SHOWN);
 		if (_window) {
 			_renderer = SDL_CreateRenderer(_window, -1, 0);
 			if (_renderer) {
@@ -111,55 +96,58 @@ bool Game::initialize(const char* title, int width, int height) {
 	else {
 		_isRunning = false;
 	}
-
+	
+	auto settings = loadActorsData("actors.dat");
+	
 	if (!ResourceManager::initialize()) { return false; }
 	TriggerFactory::initialize();
+	_luaEnv = createLuaEnv();
+	_playerAgent = nullptr;
+
+	if (Config.AreLogsVisible) {
+		Logger::startLogging();
+	}
+	else {
+		Logger::stopLogging();
+	}
 
 	auto rm = ResourceManager::get();
 	rm->loadFont("mainfont", "content/CourierNew.ttf", 14);
-	rm->loadImage(ActorRingTextureKey, ActorRingTexturePath);
-	rm->loadImage(TriggerRingTextureKey, TriggerRingTexturePath);
-	rm->loadImage(HealthBarTextureKey, HealthBarTexturePath);
+	rm->loadImage(Config.ActorRingTextureKey, Config.ActorRingTexturePath);
+	rm->loadImage(Config.TriggerRingTextureKey, Config.TriggerRingTexturePath);
+	rm->loadImage(Config.HealthBarTextureKey, Config.HealthBarTexturePath);
 
-	_playerAgent = nullptr;
-	_gameMap = GameMap::create("test.map");
+	_gameMap = GameMap::create(settings.map.c_str());
+
+	_gameMap->place(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
+	//_gameMap->place(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
+	//_gameMap->place(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
+	//_gameMap->place(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
 
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
 
-	_gameMap->place(TriggerFactory::create(TriggerType::HEALTH, Vector2(100, 100)));
-	_gameMap->place(TriggerFactory::create("Railgun", Vector2(DisplayWidth - 100, 100)));
-	_gameMap->place(TriggerFactory::create("Chaingun", Vector2(100, DisplayHeight - 100)));
-	_gameMap->place(TriggerFactory::create(TriggerType::ARMOR, Vector2(DisplayWidth - 100, DisplayHeight - 100)));
-		
-	int n = 2;
-	float r = 300;
-	float angle = 2 * common::PI_F / n;
-	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
+	initializeTeams(settings.actors);
 
-	_luaEnv = createLuaEnv();
-
-	initializeTeams("actors.dat");
-
-	start();
+	start(settings.duration);
 
 	return true;
 }
 
-
-void Game::start() {
+void Game::start(size_t durationInSeconds) {
 	for (Agent* agent : _agents) {
 		agent->start();
 	}
 	_gameTime = SDL_GetPerformanceCounter();
-	_timeEnd = _gameTime + 1000000 * Duration;
+	_timeEnd = _gameTime + 10000000 * durationInSeconds;
+	_lastTimeVisible = durationInSeconds;
 }
 
-void Game::initializeTeams(const String& filename) {
+void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 	// Actor* actor = new Actor("test" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r);
 	std::map<size_t, Team*> teams;
 
-	for (auto actorData : loadActorsData(filename)) {
+	for (auto actorData : actorsData) {
 		Team* team = nullptr;
 		auto teamIter = teams.find(actorData.team);
 		if (teamIter != teams.end()) {
@@ -171,17 +159,17 @@ void Game::initializeTeams(const String& filename) {
 		}
 
 		Actor* actor = new Actor(actorData.name, actorData.position);
-		size_t agentScriptPrefixLength = AgentScriptPrefix.length();
+		size_t agentScriptPrefixLength = Config.AgentScriptPrefix.length();
 		bool isValid = false;
 		Agent* agent;
 
 		if (_gameMap->place(actor)) {
-			if (actorData.script == AgentControlled && _playerAgent == nullptr) {
+			if (actorData.script == Config.AgentControlled && _playerAgent == nullptr) {
 				_playerAgent = new PlayerAgent(actor);
 				agent = _playerAgent;
 				isValid = true;
 			}
-			else if (actorData.script.substr(0, agentScriptPrefixLength) == AgentScriptPrefix) {
+			else if (actorData.script.substr(0, agentScriptPrefixLength) == Config.AgentScriptPrefix) {
 				agent = new LuaAgent(actor, actorData.script.substr(agentScriptPrefixLength), _luaEnv);
 				isValid = true;
 			}
@@ -308,11 +296,25 @@ void Game::dispose() {
 void Game::update() {
 	if (_isUpdateEnabled) {
 		_gameTime = SDL_GetPerformanceCounter();
+		if (_gameTime > _timeEnd) {
+			_gameTime = _timeEnd;
+		}
+
+		size_t remainingTimeInSeconds = (size_t)(getRemainingTime() / 10000000);
+		if (remainingTimeInSeconds < _lastTimeVisible) {
+			_lastTimeVisible = remainingTimeInSeconds;
+			Logger::log("Remaining time: " + std::to_string(_lastTimeVisible) + "s");
+		}
 
 		std::vector<Team*> winners;
 		GameState state = checkWinLoseConditions(winners);
 
 		if (state == GameState::IN_PROGRESS) {
+
+			for (Trigger* trigger : _gameMap->getTriggers()) {
+				trigger->update(_gameTime);
+			}
+
 			_updateHolder.notify_all();
 			_missileManager->update(_gameTime);
 
@@ -329,15 +331,15 @@ void Game::update() {
 			}
 		}
 		else if (state == GameState::ENDED_WIN) {
-			Logger::log("Wygrala druzyna " + std::to_string(winners.at(0)->getNumber()) + "!");
+			Logger::log("Team " + std::to_string(winners.at(0)->getNumber()) + " won!");
 			_isUpdateEnabled = false;
 		}
 		else if (state == GameState::TIME_OUT) {
 			if (winners.size() == 1) {
-				Logger::log("Koniec czasu. Wygrala druzyna " + std::to_string(winners.at(0)->getNumber()) + ".");
+				Logger::log("Time's out. Team " + std::to_string(winners.at(0)->getNumber()) + " won.");
 			}
 			else {
-				String message = "Koniec czasu. Remis pomiedzy druzynami: ";
+				String message = "Time's out. It's a draw between teams: ";
 				bool addComma = false;
 				for (Team* team : winners) {
 					if (addComma) { message += ", "; }
@@ -350,7 +352,7 @@ void Game::update() {
 			_isUpdateEnabled = false;
 		}
 		else if (state == GameState::ENDED_DRAW) {
-			Logger::log("Remis: wszystkie druzyny zostaly wyeliminowane!");
+			Logger::log("Draw: all teams were eliminated!");
 			_isUpdateEnabled = false;
 		}		
 
@@ -367,16 +369,19 @@ void Game::render() {
 	SDL_SetRenderDrawColor(_renderer, 128, 144, 192, 255);
 	SDL_RenderClear(_renderer);
 
-	Vector2 center = Vector2(DisplayWidth / 2, DisplayHeight / 2);
+	Vector2 center = Vector2(Config.DisplayWidth / 2, Config.DisplayHeight / 2);
 	Vector2 mousePos = Vector2(mousePosX, mousePosY);
 	Segment centerMouseSegment = Segment(center, mousePos);
 
 	if (_isNavigationMeshVisible) {
-		size_t n = (int)ceil(_gameMap->getWidth() / RegularGridSize);
-		size_t m = (int)ceil(_gameMap->getHeight() / RegularGridSize);
+
+		int gridSize = Config.RegularGridSize;
+
+		size_t n = (int)ceil(_gameMap->getWidth() / gridSize);
+		size_t m = (int)ceil(_gameMap->getHeight() / gridSize);
 		for (size_t i = 0; i < n; ++i) {
 			for (size_t j = 0; j < m; ++j) {
-				drawAabb(Aabb(i * RegularGridSize, j * RegularGridSize, RegularGridSize, RegularGridSize), colors::gray);
+				drawAabb(Aabb(i * gridSize, j * gridSize, gridSize, gridSize), colors::gray);
 			}
 		}
 	}
@@ -449,38 +454,35 @@ void Game::render() {
 	*/
 
 	if (currentActor != nullptr) {
-		fillRing(currentActor->getPosition(), ActorSelectionRing, ActorSelectionRing + 1, colors::green);
+		fillRing(currentActor->getPosition(), Config.ActorSelectionRing, Config.ActorSelectionRing + 1, colors::green);
 
-		for (GameDynamicObject* seenObject : currentActor->getSeenObjects()) {
-			fillRing(seenObject->getPosition(), ActorSelectionRing, ActorSelectionRing, colors::cyan);
-		}
+		/*for (GameDynamicObject* seenObject : currentActor->getSeenObjects()) {
+			fillRing(seenObject->getPosition(), Config.ActorSelectionRing, Config.ActorSelectionRing, colors::cyan);
+		}*/
 	}
 
-	for (GameDynamicObject* entity : _gameMap->getEntities()) {
-		switch (entity->getGameObjectType()) {
-		case GameDynamicObjectType::ACTOR: {
-			Actor* actor = (Actor*)entity;
-			if (actor->isMoving()) {
-				//GameTime from, to;
-				//from = SDL_GetPerformanceCounter();
-				drawActor(*actor);
-				//to = SDL_GetPerformanceCounter();
-				//Logger::log("Render:                 " + std::to_string(to - from));
-			}
-			else {
-				drawActor(*actor);
-			}
+	int actorRadius = Config.ActorRadius;
+
+	for (Trigger* trigger : _gameMap->getTriggers()) {
+		drawTrigger(*trigger);
+	}
+
+	for (Actor* actor : _gameMap->getActors()) {		
+		if (actor->isMoving()) {
+			//GameTime from, to;
+			//from = SDL_GetPerformanceCounter();
+			drawActor(*actor);
+			//to = SDL_GetPerformanceCounter();
+			//Logger::log("Render:                 " + std::to_string(to - from));
+		}
+		else {
+			drawActor(*actor);
+		}
 #ifdef _DEBUG
-			if (_areAabbsVisible) {
-				drawCircle(entity->getPosition(), ActorRadius, colors::black);
-			}
+		if (_areAabbsVisible) {
+			drawCircle(actor->getPosition(), actorRadius, colors::black);
+		}
 #endif // _DEBUG
-			break;
-		}
-		case GameDynamicObjectType::TRIGGER:
-			drawTrigger(*((Trigger*)entity));
-			break;
-		}
 	}
 
 #ifdef _DEBUG
@@ -489,14 +491,14 @@ void Game::render() {
 		if (_iscurrentPathVisible) {
 			auto viewBorders = currentActor->getViewBorders();
 			Vector2 pos = currentActor->getPosition();
-			drawSegment(Segment(pos, pos + viewBorders.first * ActorSightRadius), colors::pink);
-			drawSegment(Segment(pos, pos + viewBorders.second * ActorSightRadius), colors::pink);
+			drawSegment(Segment(pos, pos + viewBorders.first * Config.ActorSightRadius), colors::pink);
+			drawSegment(Segment(pos, pos + viewBorders.second * Config.ActorSightRadius), colors::pink);
 
 			auto vos = currentActor->getVelocityObstacles(currentActor->getObjectsInViewAngle());
 			for (VelocityObstacle vo : vos) {
 				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
-				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * ActorSightRadius), colors::yellow);
-				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * ActorSightRadius), colors::yellow);
+				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * Config.ActorSightRadius), colors::yellow);
+				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * Config.ActorSightRadius), colors::yellow);
 			}
 
 			for (auto candidate : currentActor->computeCandidates(vos)) {
@@ -620,7 +622,7 @@ void Game::fillRing(const Vector2& center, float radius1, float radius2, const S
 void Game::drawTrigger(const Trigger& trigger) const {
 	try {
 		if (trigger.isActive()) {
-			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(TriggerRingTextureKey));
+			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.TriggerRingTextureKey));
 			drawTexture(texture, trigger.getPosition(), trigger.getOrientation(), false);
 			SDL_DestroyTexture(texture);
 		}
@@ -639,24 +641,39 @@ SDL_Color blendColors(const SDL_Color& c1, const SDL_Color& c2, float t) {
 void Game::drawActor(const Actor& actor) const {
 	try {
 		if (!actor.isDead()) {
-			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(ActorRingTextureKey));
+			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.ActorRingTextureKey));
 			Vector2 actorPos = actor.getPosition();
 			drawTexture(texture, actorPos, actor.getOrientation(), false);
 			SDL_DestroyTexture(texture);
 
 			if (_areHealthBarsVisible) {
-				SDL_Rect rect = { actorPos.x - HealthBarWidth / 2, actorPos.y + ActorRadius + 15, HealthBarWidth, HealthBarHeight };
-				SDL_SetRenderDrawColor(_renderer, HealthBarBackColor.r, HealthBarBackColor.g, HealthBarBackColor.b, 255);
+				SDL_Rect rect = { 
+					actorPos.x - Config.HealthBarWidth / 2, 
+					actorPos.y + Config.ActorRadius + 15, 
+					Config.HealthBarWidth, 
+					Config.HealthBarHeight 
+				};
+				SDL_SetRenderDrawColor(_renderer, 
+					Config.HealthBarBackColor.r, 
+					Config.HealthBarBackColor.g, 
+					Config.HealthBarBackColor.b, 255
+				);
 				SDL_RenderFillRect(_renderer, &rect);
-				float hpPerc = common::clamp((float)actor.getHealth() / ActorMaxHealth, 0, 1);
-				SDL_Color color = hpPerc > 0.5f ? blendColors(HealthBarFullColor, HealthBarHalfColor, (hpPerc - 0.5f) / 0.5f)
-					: blendColors(HealthBarHalfColor, HealthBarEmptyColor, hpPerc / 0.5f);
+				float hpPerc = common::clamp((float)actor.getHealth() / Config.ActorMaxHealth, 0, 1);
+				SDL_Color color = hpPerc > 0.5f ? blendColors(
+						Config.HealthBarFullColor, 
+						Config.HealthBarHalfColor, 
+						(hpPerc - 0.5f) / 0.5f)
+					: blendColors(
+						Config.HealthBarHalfColor,
+						Config.HealthBarEmptyColor, 
+						hpPerc / 0.5f);
 				SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, 255);
 				rect.w *= hpPerc;
 				SDL_RenderFillRect(_renderer, &rect);
 
-				texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(HealthBarTextureKey));
-				drawTexture(texture, Vector2(actorPos.x, actorPos.y + ActorRadius + 15 + HealthBarHeight / 2), 0, false);
+				texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.HealthBarTextureKey));
+				drawTexture(texture, Vector2(actorPos.x, actorPos.y + Config.ActorRadius + 15 + Config.HealthBarHeight / 2), 0, false);
 				SDL_DestroyTexture(texture);
 			}
 		}
@@ -669,7 +686,7 @@ void Game::registerAgentToDispose(Agent* agent) {
 	Actor* actor = agent->getActor();
 	getMap()->remove(actor);
 	if (actor->getTeam()->getRemainingActors() == 0) {
-		Logger::log("Druzyna " + std::to_string(actor->getTeam()->getNumber()) + " odpada!");
+		Logger::log("Team " + std::to_string(actor->getTeam()->getNumber()) + " was eliminated!");
 	}
 }
 

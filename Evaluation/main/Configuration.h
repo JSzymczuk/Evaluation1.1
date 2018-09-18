@@ -2,75 +2,80 @@
 
 #include "SDL.h"
 #include <string>
+#include <map>
 
 typedef std::string String;
 typedef unsigned long long int GameTime;
 
-const int DisplayWidth = 960;
-const int DisplayHeight = 720;
-const int FPS = 30;
-const bool AreLogsVisible = true;
-const bool CollisionMethodAabbTree = false;
-const long long ActorUpdateFrequency = 1000000 / 30;
-const int RegularGridSize = 120;
-const String LuaInitializeFunctionName = "Initialize";
-const String LuaUpdateFunctionName = "Update";
-const String AgentControlled = "ms";
-const String AgentScriptPrefix = "sc:";
-const int Duration = 30;
+struct ConfigurationParameters {
 
-const int TriggerRadius = 20;
-const int ActorRadius = 15;
-const int ActorSelectionRing = 19;
-const int ActorSightRadius = 300;
-const int ActorVOCheckRadius = 80;
-const int ActorVOCheckAngle = 30;
-const float VOSideVelocityMargin = 0.30f;
-const int MissileInitialDistance = 30;
-const int MinInitialTriggerActivationTime = 0;
-const int MinTriggerActivationTime = 5000000;
-const int MaxTriggerActivationTime = 15000000;
-const int TriggerDeactivationTime = 15000000;
-const int WeaponChangeTime = 1200000;
-const int ActorDyingTime = 3000000;
-const float MaxMovementWaitingTime = 500000;
-const float MaxRecalculatedWaitingTime = 1000;
-const int MaxRecalculations = 5;
-const size_t ActionPositionHistoryLength = 10;
-const float ActorOscilationRadius = 6.0f;
-const float TriggerRotationSpeed = 0.05f;
-const float ActorRotationSpeed = 0.25f;
-const float ActorSpeed = 3.1f;
-const float MovementGoalMargin = 2.0f;
-const float CollisionTreeMovablePadding = 1.5f;
-const float MovementSafetyMargin = 4.0f;
-const float ActorWanderSpread = 0.20f;
-const float WanderCentripetalForce = 25000;
-const float ActorInitialHealth = 0.70f;
-const int ActorMaxHealth = 100;
-const int HealthBarWidth = 80;
-const int HealthBarHeight = 5;
-const SDL_Color HealthBarBackColor = { 63, 63, 63 };
-const SDL_Color HealthBarFullColor = { 0, 215, 80 };
-const SDL_Color HealthBarHalfColor = { 215, 215, 0 };
-const SDL_Color HealthBarEmptyColor = { 215, 0, 0 };
-const std::string HealthBarTextureKey = "health_bar";
-const std::string HealthBarTexturePath = "content/health_bar.png";
-const std::string ActorRingTextureKey = "actor_ring";
-const std::string ActorRingTexturePath = "content/actor_ring_medium.png";
-const std::string TriggerRingTextureKey = "trigger_ring";
-const std::string TriggerRingTexturePath = "content/trigger_ring.png";
+	const String WindowTitle;
+	const int DisplayWidth;
+	const int DisplayHeight;
+	const int FPS;
+	const bool AreLogsVisible;
+	const bool CollisionMethodAabbTree;
+	const long long ActorUpdateFrequency;
+	const int RegularGridSize;
+	const String LuaInitializeFunctionName;
+	const String LuaUpdateFunctionName;
+	const String AgentControlled;
+	const String AgentScriptPrefix;
 
-const String MapsDirectory = "data/maps/";
+	const int TriggerRadius;
+	const int ActorMaxHealth;
+	const int ActorRadius;
+	const int ActorSelectionRing;
+	const int ActorSightRadius;
+	const int ActorVOCheckRadius;
+	const int ActorVOCheckAngle;
+	const float VOSideVelocityMargin;
+	const int MissileInitialDistance;
+	const int MinInitialTriggerActivationTime;
+	const int MinTriggerActivationTime;
+	const int MaxTriggerActivationTime;
+	const int TriggerDeactivationTime;
+	const int WeaponChangeTime;
+	const int ActorDyingTime;
+	const float MaxMovementWaitingTime;
+	const float MaxRecalculatedWaitingTime;
+	const int MaxRecalculations;
+	const size_t ActionPositionHistoryLength;
+	const float ActorOscilationRadius;
+	const float TriggerRotationSpeed;
+	const float ActorRotationSpeed;
+	const float ActorSpeed;
+	const float MovementGoalMargin;
+	const float CollisionTreeMovablePadding;
+	const float MovementSafetyMargin;
+	const float ActorWanderSpread;
+	const float WanderCentripetalForce;
+	const float ActorInitialHealth;
+	const String DefaultWeapon;
+	const int ArmorMaxShots;
+	const int ArmorTriggerBonus;
+	const float ArmorTriggerMultiplier;
+	const float MedpackHealthBonus;
+	const float MaxArmor;
+	const int HealthBarWidth;
+	const int HealthBarHeight;
+	const String WeaponsDataFile;
+	const String HealthBarTextureKey;
+	const String HealthBarTexturePath;
+	const String ActorRingTextureKey;
+	const String ActorRingTexturePath;
+	const String TriggerRingTextureKey;
+	const String TriggerRingTexturePath;
 
-const String WeaponsDataFile = "data/weapons.dat";
-const String DefaultWeapon = "Shotgun";
+	const SDL_Color HealthBarBackColor = { 63, 63, 63 };
+	const SDL_Color HealthBarFullColor = { 0, 215, 80 };
+	const SDL_Color HealthBarHalfColor = { 215, 215, 0 };
+	const SDL_Color HealthBarEmptyColor = { 215, 0, 0 };
 
-const int ARMOR_MAX_SHOTS = 5;
-const int ARMOR_TRIGGER_BONUS = 10;
-const float ARMOR_TRIGGER_MULTIPLIER = 0.5f;
-const float MEDPACK_HEALTH_BONUS = 15;
-const float MAX_ARMOR = 50;
+	ConfigurationParameters(const std::map<String, String>& parameters);
+};
+
+extern ConfigurationParameters Config;
 
 namespace colors {
 	const SDL_Color white = { 255, 255, 255, 255 };
@@ -86,4 +91,3 @@ namespace colors {
 	const SDL_Color darkRed = { 127, 63, 63, 255 };
 	const SDL_Color darkBlue = { 63, 63, 127, 255 };
 }
-

@@ -35,29 +35,6 @@ bool RegularGrid::isPositionValid(const GameDynamicObject* entity) const {
 	return position.x > radius && position.y > radius && position.x < _width - radius && position.y < _height - radius 
 		&& narrowphaseDynamic(entity).size() == 0 && narrowphaseStatic(entity).size() == 0;
 }
-//
-//EntitiesInitializeResult RegularGrid::initialize(const std::vector<GameDynamicObject*>& entities) {
-//
-//	std::vector<GameDynamicObject*> invalid;
-//	std::vector<GameDynamicObject*> allowed;
-//	allowed.reserve(entities.size());
-//
-//	for (auto entity : entities) {
-//		if (isPositionValid(entity)) {
-//			allowed.push_back(entity);
-//		}
-//		else {
-//			invalid.push_back(entity);
-//		}
-//	}
-//	
-//	for (auto entity : allowed) {
-//		add(entity);
-//		entity->enableCollisions(this);
-//	}
-//	
-//	return std::make_pair(allowed, invalid);
-//}
 
 RegularGrid::Region* RegularGrid::getRegionById(size_t i, size_t j) {
 	if (i < _regionsX && j < _regionsY) {
@@ -109,40 +86,6 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsContaining(const 
 		}
 	}
 
-	/*const Region* region = getRegionByCoordinates(x, y);
-	if (region == nullptr) { return result; }
-
-	result.push_back(region);
-	size_t idX = region->idX, idY = region->idY;
-
-	float xMin = region->idX * _regionSize, xMax = xMin + _regionSize;
-	float yMin = region->idY * _regionSize, yMax = yMin + _regionSize;
-
-	if (x - radius <= xMin && idX > 0) {
-		result.push_back(getRegionById(idX - 1, idY));
-		if (idY > 0 && common::sqr(x - xMin) + common::sqr(y - yMin) <= radius * radius) {
-			result.push_back(getRegionById(idX - 1, idY - 1));
-		}
-		if (idY < _regionsY - 1 && common::sqr(x - xMin) + common::sqr(y - yMax) <= radius * radius) {
-			result.push_back(getRegionById(idX - 1, idY + 1));
-		}
-	}
-	if (x + radius >= xMax && idX < _regionsX - 1) {
-		result.push_back(getRegionById(idX + 1, idY));
-		if (idY > 0 && common::sqr(x - xMax) + common::sqr(y - yMin) <= radius * radius) {
-			result.push_back(getRegionById(idX + 1, idY - 1));
-		}
-		if (idY < _regionsY - 1 && common::sqr(x - xMax) + common::sqr(y - yMax) <= radius * radius) {
-			result.push_back(getRegionById(idX + 1, idY + 1));
-		}
-	}
-	if (y - radius <= yMin && idY > 0) {
-		result.push_back(getRegionById(idX, idY - 1));
-	}
-	if (y + radius >= yMax && idY < _regionsY - 1) {
-		result.push_back(getRegionById(idX, idY + 1));
-	}
-*/
 	return result;
 }
 
@@ -596,7 +539,7 @@ std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& fr
 std::vector<GameDynamicObject*> RegularGrid::narrowphaseDynamic(const GameDynamicObject* entity) const {
 	std::vector<GameDynamicObject*> result;
 	Vector2 position = entity->getPosition();
-	float radius = entity->getRadius() + MovementSafetyMargin, r2 = radius * radius;
+	float radius = entity->getRadius() + Config.MovementSafetyMargin, r2 = radius * radius;
 	for (GameDynamicObject* other : broadphaseDynamic(position, radius)) {
 		if (entity != other && common::sqDist(position, other->getPosition()) <= r2) {
 			result.push_back(other);
@@ -608,7 +551,7 @@ std::vector<GameDynamicObject*> RegularGrid::narrowphaseDynamic(const GameDynami
 std::vector<GameStaticObject*> RegularGrid::narrowphaseStatic(const GameDynamicObject* entity) const {
 	std::vector<GameStaticObject*> result;
 	Vector2 position = entity->getPosition();
-	float radius = entity->getRadius() + MovementSafetyMargin;
+	float radius = entity->getRadius() + Config.MovementSafetyMargin;
 	for (GameStaticObject* other : broadphaseStatic(position, radius)) {
 		if (other->getDistanceTo(position) <= radius) {
 			result.push_back(other);

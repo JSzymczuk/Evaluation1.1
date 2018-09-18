@@ -162,6 +162,7 @@
     <ClCompile Include="entities\Trigger.cpp" />
     <ClCompile Include="entities\Wall.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="main\Configuration.cpp" />
     <ClCompile Include="main\Game.cpp" />
     <ClCompile Include="math\Aabb.cpp" />
     <ClCompile Include="math\Math.cpp" />

@@ -138,6 +138,9 @@
     <ClCompile Include="agents\SharedKnowledge.cpp">
       <Filter>Source Files\Agents</Filter>
     </ClCompile>
+    <ClCompile Include="main\Configuration.cpp">
+      <Filter>Source Files\Main</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="agents\ActorInfo.h">

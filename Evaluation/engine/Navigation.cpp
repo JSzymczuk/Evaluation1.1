@@ -5,7 +5,8 @@
 #include "engine/SegmentTree.h"
 #include "main/Configuration.h"
 #include "engine/CommonFunctions.h"
-
+#include "entities/Actor.h"
+#include "entities/Trigger.h"
 
 float GameMap::getWidth() const { return _width; }
 float GameMap::getHeight() const { return _height; }
@@ -20,6 +21,10 @@ void GameMap::destroy(GameMap* map) {
 	delete map->_collisionResolver;
 	delete map;
 }
+
+std::vector<Actor*> GameMap::getActors() const { return _entities; }
+
+std::vector<Trigger*> GameMap::getTriggers() const { return _triggers; }
 
 std::vector<GameStaticObject*> GameMap::getWalls() const { return _walls; }
 
@@ -53,13 +58,20 @@ bool GameMap::place(GameDynamicObject* object) {
 	if (canPlace(object)) {
 		_collisionResolver->add(object);
 		object->enableCollisions(_collisionResolver);
-		_entities.push_back(object);
+		
+		auto objType = object->getGameObjectType();
+		if (objType == GameDynamicObjectType::ACTOR) {
+			_entities.push_back((Actor*)object);
+		}
+		else if (objType == GameDynamicObjectType::TRIGGER) {
+			_triggers.push_back((Trigger*)object);
+		}
 		return true;
 	}
 	return false;
 }
 
-void GameMap::remove(GameDynamicObject* object) {
+void GameMap::remove(Actor* object) {
 	size_t idx = common::indexOf(_entities, object);
 	size_t n = _entities.size();
 	if (idx != n) {
@@ -113,10 +125,6 @@ std::vector<GameDynamicObject*> GameMap::checkCollision(const Vector2& point, fl
 
 std::vector<GameDynamicObject*> GameMap::checkCollision(const Segment& segment) {
 	return _collisionResolver->broadphaseDynamic(segment.from, segment.to);
-}
-
-std::vector<GameDynamicObject*> GameMap::getEntities() const {
-	return _entities;
 }
 
 struct AStarNodeInfo {
@@ -291,7 +299,7 @@ std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to,
 	GameDynamicObject* movable, const std::vector<common::Circle>& ignoredAreas) const {
 
 	int start = getClosestNavigationNode(from, ignoredAreas);
-	int end = isPositionValid(to, ActorRadius) ? getClosestNavigationNode(to, ignoredAreas) : -1;
+	int end = isPositionValid(to, movable->getRadius() + Config.MovementSafetyMargin) ? getClosestNavigationNode(to, ignoredAreas) : -1;
 	if (start == -1 || end == -1) { return std::queue<Vector2>(); }
 	else {
 		std::vector<int> pathIndices = aStar(start, end, ignoredAreas);
@@ -346,7 +354,7 @@ Vector2 GameMap::getNodePosition(int index) const { return _navigationMesh.at(in
 
 bool GameMap::isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const {
 
-	float padding = movable->getRadius() + MovementSafetyMargin + common::EPSILON;
+	float padding = movable->getRadius() + Config.MovementSafetyMargin + common::EPSILON;
 	float sqPadding = padding * padding;
 	Vector2 pos = movable->getPosition();
 	Segment segment = Segment(pos, pos + movementVector);
@@ -371,7 +379,7 @@ bool GameMap::canPlace(const GameDynamicObject* object) const {
 }
 
 bool GameMap::isPositionValid(const Vector2& point, float entityRadius) const {
-	float r = entityRadius + common::EPSILON + MovementSafetyMargin;
+	float r = entityRadius + common::EPSILON + Config.MovementSafetyMargin;
 	for (auto staticObj : _collisionResolver->broadphaseStatic(point, r)) {
 		if (staticObj->getDistanceTo(point) <= r) {
 			return false;
@@ -381,7 +389,7 @@ bool GameMap::isPositionValid(const Vector2& point, float entityRadius) const {
 }
 
 GameMap* GameMap::Loader::load(const char* mapFilename) {
-	_reader.open(MapsDirectory + mapFilename);
+	_reader.open(mapFilename);
 
 	if (_reader.fail()) {
 		throw "Plik '" + String(mapFilename) + "' nie istnieje, jest niedostêpny lub uszkodzony.";
@@ -390,7 +398,7 @@ GameMap* GameMap::Loader::load(const char* mapFilename) {
 	_map = new GameMap();
 
 	loadMapSize();
-	_map->_collisionResolver = new RegularGrid(_map->getWidth(), _map->getHeight(), RegularGridSize);
+	_map->_collisionResolver = new RegularGrid(_map->getWidth(), _map->getHeight(), Config.RegularGridSize);
 
 	loadNavigationPoints();
 	loadNavigationMesh();

@@ -14,6 +14,8 @@
 #include "engine/RegularGrid.h"
 
 class GameDynamicObject;
+class Actor;
+class Trigger;
 class Wall;
 
 class GameMap {
@@ -24,7 +26,8 @@ public:
 	float getWidth() const;
 	float getHeight() const;
 
-	std::vector<GameDynamicObject*> getEntities() const;
+	std::vector<Actor*> getActors() const;
+	std::vector<Trigger*> getTriggers() const;
 	std::vector<GameStaticObject*> getWalls() const;
 
 	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable) const;
@@ -38,7 +41,7 @@ public:
 	bool isPositionValid(const Vector2& point, float entityRadius) const;
 	bool canPlace(const GameDynamicObject* object) const;
 	bool place(GameDynamicObject* object);
-	void remove(GameDynamicObject* object);
+	void remove(Actor* object);
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;
@@ -63,7 +66,8 @@ private:
 public:
 	CollisionResolver* _collisionResolver;
 private:
-	std::vector<GameDynamicObject*> _entities;
+	std::vector<Trigger*> _triggers;
+	std::vector<Actor*> _entities;
 	std::vector<GameStaticObject*> _walls;
 
 	int getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const;

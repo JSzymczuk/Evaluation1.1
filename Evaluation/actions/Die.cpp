@@ -11,7 +11,7 @@ void DieAction::finish(GameTime gameTime) {
 	actor->setNextAction(new DeadAction(actor));
 }
 
-bool DieAction::update(GameTime gameTime) { return gameTime - getTimeStarted() > ActorDyingTime; }
+bool DieAction::update(GameTime gameTime) { return gameTime - getTimeStarted() > Config.ActorDyingTime; }
 
 bool DieAction::locksRotation() const { return true; }
 

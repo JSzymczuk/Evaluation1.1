@@ -15,5 +15,5 @@ void ChangeWeaponAction::finish(GameTime gameTime) {
 }
 
 bool ChangeWeaponAction::update(GameTime gameTime) {
-	return gameTime - getTimeStarted() > WeaponChangeTime || getActor()->getCurrentWeapon() == _weaponName;
+	return gameTime - getTimeStarted() > Config.WeaponChangeTime || getActor()->getCurrentWeapon() == _weaponName;
 }

@@ -22,11 +22,18 @@ enum GameState {
 	TIME_OUT
 };
 
+struct ActorLoadedData {
+	String name;
+	String script;
+	size_t team;
+	Vector2 position;
+};
+
 class Game {
 public:
 	Game();
 	~Game();
-	bool initialize(const char* title, int width, int height);
+	bool initialize();
 	bool isRunning();
 	void handleEvents();
 	void update();
@@ -45,8 +52,6 @@ public:
 	void registerAgentToDispose(Agent* agent);
 	GameState checkWinLoseConditions(std::vector<Team*>& winners) const;
 	GameTime getRemainingTime() const;
-
-	void start();
 
 private:
 	static Game* _instance;
@@ -69,7 +74,8 @@ private:
 	std::vector<Agent*> _agents;
 	std::queue<Agent*> _threadsToDispose;
 
-	void initializeTeams(const String& filename);
+	void start(size_t durationInSeconds);
+	void initializeTeams(const std::vector<ActorLoadedData>& actorsData);
 
 	void drawTrigger(const Trigger& trigger) const;
 	void drawActor(const Actor& actor) const;
@@ -80,6 +86,7 @@ private:
 	bool _iscurrentPathVisible = false;
 	bool _isUpdateEnabled = true;
 	std::queue<Vector2> _path;
+	size_t _lastTimeVisible;
 
 	int mousePosX;
 	int mousePosY;

@@ -15,19 +15,19 @@
 Actor::Actor(const std::string& name, const Vector2& position)
 	: GameDynamicObject(position, common::PI_F / 2) {
 	_name = name;
-	_health = common::min(ActorMaxHealth, ActorMaxHealth * ActorInitialHealth);
+	_health = common::min(Config.ActorMaxHealth, Config.ActorMaxHealth * Config.ActorInitialHealth);
 	_armor = 0;
 	_armorShotsRemaining = 0;
 	_velocity = Vector2();
 	_rotation = 0;
 	_isRotating = false;
 	_isWaiting = false;
-	_currentWeapon = DefaultWeapon;
+	_currentWeapon = Config.DefaultWeapon;
 	_recalculations = 0;
 	_positionHistoryLength = 0;
 	_nextHistoryIdx = 0;
 
-	for (size_t i = 0; i < ActionPositionHistoryLength; ++i) {
+	for (size_t i = 0; i < Config.ActionPositionHistoryLength; ++i) {
 		_positionHistory.push_back(_position);
 	}
 
@@ -60,7 +60,7 @@ std::vector<GameDynamicObject*> Actor::getSeenObjects() const { return _nearbyOb
 
 bool Actor::isDead() const { return _currentAction != nullptr && _currentAction->getActionType() == ActionType::DEAD; }
 
-float Actor::getMaxSpeed() const { return ActorSpeed; }
+float Actor::getMaxSpeed() const { return Config.ActorSpeed; }
 
 bool Actor::isMoving() const { return _path.size() > 0 || _preferredVelocity.lengthSquared() > common::EPSILON; }
 
@@ -130,9 +130,9 @@ float Actor::damage(float dmg) {
 
 float Actor::heal(float health) {
 	if (isDead()) { return 0; }
-	if (_health + health > ActorMaxHealth) {
-		health += _health - ActorMaxHealth;
-		_health = ActorMaxHealth;
+	if (_health + health > Config.ActorMaxHealth) {
+		health += _health - Config.ActorMaxHealth;
+		_health = Config.ActorMaxHealth;
 	}
 	else {
 		_health += health;
@@ -173,14 +173,15 @@ void Actor::stop() {
 }
 
 Aabb Actor::getAabb() const {
+	float r = Config.ActorRadius;
 	return Aabb(
-		_position.x - ActorRadius, 
-		_position.y - ActorRadius, 
-		2 * ActorRadius, 
-		2 * ActorRadius);
+		_position.x - r, 
+		_position.y - r, 
+		2 * r, 
+		2 * r);
 }
 
-float Actor::getRadius() const { return ActorRadius; }
+float Actor::getRadius() const { return Config.ActorRadius; }
 
 bool Actor::isSolid() const { return true; }
 
@@ -268,7 +269,7 @@ float Actor::calculateRotation() const {
 	float diff = clockwise ? common::measureAngle(_orientation, _desiredOrientation)
 		: common::measureAngle(_desiredOrientation, _orientation);
 	if (diff > common::PI_F) { return 0; }
-	if (diff < ActorRotationSpeed) { return (clockwise ? diff : -diff) / ActorRotationSpeed; }
+	if (diff < Config.ActorRotationSpeed) { return (clockwise ? diff : -diff) / Config.ActorRotationSpeed; }
 	return clockwise ? 1.0f : -1.0f;
 }
 
@@ -276,7 +277,7 @@ void Actor::setPreferredVelocityAndSafeGoal() {
 	if (!_path.empty()) {
 		Vector2 toDestination = _path.back() - _position;
 		if (Game::getInstance()->getMap()->isMovementValid(this, toDestination)) {
-			if ((toDestination).lengthSquared() < common::sqr(MovementGoalMargin)) {
+			if ((toDestination).lengthSquared() < common::sqr(Config.MovementGoalMargin)) {
 				abortMovement("Actor " + _name + " reached its destination.", true);
 			}
 			else {
@@ -284,7 +285,7 @@ void Actor::setPreferredVelocityAndSafeGoal() {
 			}
 		}
 		else {
-			if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(MovementGoalMargin)) {
+			if ((_nextSafeGoal - _position).lengthSquared() < common::sqr(Config.MovementGoalMargin)) {
 				_path.pop();
 				_nextSafeGoal = getNextSafeGoal();
 			}
@@ -302,7 +303,7 @@ bool Actor::updateOrientation(GameTime time) {
 	if (isRotating()) {
 		_orientation = common::normalizeAngle(_orientation);
 		_rotation = calculateRotation();
-		_orientation += _rotation * ActorRotationSpeed;
+		_orientation += _rotation * Config.ActorRotationSpeed;
 		if (common::abs(_orientation - _desiredOrientation) < common::EPSILON) {
 			_isRotating = false;
 		}
@@ -348,7 +349,7 @@ void Actor::updateMovement(GameTime time) {
 		Logger::logIfNotIgnored("selectVelocity", "Select Velocity:        " + std::to_string(to - from));
 
 		if (_velocity.lengthSquared() > common::EPSILON) {
-			_velocity = _velocity.normal() * ActorSpeed;
+			_velocity = _velocity.normal() * getMaxSpeed();
 		}
 
 		from = SDL_GetPerformanceCounter();
@@ -391,14 +392,14 @@ void Actor::updateMovement(GameTime time) {
 			}
 		}
 		else if (_isWaiting || oscilationDetected) {
-			if (time - _waitingStarted > (_recalculations > 0 ? MaxRecalculatedWaitingTime : MaxMovementWaitingTime)) {
+			if (time - _waitingStarted > (_recalculations > 0 ? Config.MaxRecalculatedWaitingTime : Config.MaxMovementWaitingTime)) {
 				if (!_path.empty()) {
 					Vector2 destination = _path.back();
 					abortMovement("Actor " + _name + " is searching for alternative path.", false);
-					if (_recalculations < MaxRecalculations) {
+					if (_recalculations < Config.MaxRecalculations) {
 						++_recalculations;
 						move(Game::getInstance()->getMap()->findPath(_position, destination, this, {
-							common::Circle(_position, ActorRadius * (_recalculations + 1))
+							common::Circle(_position, Config.ActorRadius * (_recalculations + 1))
 						}));
 					}
 				}
@@ -423,10 +424,10 @@ void Actor::updateMovement(GameTime time) {
 
 void Actor::saveCurrentPositionInHistory() {
 	++_nextHistoryIdx;
-	if (_nextHistoryIdx == ActionPositionHistoryLength) {
+	if (_nextHistoryIdx == Config.ActionPositionHistoryLength) {
 		_nextHistoryIdx = 0;
 	}
-	if (_positionHistoryLength < ActionPositionHistoryLength) {
+	if (_positionHistoryLength < Config.ActionPositionHistoryLength) {
 		++_positionHistoryLength;
 	}
 	_positionHistory[_nextHistoryIdx].x = _position.x;
@@ -434,9 +435,9 @@ void Actor::saveCurrentPositionInHistory() {
 }
 
 bool Actor::isOscilating() const {
-	if (_positionHistoryLength == ActionPositionHistoryLength) {
+	if (_positionHistoryLength == Config.ActionPositionHistoryLength) {
 		Vector2 pos = _positionHistory[0];
-		float margin = ActorOscilationRadius * ActorOscilationRadius;
+		float margin = common::sqr(Config.ActorOscilationRadius);
 		for (int i = 1; i < _positionHistoryLength; ++i) {
 			if (common::sqDist(pos, _positionHistory[i]) > margin) {
 				return false;
@@ -451,7 +452,8 @@ bool Actor::isOscilating() const {
 void Actor::clearPositionHistory() {
 	float x = _position.x;
 	float y = _position.y;
-	for (int i = 0; i < ActionPositionHistoryLength; ++i) {
+	size_t n = Config.ActionPositionHistoryLength;
+	for (int i = 0; i < n; ++i) {
 		_positionHistory[i].x = x;
 		_positionHistory[i].y = y;
 	}
@@ -473,13 +475,14 @@ bool Actor::updateWeapons(GameTime time) {
 
 Actor::MovementCheckResult Actor::checkMovement() const {
 	Vector2 futurePosition = _position + _velocity;
-	auto potentialColliders = getDynamicObjectsInArea(futurePosition, ActorRadius);
+	float r = Config.ActorRadius;
+	auto potentialColliders = getDynamicObjectsInArea(futurePosition, r);
 
 	Actor::MovementCheckResult result;
 	result.allowed = true;
 	result.triggers = std::vector<Trigger*>();
 
-	common::Circle futureCollisionArea = { futurePosition, float(ActorRadius) };
+	common::Circle futureCollisionArea = { futurePosition, r };
 
 	for (GameDynamicObject* entity : potentialColliders) {
 		if (entity != this && common::testCircles(futureCollisionArea, entity->getCollisionArea())) {
@@ -488,7 +491,7 @@ Actor::MovementCheckResult Actor::checkMovement() const {
 		}
 	}
 
-	if (checkMovementCollisions(Segment(_position, futurePosition), ActorRadius + MovementSafetyMargin)) {
+	if (checkMovementCollisions(Segment(_position, futurePosition), r + Config.MovementSafetyMargin)) {
 		//_path.size() > 0 ? ActorRadius - MovementSafetyMargin : ActorRadius)) {
 		result.allowed = false;
 		Logger::log("Actor " + _name + " movement wasn't allowed.");
@@ -503,25 +506,30 @@ float Actor::getDistanceToGoal() const {
 }
 
 std::pair<Vector2, Vector2> Actor::getViewBorders() const {
-	float angle = common::radians(ActorVOCheckAngle);
+	float angle = common::radians(Config.ActorVOCheckAngle);
 	float from = _orientation - angle;
 	float to = _orientation + angle;
 	return std::make_pair(Vector2(cosf(from), sinf(from)), Vector2(cosf(to), sinf(to)));
 }
 
 std::vector<GameDynamicObject*> Actor::getObjectsInViewAngle() const {
-	float angle = common::radians(ActorVOCheckAngle);
+	float angle = common::radians(Config.ActorVOCheckAngle);
 	float from = _orientation - angle;
 	float to = _orientation + angle;
+
+	float r = getRadius();
+	float safetyMargin = Config.MovementSafetyMargin;
+	float voCheckRadius = Config.ActorVOCheckRadius;
+
 	std::vector<GameDynamicObject*> result;
 	for (GameDynamicObject* other : _nearbyObjects) {
 		Vector2 otherPos = other->getPosition();
 		if (
 			(common::isAngleBetween(common::angleFromTo(_position, otherPos), from, to)
-			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(from), sinf(from)) * ActorVOCheckRadius)) <= ActorRadius
-			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(to), sinf(to)) * ActorVOCheckRadius)) <= ActorRadius)
-			&& common::sqDist(otherPos, _position) <= common::sqr(ActorVOCheckRadius)
-			|| common::sqDist(otherPos, _position) <= common::sqr(2 * ActorRadius + common::EPSILON + MovementSafetyMargin)) {
+			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(from), sinf(from)) * voCheckRadius)) <= r
+			|| common::distance(otherPos, Segment(_position, _position + Vector2(cosf(to), sinf(to)) * voCheckRadius)) <= r)
+			&& common::sqDist(otherPos, _position) <= common::sqr(voCheckRadius)
+			|| common::sqDist(otherPos, _position) <= common::sqr(2 * r + common::EPSILON + safetyMargin)) {
 			result.push_back(other);
 		}
 	}
@@ -537,7 +545,7 @@ std::pair<Vector2, Vector2> getVOSides(const Vector2& point, const common::Circl
 	else {
 		openingAngle = common::PI_2_F;
 	}
-	openingAngle += VOSideVelocityMargin;
+	openingAngle += Config.VOSideVelocityMargin;
 	return std::make_pair(
 		Vector2(cosf(angle - openingAngle), sinf(angle - openingAngle)),
 		Vector2(cosf(angle + openingAngle), sinf(angle + openingAngle))
@@ -548,10 +556,11 @@ std::vector<VelocityObstacle> Actor::getVelocityObstacles(const std::vector<Game
 	std::vector<VelocityObstacle> result;
 	result.reserve(obstacles.size());
 	Vector2 pos = _position;
+	float r = 2 * Config.ActorRadius;
 	for (GameDynamicObject* other : obstacles) {
 		//Vector2D apex = cder->is_static() ? pos : pos + (cder->predicted_velocity() + movable->velocity) / 2;
 		Vector2 apex = pos;
-		auto sides = getVOSides(pos, common::Circle(other->getPosition(), ActorRadius * 2));
+		auto sides = getVOSides(pos, common::Circle(other->getPosition(), r));
 		result.push_back({ apex, sides.first, sides.second, other });
 	}
 	return result;
@@ -572,12 +581,15 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 		}
 	}
 
+	float speed = getMaxSpeed();
+	float voCheckRadius = Config.ActorVOCheckRadius;
+
 	if (accept && _preferredVelocity.lengthSquared() > common::EPSILON) {
 		Candidate c;
 		c.velocity = _preferredVelocity;
 		c.difference = 0;
-		c.collisionFreeDistance = minDistanceWithoutCollision(_preferredVelocity, ActorVOCheckRadius);
-		if (c.collisionFreeDistance > ActorSpeed) {
+		c.collisionFreeDistance = minDistanceWithoutCollision(_preferredVelocity, voCheckRadius);
+		if (c.collisionFreeDistance > speed) {
 			result.push_back(c);
 		}
 	}
@@ -586,7 +598,7 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 
 	// SprawdŸ wektory ruchu wzd³u¿ krawêdzi VO.
 	for (size_t i = 0; i < n; ++i) {
-		Vector2 v1 = common::adjustLength(vo[i].side1, ActorSpeed), v2 = common::adjustLength(vo[i].side2, ActorSpeed);
+		Vector2 v1 = common::adjustLength(vo[i].side1, speed), v2 = common::adjustLength(vo[i].side2, speed);
 		Vector2 point1 = vo[i].apex + v1, point2 = vo[i].apex + v2;
 		bool accept1 = true, accept2 = true;
 		for (size_t j = 0; j < n && (accept1 || accept2); ++j) {
@@ -608,14 +620,14 @@ std::vector<Actor::Candidate> Actor::computeCandidates(const std::vector<Velocit
 			Candidate c;
 			c.velocity = v1;
 			c.difference = common::distance(v1, _preferredVelocity);
-			c.collisionFreeDistance = minDistanceWithoutCollision(v1, ActorVOCheckRadius);
+			c.collisionFreeDistance = minDistanceWithoutCollision(v1, voCheckRadius);
 			result.push_back(c);
 		}
 		if (accept2) {
 			Candidate c;
 			c.velocity = v2;
 			c.difference = common::distance(v2, _preferredVelocity);
-			c.collisionFreeDistance = minDistanceWithoutCollision(v2, ActorVOCheckRadius);
+			c.collisionFreeDistance = minDistanceWithoutCollision(v2, voCheckRadius);
 			result.push_back(c);
 		}
 	}
@@ -632,18 +644,19 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 	Segment segment(_position, endPoint);
 	float minDist = maxDistance;
 	Segment movementSegment = Segment(_position, endPoint);
+	float r = getRadius();
 	
 	for (auto c : getDynamicObjectsOnLine(segment)) {
 		Vector2 otherPos = c->getPosition();
 		float otherRadius = c->getRadius();
-		if (c != this && c->isSolid() && common::distance(otherPos, movementSegment) <= ActorRadius + otherRadius + common::EPSILON) {
-			float dist = (otherPos - _position).length() - otherRadius - ActorRadius;
+		if (c != this && c->isSolid() && common::distance(otherPos, movementSegment) <= r + otherRadius + common::EPSILON) {
+			float dist = (otherPos - _position).length() - otherRadius - r;
 			if (dist < minDist) { minDist = dist; }
 		}
 	}
 	
 	for (auto elem : getStaticObjectsOnLine(segment)) {
-		float dist = elem->getDistanceTo(_position) - ActorRadius;
+		float dist = elem->getDistanceTo(_position) - r;
 		if (dist < minDist) { minDist = dist; }
 	}
 
@@ -653,7 +666,9 @@ float Actor::minDistanceWithoutCollision(const Vector2& direction, float maxDist
 Vector2 Actor::selectVelocity(const std::vector<Candidate>& candidates) const {
 	if (candidates.empty()) { return Vector2(); }
 	size_t min = 0;
-	auto fval = [](Candidate c) -> float { return c.difference + (ActorVOCheckRadius - c.collisionFreeDistance) / ActorVOCheckRadius; };
+	auto fval = [](Candidate c) -> float { 
+		return c.difference + (Config.ActorVOCheckRadius - c.collisionFreeDistance) / Config.ActorVOCheckRadius; 
+	};
 	float minval = fval(candidates[min]);
 	size_t n = candidates.size();
 	for (size_t i = 1; i < n; ++i) {
@@ -667,7 +682,7 @@ Vector2 Actor::selectVelocity(const std::vector<Candidate>& candidates) const {
 std::vector<Wall*> Actor::getWallsNearGoal() const {
 	std::vector<Wall*> result;
 	if (!_path.empty()) {
-		float dist = (1.1f * ActorRadius + common::EPSILON) * common::SQRT_2_F;
+		float dist = (1.1f * getRadius() + common::EPSILON) * common::SQRT_2_F;
 		Vector2 point = _path.front();
 		for (GameStaticObject* staticObj : Game::getInstance()->getMap()->getWalls()) {
 			Wall* wall = (Wall*)staticObj;
@@ -750,7 +765,8 @@ Vector2 Actor::getNextSafeGoal() const {
 					}
 				}
 
-				return commonPoint + translation.normal() * common::SQRT_2_F * (ActorRadius + MovementSafetyMargin + common::EPSILON);
+				return commonPoint + translation.normal() * common::SQRT_2_F
+					* (Config.ActorRadius + Config.MovementSafetyMargin + common::EPSILON);
 			}
 		}
 		return _path.front();
@@ -761,9 +777,9 @@ Vector2 Actor::getNextSafeGoal() const {
 std::vector<GameDynamicObject*> Actor::getNearbyObjects() const {
 	std::vector<GameDynamicObject*> result;
 	Vector2 pos = getPosition();
-	float maxDist = common::sqr(ActorSightRadius);
+	float maxDist = common::sqr(Config.ActorSightRadius);
 
-	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, ActorSightRadius)) {
+	for (GameDynamicObject* entity : getDynamicObjectsInArea(_position, Config.ActorSightRadius)) {
 		if (entity != this && entity->getGameObjectType() == GameDynamicObjectType::ACTOR
 			&& common::sqDist(entity->getPosition(), pos) < maxDist
 			&& getStaticObjectsOnLine(Segment(pos, entity->getPosition())).empty()) {

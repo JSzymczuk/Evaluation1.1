@@ -31,7 +31,7 @@ std::map<String, WeaponInfo> MissileManager::_weaponInfo = std::map<String, Weap
 void MissileManager::initializeMissile(int missileIndex, Actor* actor, const Vector2& position, const Vector2& target, GameTime time) {
 	Missile& missile = _missiles[missileIndex];
 	missile.owner = actor;
-	missile.origin = position + ((target - position).normal() * MissileInitialDistance);
+	missile.origin = position + ((target - position).normal() * Config.MissileInitialDistance);
 	missile.target = target;
 	missile.timeFired = time;
 	missile.weaponType = actor->getCurrentWeapon();
@@ -43,7 +43,7 @@ void MissileManager::initializeMissile(int missileIndex, Actor* actor, const Vec
 
 void MissileManager::shootAt(Actor* actor, const Vector2& target, GameTime time) {
 	Vector2 pos = actor->getPosition();
-	if (common::sqDist(pos, target) > common::sqr(MissileInitialDistance)) {
+	if (common::sqDist(pos, target) > common::sqr(Config.MissileInitialDistance)) {
 		const WeaponInfo& weaponInfo = getWeaponInfo(actor->getCurrentWeapon());
 		if (weaponInfo.missilesNumber == 1) { initializeMissile(getNextIndex(), actor, pos, target, time); }
 		else {
@@ -204,7 +204,7 @@ const std::map<String, WeaponInfo>& MissileManager::getWeaponsInfo() { return _w
 
 void MissileManager::initializeWeaponInfo() {
 
-	std::ifstream infile(WeaponsDataFile);
+	std::ifstream infile(Config.WeaponsDataFile);
 	std::map<std::string, std::string> lines;
 	std::string line, name, property;
 
@@ -215,7 +215,7 @@ void MissileManager::initializeWeaponInfo() {
 		if (line.find_first_not_of(' ') != std::string::npos) {
 			std::istringstream iss(line);
 			if (!(iss >> name >> property) || lines.find(name) != lines.end()) {
-				Logger::log(WeaponsDataFile + ": syntax error on line " + std::to_string(i) + ".");
+				Logger::log(Config.WeaponsDataFile + ": syntax error on line " + std::to_string(i) + ".");
 			}
 			else { lines[name] = property; }
 		}

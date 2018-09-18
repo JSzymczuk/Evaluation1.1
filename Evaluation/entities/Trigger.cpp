@@ -8,8 +8,8 @@
 Trigger::Trigger(const Vector2& position, const String& label)
 	: _isActive(false), _label(label), GameDynamicObject(position, 0) {
 	_activationTime = SDL_GetPerformanceCounter()
-		+ MinInitialTriggerActivationTime - MinTriggerActivationTime
-		+ Rng::getInteger(MinTriggerActivationTime, MaxTriggerActivationTime);
+		+ Config.MinInitialTriggerActivationTime - Config.MinTriggerActivationTime
+		+ Rng::getInteger(Config.MinTriggerActivationTime, Config.MaxTriggerActivationTime);
 }
 
 Trigger::~Trigger() {}
@@ -21,10 +21,11 @@ bool Trigger::hasPositionChanged() const { return false; }
 bool Trigger::isSolid() const { return false; }
 
 Aabb Trigger::getAabb() const {
-	return Aabb(_position.x - TriggerRadius, _position.y - TriggerRadius, 2 * TriggerRadius, 2 * TriggerRadius);
+	float r = getRadius();
+	return Aabb(_position.x - r, _position.y - r, 2 * r, 2 * r);
 }
 
-float Trigger::getRadius() const { return TriggerRadius; }
+float Trigger::getRadius() const { return Config.TriggerRadius; }
 
 GameDynamicObjectType Trigger::getGameObjectType() const { return GameDynamicObjectType::TRIGGER; }
 
@@ -32,8 +33,8 @@ bool Trigger::isActive() const { return _isActive; }
 
 void Trigger::update(GameTime time) {
 	if (_isActive) {
-		if (_activationTime + TriggerDeactivationTime < time) { deactivate(time); }
-		else { _orientation += TriggerRotationSpeed; }
+		if (_activationTime + Config.TriggerDeactivationTime < time) { deactivate(time); }
+		else { _orientation += Config.TriggerRotationSpeed; }
 	}
 	else if (_activationTime < time) { activate(time); }
 }
@@ -54,7 +55,7 @@ void Trigger::activate(GameTime time) {
 void Trigger::pick(Actor* actor, GameTime time) { deactivate(time); }
 
 void Trigger::setNextActivationTime(GameTime time) {
-	_activationTime = time + Rng::getInteger(MinTriggerActivationTime, MaxTriggerActivationTime);
+	_activationTime = time + Rng::getInteger(Config.MinTriggerActivationTime, Config.MaxTriggerActivationTime);
 }
 
 TriggerType AmmoPack::getTriggerType() const { return TriggerType::WEAPON; }
@@ -89,27 +90,27 @@ void AmmoPack::pick(Actor* actor, GameTime time) {
 void ArmorPack::pick(Actor* actor, GameTime time) {
 	int shots = actor->getRemainingArmorShots();
 	if (shots == 0) {
-		actor->setArmor(ARMOR_TRIGGER_BONUS);
-		actor->setRemainingArmorShots(ARMOR_MAX_SHOTS);
+		actor->setArmor(Config.ArmorTriggerBonus);
+		actor->setRemainingArmorShots(Config.ArmorMaxShots);
 		Logger::log("Actor " + actor->getName()
 			+ " gained armor bonus +"
-			+ std::to_string(ARMOR_TRIGGER_BONUS) + ".");
+			+ std::to_string(Config.ArmorTriggerBonus) + ".");
 	}
-	else if (ARMOR_MAX_SHOTS) {
-		float armor = common::min(actor->getArmor() * (1 + ARMOR_TRIGGER_MULTIPLIER), MAX_ARMOR);
+	else if (Config.ArmorMaxShots) {
+		float armor = common::min(actor->getArmor() * (1 + Config.ArmorTriggerMultiplier), Config.MaxArmor);
 		actor->setArmor(armor);
 		Logger::log("Actor " + actor->getName()
 			+ " armor rose. Current armor: +"
 			+ std::to_string(armor) + ".");
 	}
 	else {
-		actor->setRemainingArmorShots(ARMOR_MAX_SHOTS);
+		actor->setRemainingArmorShots(Config.ArmorMaxShots);
 		Logger::log("Actor " + actor->getName() + "'s armor was renewed.");
 	}
 	Trigger::pick(actor, time);
 }
 
 void MedPack::pick(Actor* actor, GameTime time) {
-	actor->heal(MEDPACK_HEALTH_BONUS);
+	actor->heal(Config.MedpackHealthBonus);
 	Trigger::pick(actor, time);
 }

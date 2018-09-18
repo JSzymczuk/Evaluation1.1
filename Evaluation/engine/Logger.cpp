@@ -1,7 +1,7 @@
 #include "Logger.h"
 #include "engine/CommonFunctions.h"
 
-bool Logger::_isLogging = AreLogsVisible;
+bool Logger::_isLogging = true;
 
 std::vector<String> Logger::_logs = std::vector<String>();
 

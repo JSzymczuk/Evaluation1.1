@@ -76,7 +76,7 @@ void Agent::wander() {
 
 void LuaAgent::initialize(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luabind::call_function<void>(_luaEnv, (_name + LuaInitializeFunctionName).c_str(), this, actorKnowledge, time);
+		luabind::call_function<void>(_luaEnv, (_name + Config.LuaInitializeFunctionName).c_str(), this, actorKnowledge, time);
 	}
 	catch (luabind::error& e) {
 		std::cerr << e.what() << std::endl;
@@ -87,7 +87,7 @@ void LuaAgent::initialize(const ActorKnowledge& actorKnowledge, GameTime time) {
 
 void LuaAgent::update(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luabind::call_function<void>(_luaEnv, (_name + LuaUpdateFunctionName).c_str(), this, actorKnowledge, time);
+		luabind::call_function<void>(_luaEnv, (_name + Config.LuaUpdateFunctionName).c_str(), this, actorKnowledge, time);
 	}
 	catch (luabind::error& e) {
 		std::cerr << e.what() << std::endl;

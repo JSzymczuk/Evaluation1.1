@@ -2,16 +2,13 @@
 #include "main/Game.h"
 
 int main(int argc, char** argv) {
-
-	//GameMap::Loader().generateConnections("map1.map", MapsDirectory + "/map2.map");
-
-	int preferredFrameDuration = 1000 / FPS;
+	
+	int preferredFrameDuration = 1000 / Config.FPS;
 	int initialFrame;
 	int frameDuration;
 
 	Game* game = new Game();
-	if (game->initialize("", DisplayWidth, DisplayHeight)) {
-
+	if (game->initialize()) {
 		while (game->isRunning()) {
 
 			initialFrame = SDL_GetTicks();
@@ -32,6 +29,4 @@ int main(int argc, char** argv) {
 	else {
 		return 1;
 	}
-	/**/
-
 }
