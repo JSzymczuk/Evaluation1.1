@@ -4,10 +4,121 @@
 #include "math/Math.h"
 #include "entities/Entity.h"
 #include "entities/Actor.h"
+#include "entities/Trigger.h"
 #include "engine/Logger.h"
 
+
+
+// Fair
+
+//void RegularGrid::requestWriteEnter() {
+//	_requestQueueMtx.lock();
+//	_accessMtx.lock();
+//	_requestQueueMtx.unlock();
+//}
+//void RegularGrid::requestWriteExit() {
+//	_accessMtx.unlock();
+//}
+//void RegularGrid::requestReadEnter() const {
+//	_requestQueueMtx.lock();
+//	_readersMtx.lock();
+//	if (_currentReaders == 0) {
+//		_accessMtx.lock();
+//	}
+//	++_currentReaders;
+//	_requestQueueMtx.unlock();
+//	_readersMtx.unlock();
+//}
+//void RegularGrid::requestReadExit() const {
+//	_readersMtx.lock();
+//	--_currentReaders;
+//	if (_currentReaders == 0) {
+//		_accessMtx.unlock();
+//	}
+//	_readersMtx.unlock();
+//}
+
+// Reader preference
+
+void RegularGrid::requestReadEnter() const {
+	_readerMtx.lock();
+	if (_currentReaders == 0) {
+		_writerMtx.lock();
+	}
+	++_currentReaders;
+	_readerMtx.unlock();
+}
+
+void RegularGrid::requestReadExit() const {
+	_readerMtx.lock();
+	--_currentReaders;
+	if (_currentReaders == 0) {
+		_writerMtx.unlock();
+	}
+	_readerMtx.unlock();
+}
+
+void RegularGrid::requestWriteEnter() {
+	_writerMtx.lock();
+}
+
+void RegularGrid::requestWriteExit() {
+	_writerMtx.unlock();
+}
+
+
+// Writer preference
+
+//void RegularGrid::requestReadEnter() const {
+//	_readerRequestMtx.lock();
+//	_readerMtx.lock();
+//	if (_currentRaders == 0) {
+//		_resourceMtx.lock();
+//	}
+//	++_currentRaders;
+//	_readerMtx.unlock();
+//	_readerRequestMtx.unlock();
+//}
+//
+//void RegularGrid::requestReadExit() const {
+//	_readerMtx.lock();
+//	--_currentRaders;
+//	if (_currentRaders == 0) {
+//		_resourceMtx.unlock();
+//	}
+//	_readerMtx.unlock();
+//}
+//
+//void RegularGrid::requestWriteEnter() {
+//	_writerRequestMtx.lock();
+//	if (_currentWriters == 0) {
+//		_readerRequestMtx.lock();
+//	}
+//	++_currentWriters;
+//	_writerRequestMtx.unlock();
+//
+//	_resourceMtx.lock();
+//}
+//
+//void RegularGrid::requestWriteExit() {
+//	_resourceMtx.unlock();
+//
+//	_writerRequestMtx.lock();
+//	--_currentWriters;
+//	if (_currentWriters == 0) {
+//		_readerRequestMtx.unlock();
+//	}
+//	_writerRequestMtx.unlock();
+//}
+
+
+
+
+
 RegularGrid::RegularGrid(float width, float height, size_t regionSize)
-	: _width(width), _height(height), _regions(nullptr), _regionSize(regionSize) { 
+	: CollisionResolver(), _width(width), _height(height), _regions(nullptr), _regionSize(regionSize) { 
+	
+	_multithreadingEnabled = Config.MultithreadingEnabled;
 
 	_regionsX = (size_t)ceil(_width / _regionSize);
 	_regionsY = (size_t)ceil(_height / _regionSize);
@@ -27,13 +138,6 @@ RegularGrid::~RegularGrid() {
 		delete[] _regions[i];
 	}
 	delete[] _regions;
-}
-
-bool RegularGrid::isPositionValid(const GameDynamicObject* entity) const {
-	Vector2 position = entity->getPosition();
-	float radius = entity->getRadius();
-	return position.x > radius && position.y > radius && position.x < _width - radius && position.y < _height - radius 
-		&& narrowphaseDynamic(entity).size() == 0 && narrowphaseStatic(entity).size() == 0;
 }
 
 RegularGrid::Region* RegularGrid::getRegionById(size_t i, size_t j) {
@@ -72,6 +176,9 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsContaining(const 
 	std::vector<const Region*> result;	
 	float x = point.x, y = point.y;
 
+	// powiêksz o maksymalny promieñ obiektu, aby z³apaæ te¿ te, które wystaj¹ z s¹siednich regionów
+	radius += Config.ActorRadius;
+
 	int ixFrom = (x - radius) / _regionSize, iyFrom = (y - radius) / _regionSize;
 	int ixTo = (x + radius) / _regionSize, iyTo = (y + radius) / _regionSize;
 
@@ -97,6 +204,34 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsForMovement(const
 	return getRegionsCloseToSegment(from, to, true, radius);
 }
 
+std::vector<RegularGrid::Region*> RegularGrid::getRegionsContaining(const Vector2& point, float radius) {
+	std::vector<Region*> result;
+	float x = point.x, y = point.y;
+
+	// powiêksz o maksymalny promieñ obiektu, aby z³apaæ te¿ te, które wystaj¹ z s¹siednich regionów
+	radius += Config.ActorRadius;
+
+	int ixFrom = (x - radius) / _regionSize, iyFrom = (y - radius) / _regionSize;
+	int ixTo = (x + radius) / _regionSize, iyTo = (y + radius) / _regionSize;
+
+	if (ixFrom < 0) { ixFrom = 0; }
+	if (iyFrom < 0) { iyFrom = 0; }
+	if (ixTo >= _regionsX) { ixTo = _regionsX - 1; }
+	if (iyTo >= _regionsY) { iyTo = _regionsY - 1; }
+
+	for (int iy = iyFrom; iy <= iyTo; ++iy) {
+		for (int ix = ixFrom; ix <= ixTo; ++ix) {
+			result.push_back(&_regions[ix][iy]);
+		}
+	}
+
+	return result;
+}
+
+std::vector<RegularGrid::Region*> RegularGrid::getRegionsContaining(const Segment& segment) {
+	return getRegionsCloseToSegment(segment.from, segment.to, false, 0);
+}
+
 std::vector<const RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(
 	const Vector2& from, const Vector2& to, bool useRadius, float radius) const {
 
@@ -115,7 +250,7 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(
 	if (ixFrom == ixTo && iyFrom == iyTo) {
 		if (useRadius) {
 			result = getRegionsContaining(Vector2(xFrom, yFrom), radius);
-			common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+			common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 		}
 		else {
 			if (0 <= ixFrom && ixFrom < _regionsX && 0 <= iyFrom && iyFrom < _regionsY) {
@@ -132,11 +267,11 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(
 			}
 
 			if (useRadius) {
-				common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
+				common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
 				for (float y = (iyFrom + 1) * _regionSize; y < yTo; y += _regionSize) {
-					common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, y), radius));
+					common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xFrom, y), radius));
 				}
-				common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+				common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 			}
 			else {
 				if (0 <= ixFrom && ixFrom < _regionsX) {
@@ -158,8 +293,8 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(
 			int ix = ixFrom, iy = iyFrom;
 
 			if (useRadius) {
-				common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
-				common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+				common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
+				common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 			}
 			else {
 				const Region* region = getRegionById(ix, iy);
@@ -209,7 +344,7 @@ std::vector<const RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(
 				}
 
 				if (useRadius) {
-					common::addIfUnique(result, getRegionsContaining(Vector2(xLast, yLast), radius));
+					common::addIfUnique<const Region*>(result, getRegionsContaining(Vector2(xLast, yLast), radius));
 				}
 				else {
 					const Region* region = getRegionById(ix, iy);
@@ -241,7 +376,7 @@ std::vector<RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(const Ve
 	if (ixFrom == ixTo && iyFrom == iyTo) {
 		if (useRadius) {
 			result = getRegionsContaining(Vector2(xFrom, yFrom), radius);
-			common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+			common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 		}
 		else {
 			result.push_back(getRegionById(ixFrom, iyFrom));
@@ -256,11 +391,11 @@ std::vector<RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(const Ve
 			}
 
 			if (useRadius) {
-				common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
+				common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
 				for (float y = (iyFrom + 1) * _regionSize; y < yTo; y += _regionSize) {
-					common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, y), radius));
+					common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xFrom, y), radius));
 				}
-				common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+				common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 			}
 			else {
 				for (size_t iy = iyFrom; iy <= iyTo; ++iy) {
@@ -280,8 +415,8 @@ std::vector<RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(const Ve
 			int ix = ixFrom, iy = iyFrom;
 
 			if (useRadius) {
-				common::addIfUnique(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
-				common::addIfUnique(result, getRegionsContaining(Vector2(xTo, yTo), radius));
+				common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xFrom, yFrom), radius));
+				common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xTo, yTo), radius));
 			}
 			else {
 				result.push_back(getRegionById(ix, iy));
@@ -327,7 +462,7 @@ std::vector<RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(const Ve
 				}
 
 				if (useRadius) {
-					common::addIfUnique(result, getRegionsContaining(Vector2(xLast, yLast), radius));
+					common::addIfUnique<Region*>(result, getRegionsContaining(Vector2(xLast, yLast), radius));
 				}
 				else {
 					result.push_back(getRegionById(ix, iy));
@@ -340,222 +475,165 @@ std::vector<RegularGrid::Region*> RegularGrid::getRegionsCloseToSegment(const Ve
 	return result;
 }
 
-template <typename T> void uniqueElements(const std::vector<T>& first, const std::vector<T>& second,
-	std::vector<T>& uniqueFirst, std::vector<T>& uniqueSecond) {
-	for (T t : first) {
-		if (!common::contains(second, t)) { uniqueFirst.push_back(t); }
-	}
-	for (T t : second) {
-		if (!common::contains(first, t)) { uniqueSecond.push_back(t); }
+// Operacje na elementach
+
+void RegularGrid::initializeDynamic(const std::vector<DynamicEntity*>& dynamicObjects) {
+	for (DynamicEntity* entity : dynamicObjects) {
+		add(entity);
 	}
 }
 
-void RegularGrid::add(GameDynamicObject* element) {
-	common::Circle collisionShape = element->getCollisionArea();
-	_mtx.lock(); 
-	for (Region* region : getRegionsContaining(collisionShape.center, collisionShape.radius)) {
-		region->dynamicObjects.push_back(element);
-	}
-	_mtx.unlock();
-	element->enableCollisions(this);
-}
-
-void RegularGrid::remove(GameDynamicObject* element) {
-	common::Circle collisionShape = element->getCollisionArea();
-	_mtx.lock(); 
-	for (Region* region : getRegionsContaining(collisionShape.center, collisionShape.radius)) {
-		common::swapLastAndRemove(region->dynamicObjects, common::indexOf(region->dynamicObjects, element));
-	}
-	_mtx.unlock();
-	element->disableCollisions();
-}
-
-void RegularGrid::update(GameDynamicObject* element) {
-	if (element->hasPositionChanged()) {
-		float r = element->getRadius();
-		Vector2 position = element->getPosition();
-		Vector2 previousPosition = position - element->getVelocity();
-		std::vector<Region*> toRemove;
-		std::vector<Region*> toAdd;
-		uniqueElements(getRegionsContaining(previousPosition, r), getRegionsContaining(position, r), toRemove, toAdd);
-		_mtx.lock();
-		for (Region* region : toAdd) {
-			region->dynamicObjects.push_back(element);
-		}
-		for (Region* region : toRemove) {
-			common::swapLastAndRemove(region->dynamicObjects, common::indexOf(region->dynamicObjects, element));
-		}
-		_mtx.unlock();
-	}
-}
-
-void RegularGrid::add(GameStaticObject* element) {
+void RegularGrid::add(StaticEntity* element) {
 	std::vector<Region*> regions;
 	for (const Segment& segment : element->getBounds()) {
-		common::addIfUnique(regions, getRegionsContaining(segment));
+		common::addIfUnique<Region*>(regions, getRegionsContaining(segment));
 	}
-	_mtx.lock();
+	if (_multithreadingEnabled) { requestWriteEnter(); }
 	for (Region* region : regions) {
 		region->staticObjects.push_back(element);
 	}
-	_mtx.unlock();
+	if (_multithreadingEnabled) { requestWriteExit(); }
 }
 
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& point, float radius, std::vector<std::pair<size_t, size_t>>& regions) const {
-	std::vector<GameDynamicObject*> result;
-	_mtx.lock();
-	for (const Region* region : getRegionsContaining(point, radius)) {
-		common::addIfUnique(result, region->dynamicObjects);
-		regions.push_back(std::make_pair(region->idX, region->idY));
+void RegularGrid::add(DynamicEntity* element) {
+	Vector2 center = element->getPosition();
+	Region* region = getRegionByCoordinates(center.x, center.y);
+	if (_multithreadingEnabled) { requestWriteEnter(); }
+	region->dynamicObjects.push_back(element);
+	if (_multithreadingEnabled) { requestWriteExit(); }
+	Movable* movable = dynamic_cast<Movable*>(element);
+	if (movable != nullptr) { movable->_gridRegion = region; }
+	CollisionResolver::addDynamicObject(element);
+}
+
+void RegularGrid::remove(DynamicEntity* element) {
+	Region* region;
+	Movable* movable = dynamic_cast<Movable*>(element);
+	if (movable != nullptr) { 
+		region = movable->_gridRegion;
+		movable->_gridRegion = nullptr;
 	}
-	_mtx.unlock();
+	else {
+		Vector2 center = element->getPosition();
+		region = getRegionByCoordinates(center.x, center.y);
+	}
+	if (_multithreadingEnabled) { requestWriteEnter(); }
+	common::swapLastAndRemove(region->dynamicObjects, common::indexOf(region->dynamicObjects, element));
+	if (_multithreadingEnabled) { requestWriteExit(); }
+	CollisionResolver::removeDynamicObject(element);
+}
+
+void RegularGrid::update(Movable* element) {
+	if (element->hasPositionChanged()) {
+		Vector2 position = element->getPosition();
+		Region* newRegion = getRegionByCoordinates(position.x, position.y);
+		Region* oldRegion = element->_gridRegion;
+		if (oldRegion != newRegion) {
+			if (_multithreadingEnabled) { requestWriteEnter(); }
+			common::swapLastAndRemove(oldRegion->dynamicObjects, common::indexOf<DynamicEntity*>(oldRegion->dynamicObjects, element));
+			newRegion->dynamicObjects.push_back(element);
+			if (_multithreadingEnabled) { requestWriteExit(); }
+			element->_gridRegion = newRegion;
+		}
+	}
+}
+
+// Faza ogólna
+
+std::vector<DynamicEntity*> RegularGrid::broadphaseDynamic(const Vector2& point, float radius) const {
+	std::vector<DynamicEntity*> result;
+
+	if (_multithreadingEnabled) { 
+		requestReadEnter();
+	}
+
+	auto regions = getRegionsContaining(point, radius);
+
+	for (const Region* region : regions) {
+		common::merge(result, region->dynamicObjects);
+	}
+
+	if (_multithreadingEnabled) {
+		requestReadExit();
+	}
+
 	return result;
 }
 
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to, std::vector<std::pair<size_t, size_t>>& regions) const {
-	std::vector<GameDynamicObject*> result;
-	_mtx.lock();
-	for (const Region* region : getRegionsContaining(Segment(from, to))) {
-		common::addIfUnique(result, region->dynamicObjects);
-		regions.push_back(std::make_pair(region->idX, region->idY));
+std::vector<DynamicEntity*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to) const {
+	std::vector<DynamicEntity*> result;
+
+	if (_multithreadingEnabled) {
+		requestReadEnter();
 	}
-	_mtx.unlock();
+
+	auto regions = getRegionsForMovement(from, to, Config.ActorRadius);
+
+	for (const Region* region : regions) {
+		common::merge(result, region->dynamicObjects);
+	}
+
+	if (_multithreadingEnabled) {
+		requestReadExit();
+	}
+
 	return result;
 }
 
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to, float radius, std::vector<std::pair<size_t, size_t>>& regions) const {
-	std::vector<GameDynamicObject*> result;
-	_mtx.lock();
-	for (const Region* region : getRegionsForMovement(from, to, radius)) {
-		common::addIfUnique(result, region->dynamicObjects);
-		regions.push_back(std::make_pair(region->idX, region->idY));
+std::vector<DynamicEntity*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const {
+	std::vector<DynamicEntity*> result;
+
+	if (_multithreadingEnabled) {
+		requestReadEnter();
 	}
-	_mtx.unlock();
+
+	auto regions = getRegionsForMovement(from, to, radius + Config.ActorRadius);
+
+	for (const Region* region : regions) {
+		common::merge(result, region->dynamicObjects);
+	}
+
+	if (_multithreadingEnabled) {
+		requestReadExit();
+	}
+
 	return result;
 }
 
-std::vector<GameStaticObject*> RegularGrid::broadphaseStatic(const Vector2& point, float radius) const {
-	std::vector<GameStaticObject*> result;
-	for (const Region* region : getRegionsContaining(point, radius)) {
-		common::addIfUnique(result, region->staticObjects);
+std::vector<StaticEntity*> RegularGrid::broadphaseStatic(const Vector2& point, float radius) const {
+	std::vector<StaticEntity*> result;
+
+	auto regions = getRegionsContaining(point, radius);
+
+	for (const Region* region : regions) {
+		common::addIfUnique<StaticEntity*>(result, region->staticObjects);
 	}
+
 	return result;
 }
 
-std::vector<GameStaticObject*> RegularGrid::broadphaseStatic(const Vector2& from, const Vector2& to) const {
-	std::vector<GameStaticObject*> result;
-	for (const Region* region : getRegionsContaining(Segment(from, to))) {
+std::vector<StaticEntity*> RegularGrid::broadphaseStatic(const Vector2& from, const Vector2& to) const {
+	std::vector<StaticEntity*> result;
+
+	auto regions = getRegionsContaining(Segment(from, to));
+
+	for (const Region* region : regions) {
 		if (region->staticObjects.size() > 0) {
-			common::addIfUnique(result, region->staticObjects);
+			common::addIfUnique<StaticEntity*>(result, region->staticObjects);
 		}
-	}
-	return result;
-}
-
-std::vector<GameStaticObject*> RegularGrid::broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const {
-	std::vector<GameStaticObject*> result;
-	for (const Region* region : getRegionsForMovement(from, to, radius)) {
-		common::addIfUnique(result, region->staticObjects);
-	}
-	return result;
-}
-
-std::vector<RegularGrid::Region*> RegularGrid::getRegionsContaining(const Vector2& point, float radius) {
-	std::vector<Region*> result;
-
-	float x = point.x, y = point.y;
-	Region* region = getRegionByCoordinates(x, y);
-	if (region == nullptr) { return result; }
-
-	result.push_back(region);
-	size_t idX = region->idX, idY = region->idY;
-
-	float xMin = region->idX * _regionSize, xMax = xMin + _regionSize;
-	float yMin = region->idY * _regionSize, yMax = yMin + _regionSize;
-
-	if (x - radius <= xMin && idX > 0) {
-		result.push_back(getRegionById(idX - 1, idY));
-		if (idY > 0 && common::sqr(x - xMin) + common::sqr(y - yMin) <= radius * radius) {
-			result.push_back(getRegionById(idX - 1, idY - 1));
-		}
-		if (idY < _regionsY - 1 && common::sqr(x - xMin) + common::sqr(y - yMax) <= radius * radius) {
-			result.push_back(getRegionById(idX - 1, idY + 1));
-		}
-	}
-	if (x + radius >= xMax && idX < _regionsX - 1) {
-		result.push_back(getRegionById(idX + 1, idY));
-		if (idY > 0 && common::sqr(x - xMax) + common::sqr(y - yMin) <= radius * radius) {
-			result.push_back(getRegionById(idX + 1, idY - 1));
-		}
-		if (idY < _regionsY - 1 && common::sqr(x - xMax) + common::sqr(y - yMax) <= radius * radius) {
-			result.push_back(getRegionById(idX + 1, idY + 1));
-		}
-	}
-	if (y - radius <= yMin && idY > 0) {
-		result.push_back(getRegionById(idX, idY - 1));
-	}
-	if (y + radius >= yMax && idY < _regionsY - 1) {
-		result.push_back(getRegionById(idX, idY + 1));
 	}
 
 	return result;
 }
 
-std::vector<RegularGrid::Region*> RegularGrid::getRegionsContaining(const Segment& segment) {
-	return getRegionsCloseToSegment(segment.from, segment.to, false, 0);
-}
+std::vector<StaticEntity*> RegularGrid::broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const {
+	std::vector<StaticEntity*> result;
 
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& point) const {
-	std::vector<GameDynamicObject*> result;
-	_mtx.lock();
-	result = getRegionByCoordinates(point.x, point.y)->dynamicObjects;
-	_mtx.unlock();
-	return result;
-}
+	auto regions = getRegionsForMovement(from, to, radius);
 
-std::vector<GameStaticObject*> RegularGrid::broadphaseStatic(const Vector2& point) const {
-	std::vector<GameStaticObject*> result;
-	_mtx.lock();
-	result = getRegionByCoordinates(point.x, point.y)->staticObjects;
-	_mtx.unlock();
-	return result;
-}
-
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& point, float radius) const {
-	std::vector<std::pair<size_t, size_t>> regions;
-	return broadphaseDynamic(point, radius, regions);
-}
-
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to) const {
-	std::vector<std::pair<size_t, size_t>> regions;
-	return broadphaseDynamic(from, to, regions);
-}
-
-std::vector<GameDynamicObject*> RegularGrid::broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const {
-	std::vector<std::pair<size_t, size_t>> regions;
-	return broadphaseDynamic(from, to, radius, regions);
-}
-
-std::vector<GameDynamicObject*> RegularGrid::narrowphaseDynamic(const GameDynamicObject* entity) const {
-	std::vector<GameDynamicObject*> result;
-	Vector2 position = entity->getPosition();
-	float radius = entity->getRadius() + Config.MovementSafetyMargin, r2 = radius * radius;
-	for (GameDynamicObject* other : broadphaseDynamic(position, radius)) {
-		if (entity != other && common::sqDist(position, other->getPosition()) <= r2) {
-			result.push_back(other);
-		}
+	for (const Region* region : regions) {
+		common::addIfUnique<StaticEntity*>(result, region->staticObjects);
 	}
-	return result;
-}
 
-std::vector<GameStaticObject*> RegularGrid::narrowphaseStatic(const GameDynamicObject* entity) const {
-	std::vector<GameStaticObject*> result;
-	Vector2 position = entity->getPosition();
-	float radius = entity->getRadius() + Config.MovementSafetyMargin;
-	for (GameStaticObject* other : broadphaseStatic(position, radius)) {
-		if (other->getDistanceTo(position) <= radius) {
-			result.push_back(other);
-		}
-	}
 	return result;
 }

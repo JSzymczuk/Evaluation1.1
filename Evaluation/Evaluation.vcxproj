@@ -85,10 +85,10 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\libs\luabind\include;D:\libs\lua-5.3.4\include;D:\libs\SDL2_ttf-2.0.14\include;D:\libs\SDL2_image-2.0.3\include;D:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.8\lib\x86;C:\libs\SDL2_ttf-2.0.14\lib\x86;C:\libs\SDL2_image-2.0.3\lib\x86;C:\libs\luabind\lib\debug;C:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\libs\SDL2-2.0.8\lib\x86;D:\libs\SDL2_ttf-2.0.14\lib\x86;D:\libs\SDL2_image-2.0.3\lib\x86;D:\libs\luabind\lib\debug;D:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;lua53.lib;luabind.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
@@ -103,7 +103,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\libs\luabind\include;C:\libs\lua-5.3.4\include;C:\libs\SDL2_ttf-2.0.14\include;C:\libs\SDL2_image-2.0.3\include;C:\libs\SDL2-2.0.8\include;C:\Users\Kuba\Desktop\Evaluation1.1\Evaluation;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>C:\libs\SDL2-2.0.8\lib\x64;C:\libs\SDL2_ttf-2.0.14\lib\x64;C:\libs\SDL2_image-2.0.3\lib\x64;C:\libs\luabind\lib\debug;C:\libs\lua-5.3.4\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;lua53.lib;luabind.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -155,15 +161,20 @@
     <ClCompile Include="agents\Agent.cpp" />
     <ClCompile Include="agents\Notification.cpp" />
     <ClCompile Include="agents\SharedKnowledge.cpp" />
+    <ClCompile Include="engine\Camera.cpp" />
+    <ClCompile Include="engine\CollisionResolver.cpp" />
     <ClCompile Include="engine\Logger.cpp" />
     <ClCompile Include="engine\MissileManager.cpp" />
     <ClCompile Include="engine\Navigation.cpp" />
     <ClCompile Include="engine\RegularGrid.cpp" />
     <ClCompile Include="engine\ResourceManager.cpp" />
     <ClCompile Include="engine\Rng.cpp" />
+    <ClCompile Include="engine\TreeCollisionResolver.cpp" />
     <ClCompile Include="engine\TriggerFactory.cpp" />
+    <ClCompile Include="engine\VectorCollisionResolver.cpp" />
     <ClCompile Include="entities\Actor.cpp" />
     <ClCompile Include="entities\Entity.cpp" />
+    <ClCompile Include="entities\Movable.cpp" />
     <ClCompile Include="entities\Team.cpp" />
     <ClCompile Include="entities\Trigger.cpp" />
     <ClCompile Include="entities\Wall.cpp" />
@@ -190,6 +201,7 @@
     <ClInclude Include="agents\Notification.h" />
     <ClInclude Include="agents\SharedKnowledge.h" />
     <ClInclude Include="engine\AabbTree.h" />
+    <ClInclude Include="engine\Camera.h" />
     <ClInclude Include="engine\CollisionResolver.h" />
     <ClInclude Include="engine\CommonFunctions.h" />
     <ClInclude Include="engine\DataLoader.h" />
@@ -199,12 +211,14 @@
     <ClInclude Include="engine\RegularGrid.h" />
     <ClInclude Include="engine\ResourceManager.h" />
     <ClInclude Include="engine\Rng.h" />
-    <ClInclude Include="engine\SegmentTree.h" />
+    <ClInclude Include="engine\TreeCollisionResolver.h" />
     <ClInclude Include="engine\TriggerFactory.h" />
+    <ClInclude Include="engine\VectorCollisionResolver.h" />
     <ClInclude Include="engine\WeaponLoader.h" />
     <ClInclude Include="entities\Actor.h" />
     <ClInclude Include="entities\Entity.h" />
     <ClInclude Include="entities\Missile.h" />
+    <ClInclude Include="entities\Movable.h" />
     <ClInclude Include="entities\Team.h" />
     <ClInclude Include="entities\Trigger.h" />
     <ClInclude Include="entities\Wall.h" />

@@ -1,4 +1,3 @@
-#include "Actor.h"
 #include "Team.h"
 
 Team::Team(unsigned short number) : _teamNumber(number) {}

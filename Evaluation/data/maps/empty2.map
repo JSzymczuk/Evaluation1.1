@@ -1,0 +1,23 @@
+width: 2000 height: 2000
+
+navigation_points: 4
+id:  0 x:   40 y:   40
+id:  1 x: 1960 y:   40
+id:  2 x:   40 y: 1960
+id:  3 x: 1960 y: 1960
+
+connections: 6
+from: 0 to: 1 mul: 1.0 inv: 1
+from: 0 to: 2 mul: 1.0 inv: 1
+from: 0 to: 3 mul: 1.0 inv: 1
+from: 1 to: 2 mul: 1.0 inv: 1
+from: 1 to: 3 mul: 1.0 inv: 1
+from: 2 to: 3 mul: 1.0 inv: 1
+
+walls: 4
+wall:   20   20 1980   20 id: 0 priority: 0
+wall: 1980   20 1980 1980 id: 1 priority: 0
+wall: 1980 1980   20 1980 id: 2 priority: 0
+wall:   20 1980   20   20 id: 3 priority: 0
+
+triggers: 0

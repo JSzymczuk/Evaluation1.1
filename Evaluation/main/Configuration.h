@@ -12,11 +12,13 @@ struct ConfigurationParameters {
 	const String WindowTitle;
 	const int DisplayWidth;
 	const int DisplayHeight;
+	const int CameraSpeed;
 	const int FPS;
 	const bool AreLogsVisible;
-	const bool CollisionMethodAabbTree;
+	const bool MultithreadingEnabled;
 	const long long ActorUpdateFrequency;
 	const int RegularGridSize;
+	const float AabbTreeMargin;
 	const String LuaInitializeFunctionName;
 	const String LuaUpdateFunctionName;
 	const String AgentControlled;
@@ -71,6 +73,7 @@ struct ConfigurationParameters {
 	const String ActorRingTexturePath;
 	const String TriggerRingTextureKey;
 	const String TriggerRingTexturePath;
+	const String CollisionResolver;
 
 	const SDL_Color HealthBarBackColor = { 63, 63, 63 };
 	const SDL_Color HealthBarFullColor = { 0, 215, 80 };

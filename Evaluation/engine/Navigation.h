@@ -13,7 +13,7 @@
 #include "main/Configuration.h"
 #include "engine/RegularGrid.h"
 
-class GameDynamicObject;
+class DynamicEntity;
 class Actor;
 class Trigger;
 class Wall;
@@ -28,20 +28,24 @@ public:
 
 	std::vector<Actor*> getActors() const;
 	std::vector<Trigger*> getTriggers() const;
-	std::vector<GameStaticObject*> getWalls() const;
+	std::vector<StaticEntity*> getWalls() const;
 
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable) const;
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, GameDynamicObject* movable, const std::vector<common::Circle>& ignoredAreas) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, DynamicEntity* movable) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, DynamicEntity* movable, const std::vector<common::Circle>& ignoredAreas) const;
 	bool raycastStatic(const Segment& ray, Vector2& result) const;
-	std::vector<GameDynamicObject*> checkCollision(const Vector2& point);
-	std::vector<GameDynamicObject*> checkCollision(const Vector2& point, float radius);
-	std::vector<GameDynamicObject*> checkCollision(const Segment& segment);
-	//std::vector<GameDynamicObject*> checkCollision(const Aabb& area) const;
-	bool isMovementValid(GameDynamicObject* movable, const Vector2& movementVector) const;
-	bool isPositionValid(const Vector2& point, float entityRadius) const;
-	bool canPlace(const GameDynamicObject* object) const;
-	bool place(GameDynamicObject* object);
-	void remove(Actor* object);
+
+	bool canPlace(const DynamicEntity* object) const;
+	bool place(Actor* actor);
+	bool place(Trigger* trigger);
+	void remove(Actor* actor);
+
+	std::vector<DynamicEntity*> checkCollision(const Vector2& point, float radius);
+	std::vector<DynamicEntity*> checkCollision(const Segment& segment);
+	std::vector<Destructible*> checkCollisionDestructible(const Vector2& point, float radius) const;
+
+	const CollisionResolver* getCollisionResolver() const;
+
+	void initializeDynamic(const std::vector<DynamicEntity*>& dynamicObjects);
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;
@@ -63,12 +67,10 @@ private:
 	float _width;
 	float _height;
 	std::vector<NavigationNode> _navigationMesh;
-public:
 	CollisionResolver* _collisionResolver;
-private:
 	std::vector<Trigger*> _triggers;
 	std::vector<Actor*> _entities;
-	std::vector<GameStaticObject*> _walls;
+	std::vector<StaticEntity*> _walls;
 
 	int getClosestNavigationNode(const Vector2& point, const std::vector<common::Circle>& ignoredAreas) const;
 	std::vector<int> aStar(int from, int to, const std::vector<common::Circle>& ignoredAreas) const;
@@ -77,7 +79,6 @@ private:
 
 	static const int NULL_IDX;
 
-public:
 	class Loader {
 	public:
 		GameMap* load(const char* mapFilename);
@@ -89,8 +90,8 @@ public:
 		void loadMapSize();
 		void loadNavigationPoints();
 		void loadNavigationMesh();
-		std::vector<GameStaticObject*> loadStaticObjects();
-		std::vector<GameDynamicObject*> loadTriggers();
+		std::vector<StaticEntity*> loadStaticObjects();
+		std::vector<Trigger*> loadTriggers();
 		
 		GameMap* _map;
 		std::ifstream _reader;

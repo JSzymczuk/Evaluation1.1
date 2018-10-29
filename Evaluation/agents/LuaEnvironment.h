@@ -45,7 +45,7 @@ inline LuaEnv* createLuaEnv() {
 			.def(luabind::self / luabind::other<float>())
 			.def(luabind::self + luabind::other<Vector2>())
 			.def(luabind::self - luabind::other<Vector2>())
-			.def(luabind::self == luabind::other<Vector2>()),
+			.def(luabind::self == luabind::other<Vector2>()),			
 
 		luabind::class_<ActorInfo>("ActorInfo")
 			.def("getName", &ActorInfo::getName)
@@ -57,7 +57,7 @@ inline LuaEnv* createLuaEnv() {
 			.def("getWeaponType", &ActorInfo::getWeaponType)
 			.def("isDead", &ActorInfo::isDead)
 			.def("getObservationTime", &TriggerInfo::getObservationTime),
-
+			
 		luabind::class_<TriggerInfo>("TriggerInfo")
 			.def("getName", &TriggerInfo::getName)
 			.def("getPosition", &TriggerInfo::getPosition)
@@ -95,7 +95,8 @@ inline LuaEnv* createLuaEnv() {
 			.def("getTriggerRadius", &SharedKnowledge::getTriggerRadius)
 			.def("getActorSightRadius", &SharedKnowledge::getActorSightRadius)
 			.def("getActorSpeed", &SharedKnowledge::getActorSpeed)
-			.def("getActorRotationSpeed", &SharedKnowledge::getActorRotationSpeed),
+			.def("getActorRotationSpeed", &SharedKnowledge::getActorRotationSpeed)
+			.def("getTriggers", &SharedKnowledge::getTriggers),
 
 		luabind::class_<LuaAgent>("LuaAgent")
 			.def("getName", &LuaAgent::getName)
@@ -112,6 +113,17 @@ inline LuaEnv* createLuaEnv() {
 			.def("getSharedKnowledge", &LuaAgent::getSharedKnowledge),
 
 		luabind::class_<ActorKnowledge>("ActorKnowledge")
+			.enum_("ActionType")
+			[
+				luabind::value("Idle", 0),
+				luabind::value("Move", 1),
+				luabind::value("Face", 2),
+				luabind::value("Shoot", 3),
+				luabind::value("ChangeWeapon", 4),
+				luabind::value("Die", 5),
+				luabind::value("Dead", 6),
+				luabind::value("Wander", 7)
+			]
 			.def("getSelf", &ActorKnowledge::getSelf)
 			.def("getName", &ActorKnowledge::getName)
 			.def("getTeam", &ActorKnowledge::getTeam)
@@ -133,7 +145,9 @@ inline LuaEnv* createLuaEnv() {
 			.def("getShortDestination", &ActorKnowledge::getShortDestination)
 			.def("getLongDestination", &ActorKnowledge::getLongDestination)
 			.def("getEstimatedRemainingDistance", &ActorKnowledge::getEstimatedRemainingDistance)
-
+			.def("getCurrentAction", &ActorKnowledge::getCurrentAction)
+			
+			
 	];
 	return luaEnv;
 }

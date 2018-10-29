@@ -12,24 +12,26 @@ enum TriggerType {
 
 class Actor;
 
-class Trigger : public GameDynamicObject {
+class Trigger : public DynamicEntity, 
+	public virtual Updatable, 
+	public virtual CollisionResponder {
 public:
 	Trigger(const Vector2& position, const String& label);
 	~Trigger();
 
-	bool isSolid() const;
-	GameDynamicObjectType getGameObjectType() const;
-	Aabb getAabb() const;
-	float getRadius() const;
+	virtual String getName() const = 0;
+	bool isSolid() const override;
+	bool isSpotting() const override;
+	float getRadius() const override;
 	
 	bool isActive() const;
-	void update(GameTime time);
+	void update(GameTime time) override;
+	void onCollision(CollisionInvoker* invoker, GameTime time) override;
 
 	virtual TriggerType getTriggerType() const = 0;
-	virtual void pick(Actor* actor, GameTime time);
 	
 protected:
-	bool hasPositionChanged() const;
+	virtual void pick(Actor* actor, GameTime time) = 0;
 
 private:
 	String _label;
@@ -45,17 +47,19 @@ private:
 class ArmorPack : public Trigger {
 public:
 	ArmorPack(const Vector2& position, const String& label);
-	TriggerType getTriggerType() const;
+	String getName() const;
 	void pick(Actor* actor, GameTime time);
+	TriggerType getTriggerType() const override;
 };
 
 
 class AmmoPack : public Trigger {
 public:
 	AmmoPack(const String& weaponName, const Vector2& position, const String& label);
-	TriggerType getTriggerType() const;
+	String getName() const;
 	String getWeaponType() const;
 	void pick(Actor* actor, GameTime time);
+	TriggerType getTriggerType() const override;
 
 private:
 	String _weaponName;
@@ -66,5 +70,6 @@ class MedPack : public Trigger {
 public:
 	MedPack(const Vector2& position, const String& label);
 	void pick(Actor* actor, GameTime time);
-	TriggerType getTriggerType() const;
+	String getName() const;
+	TriggerType getTriggerType() const override;
 };

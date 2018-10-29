@@ -30,6 +30,7 @@ bool readAsBool(const String& str) {
 		return tolower(a) == tolower(b);
 	});
 }
+GameTime readAsTime(const String& str) { return std::stof(str) *  SDL_GetPerformanceFrequency(); }
 
 ConfigurationParameters::ConfigurationParameters(const std::map<String, String>& parameters) :
 	WindowTitle(parameters.at("WindowTitle")),
@@ -46,9 +47,10 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ArmorPackName(parameters.at("ArmorPackName")),
 	DefaultSettings(parameters.at("DefaultSettings")),
 	WeaponsDataFile(parameters.at("WeaponsDataFile")),
+	CollisionResolver(parameters.at("CollisionResolver")),
 
 	AreLogsVisible(readAsBool(parameters.at("AreLogsVisible"))),
-	CollisionMethodAabbTree(readAsBool(parameters.at("CollisionMethodAabbTree"))),
+	MultithreadingEnabled(readAsBool(parameters.at("MultithreadingEnabled"))),
 
 	ActorMaxHealth(readAsInt(parameters.at("ActorMaxHealth"))),
 	ActorRadius(readAsInt(parameters.at("ActorRadius"))),
@@ -60,12 +62,10 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ActorSelectionRing(readAsInt(parameters.at("ActorSelectionRing"))),
 	ActorSightRadius(readAsInt(parameters.at("ActorSightRadius"))),
 	ActorVOCheckRadius(readAsInt(parameters.at("ActorVOCheckRadius"))),
+	CameraSpeed(readAsInt(parameters.at("CameraSpeed"))),	
 	ActorVOCheckAngle(readAsInt(parameters.at("ActorVOCheckAngle"))),
 	MissileInitialDistance(readAsInt(parameters.at("MissileInitialDistance"))),
-	MinInitialTriggerActivationTime(readAsInt(parameters.at("MinInitialTriggerActivationTime"))),
-	MinTriggerActivationTime(readAsInt(parameters.at("MinTriggerActivationTime"))),
-	MaxTriggerActivationTime(readAsInt(parameters.at("MaxTriggerActivationTime"))),
-	TriggerDeactivationTime(readAsInt(parameters.at("TriggerDeactivationTime"))),
+	
 	WeaponChangeTime(readAsInt(parameters.at("WeaponChangeTime"))),
 	ActorDyingTime(readAsInt(parameters.at("ActorDyingTime"))),
 	MaxRecalculations(readAsInt(parameters.at("MaxRecalculations"))),
@@ -80,9 +80,7 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ActorNamePosition(readAsInt(parameters.at("ActorNamePosition"))),
 	TimerPosition(readAsInt(parameters.at("TimerPosition"))),
 
-	VOSideVelocityMargin(readAsFloat(parameters.at("VOSideVelocityMargin"))),
-	MaxMovementWaitingTime(readAsFloat(parameters.at("MaxMovementWaitingTime"))),
-	MaxRecalculatedWaitingTime(readAsFloat(parameters.at("MaxRecalculatedWaitingTime"))),
+	VOSideVelocityMargin(readAsFloat(parameters.at("VOSideVelocityMargin"))),	
 	ActorOscilationRadius(readAsFloat(parameters.at("ActorOscilationRadius"))),
 	TriggerRotationSpeed(readAsFloat(parameters.at("TriggerRotationSpeed"))),
 	ActorRotationSpeed(readAsFloat(parameters.at("ActorRotationSpeed"))),
@@ -95,5 +93,13 @@ ConfigurationParameters::ConfigurationParameters(const std::map<String, String>&
 	ActorInitialHealth(readAsFloat(parameters.at("ActorInitialHealth"))),
 	ArmorTriggerMultiplier(readAsFloat(parameters.at("ArmorTriggerMultiplier"))),
 	MedpackHealthBonus(readAsFloat(parameters.at("MedpackHealthBonus"))),
-	MaxArmor(readAsFloat(parameters.at("MaxArmor")))
+	MaxArmor(readAsFloat(parameters.at("MaxArmor"))),
+	AabbTreeMargin(readAsFloat(parameters.at("AabbTreeMargin"))),
+	
+	MaxMovementWaitingTime(readAsTime(parameters.at("MaxMovementWaitingTime"))),
+	MaxRecalculatedWaitingTime(readAsTime(parameters.at("MaxRecalculatedWaitingTime"))),
+	MinInitialTriggerActivationTime(readAsTime(parameters.at("MinInitialTriggerActivationTime"))),
+	MinTriggerActivationTime(readAsTime(parameters.at("MinTriggerActivationTime"))),
+	MaxTriggerActivationTime(readAsTime(parameters.at("MaxTriggerActivationTime"))),
+	TriggerDeactivationTime(readAsTime(parameters.at("TriggerDeactivationTime")))
 {}

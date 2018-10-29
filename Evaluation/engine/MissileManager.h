@@ -16,7 +16,7 @@ public:
 
 	void initialize(GameMap* map);
 	void update(GameTime time);
-	void shootAt(Actor* actor, const Vector2& target, GameTime time);
+	void shootAt(MissileOwner* owner, const Vector2& target, GameTime time);
 	std::vector<Missile> getMissiles() const;
 	std::vector<common::Ring> getExplosions(GameTime time) const;
 
@@ -38,7 +38,7 @@ private:
 	static const int DEFAULT_CAPACITY = 32;
 	static const int RESIZE_CAPACITY = 16;
 
-	void initializeMissile(int missileIndex, Actor* actor, const Vector2& position, const Vector2& target, GameTime time);
+	void initializeMissile(int missileIndex, MissileOwner* owner, const Vector2& position, const Vector2& target, GameTime time);
 	void missileHit(Missile& missile, const Vector2& point, GameTime time);
 	int getNextIndex();
 };

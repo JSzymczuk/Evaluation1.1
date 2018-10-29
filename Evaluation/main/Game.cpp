@@ -14,19 +14,28 @@
 #include "actions/Move.h"
 #include "actions/Shoot.h"
 #include "agents/LuaEnvironment.h"
-#include "engine//CommonFunctions.h"
+#include "engine/CommonFunctions.h"
+#include <fstream>
+#include "engine/TreeCollisionResolver.h"
+
+
+std::map<Agent*, size_t> agentsFps;
+std::map<Agent*, size_t> agentsTotalFrames;
 
 Game::Game() {
 	if (_instance != nullptr) {
 		delete _instance;
 	}
 	_instance = this;
+	_camera = nullptr;
 }
 
 Game::~Game() {
 	for (Agent* a : _agents) {
 		delete a;
 	}
+
+	if (_camera != nullptr) { delete _camera; }
 
 	GameMap::destroy(_gameMap);
 	destroyLuaEnv(_luaEnv);
@@ -123,27 +132,48 @@ bool Game::initialize(const String& settingsFilename) {
 	
 	_missileManager = new MissileManager();
 	_missileManager->initialize(_gameMap);
+	
+	int mapHeight = _gameMap->getHeight();
+	int mapWidth = _gameMap->getWidth();
+	int displayWidth = Config.DisplayWidth;
+	int displayHeight = Config.DisplayHeight;
+	int dw = -displayWidth / 2;
+	int dh = -displayHeight / 2;
+
+	_camera = new Camera(-(displayWidth - mapWidth) / 2, -(displayHeight - mapHeight) / 2,
+		dw, mapWidth + dw, dh, mapHeight + dh);
 
 	initializeTeams(settings.actors);
 
-	start(settings.duration);
+	_duration = settings.duration;
+	_fps = 0;
+	_lastFps = 0;
 
 	return true;
 }
 
-void Game::start(size_t durationInSeconds) {
-	for (Agent* agent : _agents) {
-		agent->start();
+void Game::run(GameTime time) {
+	if (Config.MultithreadingEnabled) {
+		for (Agent* agent : _agents) {
+			agent->run(time);
+		}
 	}
-	_gameTime = SDL_GetPerformanceCounter();
-	_timeEnd = _gameTime + 10000000 * durationInSeconds;
-	_lastTimeVisible = durationInSeconds;
+	else {
+		for (Agent* agent : _agents) {
+			agent->initialize(time);
+		}
+	}
+	_timeStarted = time;
+	_timeEnd = _timeStarted + SDL_GetPerformanceFrequency() * _duration;
+	_gameTime = _timeStarted;
+	_lastTimeVisible = _duration;
 }
 
 void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 	// Actor* actor = new Actor("test" + std::to_string(i), 0, center + Vector2(cosf(i * angle), sinf(i * angle)) * r);
 	std::map<size_t, Team*> teams;
 	std::map<Team*, std::vector<Agent*>> teamAgents;
+	std::vector<DynamicEntity*> actors;
 
 	for (auto actorData : actorsData) {
 		Team* team = nullptr;
@@ -162,8 +192,8 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 		bool isValid = false;
 		Agent* agent;
 
-		if (_gameMap->place(actor)) {
-			if (actorData.script == Config.AgentControlled && _playerAgent == nullptr) {
+		if (_gameMap->canPlace(actor)) {
+			if (_playerAgent == nullptr && actorData.script == Config.AgentControlled) {
 				_playerAgent = new PlayerAgent(actor);
 				agent = _playerAgent;
 				isValid = true;
@@ -178,20 +208,29 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 			_agents.push_back(agent);
 			team->addMember(actorData.name, actor);
 			teamAgents[team].push_back(agent);
+			actors.push_back(actor);
+
+			agentsFps[agent] = 0;
+			agentsTotalFrames[agent] = 0;
 		}
 		else {
 			delete actor;
 		}
 	}
 
+	_gameMap->initializeDynamic(actors);
+
 	std::vector<SDL_Color> teamColors = { 
 		{ 47, 63, 191 }, // niebieski
 		{ 191, 31, 31 }, // czerwony
 		{ 47, 143, 47 }, // zielony
 		{ 191, 191, 47 }, // ¿ó³ty
-		{ 160, 32, 208 }, // fioletowy
-		{ 96, 180, 180 }, // turkusowy
-		{ 96, 180, 180 }, // turkusowy
+		{ 159, 32, 207 }, // fioletowy
+		{ 47, 143, 143 }, // turkusowy
+		{ 191, 63, 191 }, // ró¿owy
+		{ 159, 95,  79 }, // br¹zowy
+		{ 143, 179, 191 }, // srebrny
+		{ 207, 143,  63 }, // z³oty
 	};
 
 	int i = 0;
@@ -233,91 +272,97 @@ bool Game::isRunning() { return _isRunning; }
 
 void Game::handleEvents() {
 	SDL_Event event;
-	SDL_PollEvent(&event);
 
-	const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
-
-	switch (event.type) {
-	case SDL_MOUSEMOTION:
-		SDL_GetMouseState(&mousePosX, &mousePosY);
-		break;
-
-	case SDL_MOUSEBUTTONUP:
-		SDL_GetMouseState(&mousePosX, &mousePosY);
-
-		if (event.button.button == SDL_BUTTON_LEFT) {
-			if (_playerAgent != nullptr) {
-				_playerAgent->shoot(Vector2(mousePosX, mousePosY));
-			}
-		}
-		else if (event.button.button == SDL_BUTTON_RIGHT) {
-			if (_playerAgent != nullptr) {				
-				if (keyboardState[SDL_SCANCODE_LSHIFT]) {
-					_playerAgent->moveDirection(Vector2(mousePosX, mousePosY) - _playerAgent->getActor()->getPosition());
-				}
-				else if (keyboardState[SDL_SCANCODE_LALT]) {
-					_playerAgent->face(Vector2(mousePosX, mousePosY));
-				}
-				else if (keyboardState[SDL_SCANCODE_LCTRL]) {
-					_playerAgent->wait();
-				}
-				else if (keyboardState[SDL_SCANCODE_W]) {
-					_playerAgent->wander();
-				}
-				else {
-					_playerAgent->move(Vector2(mousePosX, mousePosY));
-				}
-			}
-		}
-		break;
-
-	case SDL_KEYDOWN: {
+	while (SDL_PollEvent(&event))
+	{
 		const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
 
-		if (_playerAgent != nullptr) {
-			if (keyboardState[SDL_SCANCODE_1]) { 
-				_playerAgent->selectWeapon("Shotgun");
-			}
-			else if (keyboardState[SDL_SCANCODE_2]) {
-				_playerAgent->selectWeapon("Railgun");
-			}
-			else if (keyboardState[SDL_SCANCODE_3]) {
-				_playerAgent->selectWeapon("Chaingun");
-			}
-			else if (keyboardState[SDL_SCANCODE_4]) {
-				_playerAgent->selectWeapon("RocketLauncher");
-			}			
-		}
+		switch (event.type) {
+		case SDL_MOUSEMOTION:
+			SDL_GetMouseState(&mousePosX, &mousePosY);
+			break;
 
-		if (keyboardState[SDL_SCANCODE_SPACE]) {
-			if (_isNavigationMeshVisible) {
-				_isNavigationMeshVisible = false;
-				_areAabbsVisible = false;
-				_iscurrentPathVisible = false;
-			}
-			else {
-				_isNavigationMeshVisible = true;
-				_areAabbsVisible = true;
-				_iscurrentPathVisible = true;
-			}
-		}
+		case SDL_MOUSEBUTTONUP:
+			SDL_GetMouseState(&mousePosX, &mousePosY);
 
-		if (keyboardState[SDL_SCANCODE_TAB]) {
-			_isUpdateEnabled = !_isUpdateEnabled;
-		}
+			if (event.button.button == SDL_BUTTON_LEFT) {
+				if (_playerAgent != nullptr) {
+					_playerAgent->shoot(Vector2(mousePosX, mousePosY));
+				}
+			}
+			else if (event.button.button == SDL_BUTTON_RIGHT) {
+				if (_playerAgent != nullptr) {
+					if (keyboardState[SDL_SCANCODE_LSHIFT]) {
+						_playerAgent->moveDirection(Vector2(mousePosX, mousePosY) - _playerAgent->getActor()->getPosition());
+					}
+					else if (keyboardState[SDL_SCANCODE_LALT]) {
+						_playerAgent->face(Vector2(mousePosX, mousePosY));
+					}
+					else if (keyboardState[SDL_SCANCODE_LCTRL]) {
+						_playerAgent->wait();
+					}
+					else if (keyboardState[SDL_SCANCODE_W]) {
+						_playerAgent->wander();
+					}
+					else {
+						_playerAgent->move(Vector2(mousePosX, mousePosY));
+					}
+				}
+			}
+			break;
 
-		if (keyboardState[SDL_SCANCODE_LCTRL] && keyboardState[SDL_SCANCODE_L]) {
-			if (Logger::isLogging()) { Logger::stopLogging(); }
-			else { Logger::startLogging(); }			
+		case SDL_KEYDOWN: {
+			const Uint8* keyboardState = SDL_GetKeyboardState(nullptr);
+
+			if (_playerAgent != nullptr) {
+				if (keyboardState[SDL_SCANCODE_1]) {
+					_playerAgent->selectWeapon("Shotgun");
+				}
+				else if (keyboardState[SDL_SCANCODE_2]) {
+					_playerAgent->selectWeapon("Railgun");
+				}
+				else if (keyboardState[SDL_SCANCODE_3]) {
+					_playerAgent->selectWeapon("Chaingun");
+				}
+				else if (keyboardState[SDL_SCANCODE_4]) {
+					_playerAgent->selectWeapon("RocketLauncher");
+				}
+			}
+
+			if (keyboardState[SDL_SCANCODE_G]) {
+				_isNavigationMeshVisible = !_isNavigationMeshVisible;
+			}
+
+			if (keyboardState[SDL_SCANCODE_SPACE]) {
+				_areAabbsVisible = !_areAabbsVisible;
+			}
+
+			if (keyboardState[SDL_SCANCODE_P]) {
+				_isUpdateEnabled = !_isUpdateEnabled;
+			}
+
+			if (keyboardState[SDL_SCANCODE_V]) {
+				_areHealthBarsVisible = !_areHealthBarsVisible;
+			}
+
+			if (keyboardState[SDL_SCANCODE_LCTRL] && keyboardState[SDL_SCANCODE_L]) {
+				if (Logger::isLogging()) { Logger::stopLogging(); }
+				else { Logger::startLogging(); }
+			}
+
+			_camera->update(keyboardState[SDL_SCANCODE_UP], keyboardState[SDL_SCANCODE_RIGHT],
+				keyboardState[SDL_SCANCODE_DOWN], keyboardState[SDL_SCANCODE_LEFT]);
+
+			break;
 		}
-		break;
-	}
-	case SDL_QUIT:
-		_isRunning = false;
-		break;
-	default: break;
+		case SDL_QUIT:
+			_isRunning = false;
+			break;
+		default: break;
+		}
 	}
 }
+
 
 void Game::dispose() {
 	delete _missileManager;
@@ -328,29 +373,50 @@ void Game::dispose() {
 	SDL_Quit();
 }
 
-void Game::update() {
+void Game::update(GameTime time) {
 	if (_isUpdateEnabled) {
-		_gameTime = SDL_GetPerformanceCounter();
+		_gameTime = time;
 		if (_gameTime > _timeEnd) {
 			_gameTime = _timeEnd;
 		}
 
-		size_t remainingTimeInSeconds = (size_t)(getRemainingTime() / 10000000);
+		size_t remainingTimeInSeconds = getRemainingTime();
+
 		if (remainingTimeInSeconds < _lastTimeVisible) {
 			_lastTimeVisible = remainingTimeInSeconds;
+			_lastFps = _fps;
+			_fps = 1;
+			
+			for (Agent* agent : _agents) {
+				size_t newTotalFrames = agent->getTotalFrames();
+				agentsFps[agent] = newTotalFrames - agentsTotalFrames[agent];
+				agentsTotalFrames[agent] = newTotalFrames;
+			}
+			
 			Logger::log("Remaining time: " + std::to_string(_lastTimeVisible) + "s");
+		}
+		else {
+			++_fps;
 		}
 
 		std::vector<Team*> winners;
 		GameState state = checkWinLoseConditions(winners);
 
 		if (state == GameState::IN_PROGRESS) {
-
+			
 			for (Trigger* trigger : _gameMap->getTriggers()) {
 				trigger->update(_gameTime);
 			}
 
-			_updateHolder.notify_all();
+			if (Config.MultithreadingEnabled) {
+				_updateHolder.notify_all();
+			}
+			else {
+				for (Agent* agent : _agents) {
+					agent->update(_gameTime);
+				}
+			}
+
 			_missileManager->update(_gameTime);
 
 			while (!_threadsToDispose.empty()) {
@@ -406,7 +472,7 @@ String toTimeString(size_t time) {
 	return time < 10 ? "0" + std::to_string(time) : std::to_string(time);
 }
 
-void Game::render() {
+void Game::render() const {
 
 	Actor* currentActor = _playerAgent != nullptr ? _playerAgent->getActor() : nullptr;
 	if (currentActor != nullptr && currentActor->isDead()) { currentActor = nullptr; }
@@ -417,36 +483,61 @@ void Game::render() {
 	Vector2 center = Vector2(Config.DisplayWidth / 2, Config.DisplayHeight / 2);
 	Vector2 mousePos = Vector2(mousePosX, mousePosY);
 	Segment centerMouseSegment = Segment(center, mousePos);
+	
+#ifdef _DEBUG
 
-	if (_isNavigationMeshVisible) {
+	if (_areAabbsVisible) {
+		if (Config.CollisionResolver == "RegularGrid") {
 
-		int gridSize = Config.RegularGridSize;
+			int gridSize = Config.RegularGridSize;
+			auto grid = ((const RegularGrid*)_gameMap->getCollisionResolver());
 
-		size_t n = (int)ceil(_gameMap->getWidth() / gridSize);
-		size_t m = (int)ceil(_gameMap->getHeight() / gridSize);
-		for (size_t i = 0; i < n; ++i) {
-			for (size_t j = 0; j < m; ++j) {
-				drawAabb(Aabb(i * gridSize, j * gridSize, gridSize, gridSize), colors::gray);
+			size_t n = (int)ceil(_gameMap->getWidth() / gridSize);
+			size_t m = (int)ceil(_gameMap->getHeight() / gridSize);
+
+			for (size_t i = 0; i < n; ++i) {
+				for (size_t j = 0; j < m; ++j) {
+					const RegularGrid::Region* region = grid->getRegionById(i, j);
+
+					float left = i * gridSize;
+					float right = left + gridSize;
+					float top = j * gridSize;
+					float bottom = top + gridSize;
+
+					bool vld = true;
+					for (DynamicEntity* a : region->dynamicObjects) {
+						Vector2 p = a->getPosition();
+						float r = a->getRadius();
+						if (common::sqDist(p, left, right, top, bottom) > r*r) {
+							vld = false;
+							break;
+						}
+					}
+
+					drawAabb(_renderer, Aabb(i * gridSize, j * gridSize, gridSize, gridSize), *_camera, colors::gray);
+					drawString(_renderer, std::to_string(region->dynamicObjects.size()).c_str(), i * gridSize + 20, j * gridSize + 20, *_camera, Relative, false, vld ? colors::white : colors::red);
+				}
+			}
+		}
+		else if (Config.CollisionResolver == "AabbTree") {
+			auto tree = (TreeCollisionResolver*)_gameMap->getCollisionResolver();
+
+			for (Aabb& aabb : tree->getStaticAabbs()) {
+				drawAabb(_renderer, aabb, *_camera, colors::pink);
+			}
+
+			for (Aabb& aabb : tree->getDynamicAabbs()) {
+				drawAabb(_renderer, aabb, *_camera, colors::white);
 			}
 		}
 	}
-
-	auto walls = _gameMap->getWalls();
-	for (GameStaticObject* wall : walls) {
-		//drawSegment(common::extendSegment(wall, Aabb(0, 0, DisplayWidth, DisplayHeight)), gray);
-		for (Segment segment : wall->getBounds()) {
-			drawSegment(segment, colors::black);
-		}
-	}
-
-#ifdef _DEBUG
 	
 	if (_isNavigationMeshVisible) {
 		for (Segment arc : _gameMap->getNavigationArcs()) {
-			drawSegment(arc, colors::blue);
+			drawSegment(_renderer, arc, *_camera, colors::blue);
 		}
 		for (Vector2 point : _gameMap->getNavigationNodes()) {
-			drawPoint(point, colors::blue);
+			drawPoint(_renderer, point, *_camera, colors::blue);
 		}
 	}
 	
@@ -463,7 +554,7 @@ void Game::render() {
 	//}
 	//drawCircle(mousePos, 20, colors::darkRed);
 
-	if (_iscurrentPathVisible && currentActor != nullptr) {
+	/*if (_iscurrentPathVisible && currentActor != nullptr) {
 		auto pathCopy = std::queue<Vector2>(currentActor->getCurrentPath());
 		if (pathCopy.size() > 0) {
 			Vector2 prev = currentActor->getPosition();
@@ -476,7 +567,7 @@ void Game::render() {
 				prev = next;
 			}
 		}
-	}
+	}*/
 
 #endif
 
@@ -498,247 +589,75 @@ void Game::render() {
 	}
 	*/
 
-	int actorRadius = Config.ActorRadius;
+	auto walls = _gameMap->getWalls();
+	for (StaticEntity* wall : walls) {
+		//drawSegment(common::extendSegment(wall, Aabb(0, 0, DisplayWidth, DisplayHeight)), gray);
+		for (Segment segment : wall->getBounds()) {
+			drawSegment(_renderer, segment, *_camera, colors::black);
+		}
+	}
 
 	for (Trigger* trigger : _gameMap->getTriggers()) {
-		drawTrigger(*trigger);
+		drawTrigger(_renderer, *trigger, *_camera);
 	}
 
-	for (Actor* actor : _gameMap->getActors()) {		
-		if (actor->isMoving()) {
-			//GameTime from, to;
-			//from = SDL_GetPerformanceCounter();
-			drawActor(*actor);
-			//to = SDL_GetPerformanceCounter();
-			//Logger::log("Render:                 " + std::to_string(to - from));
-		}
-		else {
-			drawActor(*actor);
-		}
-#ifdef _DEBUG
-		if (_areAabbsVisible) {
-			drawCircle(actor->getPosition(), actorRadius, colors::black);
-		}
-#endif // _DEBUG
+	for (Actor* actor : _gameMap->getActors()) {	
+		drawActor(_renderer, *actor, *_camera, _playerAgent != nullptr && _playerAgent->getActor() == actor, _areHealthBarsVisible);
 	}
 
-#ifdef _DEBUG
-	if (currentActor != nullptr) {
+//#ifdef _DEBUG
+//	if (currentActor != nullptr) {
+//
+//		if (_iscurrentPathVisible) {
+//			//auto viewBorders = currentActor->getViewBorders();
+//			Vector2 pos = currentActor->getPosition();
+//			//drawSegment(Segment(pos, pos + viewBorders.first * Config.ActorSightRadius), colors::pink);
+//			//drawSegment(Segment(pos, pos + viewBorders.second * Config.ActorSightRadius), colors::pink);
+//
+//			auto vos = currentActor->getVelocityObstacles(currentActor->getObjectsInViewAngle());
+//			for (VelocityObstacle vo : vos) {
+//				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
+//				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * Config.ActorSightRadius), colors::yellow);
+//				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * Config.ActorSightRadius), colors::yellow);
+//			}
+//
+//			for (auto candidate : currentActor->computeCandidates(vos)) {
+//				drawSegment(Segment(pos, pos + candidate.velocity * 50), colors::darkRed);
+//			}
+//	
+//			auto walls = currentActor->getWallsNearGoal();
+//			for (auto wall : walls) {
+//				drawSegment(wall->getSegment(), colors::pink);
+//			}
+//
+//			drawSegment(Segment(currentActor->getPosition(), currentActor->getLongGoal()), colors::cyan);
+//			drawPoint(currentActor->getShortGoal(), colors::yellow);
+//			drawPoint(currentActor->getLongGoal(), colors::cyan);
+//		}
+//	}
+//
+//#endif // _DEBUG
 
-		if (_iscurrentPathVisible) {
-			auto viewBorders = currentActor->getViewBorders();
-			Vector2 pos = currentActor->getPosition();
-			drawSegment(Segment(pos, pos + viewBorders.first * Config.ActorSightRadius), colors::pink);
-			drawSegment(Segment(pos, pos + viewBorders.second * Config.ActorSightRadius), colors::pink);
-
-			auto vos = currentActor->getVelocityObstacles(currentActor->getObjectsInViewAngle());
-			for (VelocityObstacle vo : vos) {
-				fillRing(vo.obstacle->getPosition(), 24, 25, colors::yellow);
-				drawSegment(Segment(vo.apex, vo.apex + vo.side1 * Config.ActorSightRadius), colors::yellow);
-				drawSegment(Segment(vo.apex, vo.apex + vo.side2 * Config.ActorSightRadius), colors::yellow);
-			}
-
-			for (auto candidate : currentActor->computeCandidates(vos)) {
-				drawSegment(Segment(pos, pos + candidate.velocity * 50), colors::darkRed);
-			}
-	
-			auto walls = currentActor->getWallsNearGoal();
-			for (auto wall : walls) {
-				drawSegment(wall->getSegment(), colors::pink);
-			}
-
-			drawSegment(Segment(currentActor->getPosition(), currentActor->getLongGoal()), colors::cyan);
-			drawPoint(currentActor->getShortGoal(), colors::yellow);
-			drawPoint(currentActor->getLongGoal(), colors::cyan);
-		}
-	}
-
-#endif // _DEBUG
-
-	auto time = SDL_GetPerformanceCounter();
+	//auto time = SDL_GetPerformanceCounter();
 
 	SDL_Color missileColor;
 	for (Missile& missile : _missileManager->getMissiles()) {		
-		drawSegment(Segment(missile.frontPosition, missile.backPosition), getWeaponInfo(missile.weaponType).color);
+		drawSegment(_renderer, Segment(missile.frontPosition, missile.backPosition), *_camera, getWeaponInfo(missile.weaponType).color);
 	}
 
-	for (common::Ring& ring : _missileManager->getExplosions(time)) {
-		fillRing(ring.center, ring.radius1, ring.radius2, colors::red);
+	for (common::Ring& ring : _missileManager->getExplosions(_gameTime)) {
+		fillRing(_renderer, ring.center, ring.radius1, ring.radius2, *_camera, colors::red);
 	}
-
-	size_t seconds = (size_t)(getRemainingTime() / 10000000);
+	
+	size_t seconds = getRemainingTime();
 	size_t minutes = seconds / 60;
 	seconds %= 60;
-	drawString((toTimeString(minutes) + ":" + toTimeString(seconds)).c_str(), Config.DisplayWidth / 2, Config.TimerPosition, colors::white);
+	drawString(_renderer, (toTimeString(minutes) + ":" + toTimeString(seconds)).c_str(), 
+		Config.DisplayWidth / 2, Config.TimerPosition, *_camera, Absolute, true, colors::white);
+	drawString(_renderer, ("FPS: " + std::to_string(_lastFps)).c_str(), 30 + Config.TimerPosition, 
+		Config.TimerPosition, *_camera, Absolute, false, colors::white);
 
 	SDL_RenderPresent(_renderer);
-}
-
-void Game::drawTexture(SDL_Texture* texture, const Vector2& position) const {
-	int width, height;
-	SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
-	SDL_Rect tRect = { int(position.x), int(position.y), width, height };
-	SDL_RenderCopy(_renderer, texture, nullptr, &tRect);
-}
-
-void Game::drawTexture(SDL_Texture* texture, const Vector2& center, float orientation, bool horizontalFlip) const {
-	int width, height;
-	SDL_QueryTexture(texture, nullptr, nullptr, &width, &height);
-	int widthHalf = width / 2;
-	int heightHalf = height / 2;
-	SDL_Rect tRect = { int(center.x) - widthHalf, int(center.y) - heightHalf, width, height };
-	SDL_Point tCenter = { widthHalf, heightHalf };
-	SDL_RenderCopyEx(_renderer, texture, nullptr, &tRect, common::degrees(orientation), &tCenter, 
-		horizontalFlip ? SDL_RendererFlip::SDL_FLIP_HORIZONTAL : SDL_RendererFlip::SDL_FLIP_NONE);
-}
-
-void Game::drawString(const char* string, int x, int y, const SDL_Color& color) const {
-	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(ResourceManager::get()->getFont("mainfont"), string, color);
-	SDL_Texture* Message = SDL_CreateTextureFromSurface(_renderer, surfaceMessage);
-	int w = surfaceMessage->w, h = surfaceMessage->h;
-	SDL_Rect Message_rect = { x - w / 2, y - h / 2, w, h};
-	SDL_RenderCopy(_renderer, Message, nullptr, &Message_rect); 
-	SDL_DestroyTexture(Message);
-	SDL_FreeSurface(surfaceMessage);
-}
-
-void Game::drawAabb(const Aabb& aabb, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	SDL_Rect rect{ int(aabb.getLeft()), int(aabb.getTop()), int(aabb.getWidth()), int(aabb.getHeight()) };
-	SDL_RenderDrawRect(_renderer, &rect);
-}
-
-void Game::fillAabb(const Aabb& aabb, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	SDL_Rect rect{ int(aabb.getLeft()), int(aabb.getTop()), int(aabb.getWidth()), int(aabb.getHeight()) };
-	SDL_RenderFillRect(_renderer, &rect);
-}
-
-void Game::drawSegment(const Segment& segment, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	SDL_RenderDrawLine(_renderer, int(segment.from.x), int(segment.from.y), int(segment.to.x), int(segment.to.y));
-}
-
-void Game::drawPoint(const Vector2& point, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	SDL_Rect rect = { int(point.x - 2), int(point.y - 2), 5, 5 };
-	SDL_RenderFillRect(_renderer, &rect);
-}
-
-void Game::drawCircle(const Vector2& center, float radius, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	int x = int(center.x), y = int(center.y), r = int(radius), r2 = r * r;
-	for (int i = -r; i <= r; ++i) {
-		int t = sqrt(r2 - i * i);
-		SDL_RenderDrawPoint(_renderer, x - t, y + i);
-		SDL_RenderDrawPoint(_renderer, x + t, y + i);
-	}
-}
-
-void Game::fillCircle(const Vector2& center, float radius, const SDL_Color& color) const {
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	int x = int(center.x), y = int(center.y), r = int(radius), r2 = r * r;
-	for (int i = -r; i <= r; ++i) {
-		int t = sqrt(r2 - i * i);
-		SDL_RenderDrawLine(_renderer, x - t, y + i, x + t, y + i);
-	}
-}
-
-void Game::fillRing(const Vector2& center, float radius1, float radius2, const SDL_Color& color) const {
-	if (radius1 > radius2) { common::swap(radius1, radius2); }
-	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
-	int x = int(center.x), y = int(center.y), r1 = int(radius1), r12 = r1 * r1, r2 = int(radius2), r22 = r2 * r2;
-	for (int i = -r2; i <= r2; ++i) {
-		if (-r1 <= i && i <= r1) {
-			int t1 = sqrt(r12 - i * i);
-			int t2 = sqrt(r22 - i * i);
-			SDL_RenderDrawLine(_renderer, x - t2, y + i, x - t1, y + i);
-			SDL_RenderDrawLine(_renderer, x + t1, y + i, x + t2, y + i);
-		}
-		else {
-			int t = sqrt(r22 - i * i);
-			SDL_RenderDrawLine(_renderer, x - t, y + i, x + t, y + i);
-		}
-	}
-}
-
-void Game::drawTrigger(const Trigger& trigger) const {
-	try {
-		if (trigger.isActive()) {
-			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.TriggerRingTextureKey));
-			drawTexture(texture, trigger.getPosition(), trigger.getOrientation(), false);
-			SDL_DestroyTexture(texture);
-		}
-	}
-	catch (...) { std::cout << "Error" << std::endl; }
-}
-
-SDL_Color blendColors(const SDL_Color& c1, const SDL_Color& c2, float t) {
-	Uint8 r = t * c1.r + (1 - t) * c2.r;
-	Uint8 g = t * c1.g + (1 - t) * c2.g;
-	Uint8 b = t * c1.b + (1 - t) * c2.b;
-	Uint8 a = t * c1.a + (1 - t) * c2.a;
-	return { r, g, b, a };
-}
-
-void Game::drawActor(const Actor& actor) const {
-	try {
-		if (!actor.isDead()) {
-			SDL_Texture* texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.ActorRingTextureKey));
-			Vector2 actorPos = actor.getPosition();
-			fillCircle(actorPos, Config.ActorRadius, actor.getTeam()->getColor());
-
-			if (_playerAgent->getActor() == &actor) {
-				fillRing(actorPos, Config.ActorSelectionRing, Config.ActorSelectionRing + 1, colors::green);
-			}
-
-			drawTexture(texture, actorPos, actor.getOrientation(), false);
-			SDL_DestroyTexture(texture);
-
-			if (_areHealthBarsVisible) {
-				SDL_Rect rect = { 
-					actorPos.x - Config.HealthBarWidth / 2, 
-					actorPos.y + Config.ActorRadius + Config.HealthBarPosition, 
-					Config.HealthBarWidth, 
-					Config.HealthBarHeight 
-				};
-				SDL_SetRenderDrawColor(_renderer, 
-					Config.HealthBarBackColor.r, 
-					Config.HealthBarBackColor.g, 
-					Config.HealthBarBackColor.b, 255
-				);
-				SDL_RenderFillRect(_renderer, &rect);
-
-				--rect.x; --rect.y;
-				rect.w += 2; rect.h += 2;
-				SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
-				SDL_RenderDrawRect(_renderer, &rect);
-
-				drawString(actor.getName().c_str(), actorPos.x, actorPos.y + Config.ActorNamePosition, colors::white);
-
-				++rect.x; ++rect.y;
-				rect.w -= 2; rect.h -= 2;
-				float hpPerc = common::clamp((float)actor.getHealth() / Config.ActorMaxHealth, 0, 1);
-				SDL_Color color = hpPerc > 0.5f ? blendColors(
-						Config.HealthBarFullColor, 
-						Config.HealthBarHalfColor, 
-						(hpPerc - 0.5f) / 0.5f)
-					: blendColors(
-						Config.HealthBarHalfColor,
-						Config.HealthBarEmptyColor, 
-						hpPerc / 0.5f);
-				SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, 255);
-				rect.w *= hpPerc;
-				SDL_RenderFillRect(_renderer, &rect);
-
-
-				//texture = SDL_CreateTextureFromSurface(_renderer, ResourceManager::get()->getImage(Config.HealthBarTextureKey));
-				//drawTexture(texture, Vector2(actorPos.x, actorPos.y + Config.ActorRadius + 15 + Config.HealthBarHeight / 2), 0, false);
-				//SDL_DestroyTexture(texture);
-			}
-		}
-	}
-	catch (...) { std::cout << "Error" << std::endl; }
 }
 
 void Game::registerAgentToDispose(Agent* agent) {
@@ -798,6 +717,5 @@ GameState Game::checkWinLoseConditions(std::vector<Team*>& winners) const {
 }
 
 GameTime Game::getRemainingTime() const { 
-	GameTime remaining = _timeEnd - _gameTime;
-	return remaining > 0 ? remaining : 0;
+	return (_timeEnd - _gameTime) / SDL_GetPerformanceFrequency();
 }

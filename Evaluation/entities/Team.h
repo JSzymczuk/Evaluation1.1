@@ -4,8 +4,8 @@
 #include <vector>
 #include <mutex>
 #include "main/Configuration.h"
+#include "entities/Actor.h"
 
-class Actor;
 struct SDL_Color;
 
 class Team {

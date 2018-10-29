@@ -14,6 +14,7 @@
 #include "SDL_ttf.h"
 #include "agents/Agent.h"
 #include "agents/LuaEnvironment.h"
+#include "engine/Camera.h"
 
 enum GameState {
 	IN_PROGRESS,
@@ -36,8 +37,9 @@ public:
 	bool initialize(const String& settings);
 	bool isRunning();
 	void handleEvents();
-	void update();
-	void render();
+	void run(GameTime time);
+	void update(GameTime time);
+	void render() const;
 	void dispose();
 
 	static Game* getInstance();
@@ -58,6 +60,7 @@ private:
 	static Game* _instance;
 
 	GameTime _gameTime;
+	GameTime _timeStarted;
 	GameTime _timeEnd;
 	std::mutex _updateMutex;
 	std::condition_variable _updateHolder;
@@ -65,6 +68,7 @@ private:
 	bool _isRunning;
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
+	Camera* _camera;
 	
 	LuaEnv* _luaEnv;
 	GameMap* _gameMap;
@@ -75,11 +79,7 @@ private:
 	std::vector<Agent*> _agents;
 	std::queue<Agent*> _threadsToDispose;
 
-	void start(size_t durationInSeconds);
 	void initializeTeams(const std::vector<ActorLoadedData>& actorsData);
-
-	void drawTrigger(const Trigger& trigger) const;
-	void drawActor(const Actor& actor) const;
 
 	bool _areHealthBarsVisible = true;
 	bool _isNavigationMeshVisible = false;
@@ -88,20 +88,12 @@ private:
 	bool _isUpdateEnabled = true;
 	std::queue<Vector2> _path;
 	size_t _lastTimeVisible;
+	size_t _duration;
+	size_t _fps;
+	size_t _lastFps;
 
 	int mousePosX;
 	int mousePosY;
-	
-	void drawPoint(const Vector2& point, const SDL_Color& color) const;
-	void drawSegment(const Segment& segment, const SDL_Color& color) const;
-	void drawAabb(const Aabb& aabb, const SDL_Color& color) const;
-	void drawString(const char* string, int x, int y, const SDL_Color& color) const; 
-	void drawTexture(SDL_Texture* texture, const Vector2& position) const;
-	void drawTexture(SDL_Texture* texture, const Vector2& position, float orientation, bool horizontalFlip) const;
-	void fillAabb(const Aabb& aabb, const SDL_Color& color) const;
-	void drawCircle(const Vector2& center, float radius, const SDL_Color& color) const;
-	void fillCircle(const Vector2& center, float radius, const SDL_Color& color) const;
-	void fillRing(const Vector2& center, float radius1, float radius2, const SDL_Color& color) const;
 
 	friend class Agent;
 

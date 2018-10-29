@@ -1,0 +1,21 @@
+data/maps/empty.map 300
+a1  sc:data/ai/dumb.lua  1  660 360
+a2  sc:data/ai/dumb.lua  2  651 416
+a3  sc:data/ai/dumb.lua  3  626 466
+a4  sc:data/ai/dumb.lua  4  586 506
+a5  sc:data/ai/dumb.lua  5  536 531
+a6  sc:data/ai/dumb.lua  6  480 540
+a7  sc:data/ai/dumb.lua  7  424 531
+a8  sc:data/ai/dumb.lua  8  374 506
+a9  sc:data/ai/dumb.lua  9  334 466
+a10 sc:data/ai/dumb.lua  10 309 416
+a11 sc:data/ai/dumb.lua  1  300 360
+a12 sc:data/ai/dumb.lua  2  309 304
+a13 sc:data/ai/dumb.lua  3  334 254
+a14 sc:data/ai/dumb.lua  4  374 214
+a15 sc:data/ai/dumb.lua  5  424 189
+a16 sc:data/ai/dumb.lua  6  480 180
+a17 sc:data/ai/dumb.lua  7  536 189
+a18 sc:data/ai/dumb.lua  8  586 214
+a19 sc:data/ai/dumb.lua  9  626 254
+a20 sc:data/ai/dumb.lua  10 651 304

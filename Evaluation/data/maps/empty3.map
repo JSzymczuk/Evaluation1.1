@@ -1,0 +1,23 @@
+width: 4000 height: 4000
+
+navigation_points: 4
+id:  0 x:   40 y:   40
+id:  1 x: 3960 y:   40
+id:  2 x:   40 y: 3960
+id:  3 x: 3960 y: 3960
+
+connections: 6
+from: 0 to: 1 mul: 1.0 inv: 1
+from: 0 to: 2 mul: 1.0 inv: 1
+from: 0 to: 3 mul: 1.0 inv: 1
+from: 1 to: 2 mul: 1.0 inv: 1
+from: 1 to: 3 mul: 1.0 inv: 1
+from: 2 to: 3 mul: 1.0 inv: 1
+
+walls: 4
+wall:   20   20 3980   20 id: 0 priority: 0
+wall: 3980   20 3980 3980 id: 1 priority: 0
+wall: 3980 3980   20 3980 id: 2 priority: 0
+wall:   20 3980   20   20 id: 3 priority: 0
+
+triggers: 0

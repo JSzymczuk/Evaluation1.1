@@ -14,7 +14,10 @@ from: 1 to: 2 mul: 1.0 inv: 1
 from: 1 to: 3 mul: 1.0 inv: 1
 from: 2 to: 3 mul: 1.0 inv: 1
 
+walls: 4
 wall: 25 25 935 25 id: 0 priority: 0
 wall: 25 25 25 695 id: 1 priority: 0
 wall: 935 25 935 695 id: 2 priority: 0
 wall: 25 695 935 695 id: 3 priority: 0
+
+triggers: 0

@@ -16,6 +16,7 @@ public:
 	std::vector<ActorInfo> getTeamMembers() const;
 	String getVariable(const String& value) const;
 	void setVariable(const String& key, const String& value);
+	std::vector<TriggerInfo> getTriggers() const;
 
 	int getMapWidth() const;
 	int getMapHeight() const;

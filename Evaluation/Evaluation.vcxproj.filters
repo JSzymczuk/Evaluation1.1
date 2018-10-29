@@ -144,6 +144,21 @@
     <ClCompile Include="agents\ObjectInfo.cpp">
       <Filter>Source Files\Agents</Filter>
     </ClCompile>
+    <ClCompile Include="engine\CollisionResolver.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="entities\Movable.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\VectorCollisionResolver.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\TreeCollisionResolver.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\Camera.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="agents\ActorKnowledge.h">
@@ -159,9 +174,6 @@
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="engine\ResourceManager.h">
-      <Filter>Header Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="engine\SegmentTree.h">
       <Filter>Header Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="entities\Actor.h">
@@ -265,6 +277,18 @@
     </ClInclude>
     <ClInclude Include="agents\ObjectInfo.h">
       <Filter>Header Files\Agents</Filter>
+    </ClInclude>
+    <ClInclude Include="entities\Movable.h">
+      <Filter>Header Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\VectorCollisionResolver.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\TreeCollisionResolver.h">
+      <Filter>Header Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\Camera.h">
+      <Filter>Header Files\Engine</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

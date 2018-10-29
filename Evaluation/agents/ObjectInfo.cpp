@@ -44,8 +44,8 @@ bool ActorInfo::isDead() const { return _health <= 0; }
 
 TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
 	if (trigger != nullptr) {
-		TriggerType type = trigger->getTriggerType();
-		if (type == TriggerType::HEALTH) {
+		_name = trigger->getName();
+		/*if (type == TriggerType::HEALTH) {
 			_name = Config.MedPackName;
 		}
 		else if (type == TriggerType::ARMOR) {
@@ -53,8 +53,7 @@ TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
 		}
 		else {
 			_name = ((AmmoPack*)trigger)->getWeaponType();
-		}
-
+		}*/
 		_isActive = trigger->isActive();
 		_position = trigger->getPosition();
 	}

@@ -28,32 +28,32 @@ Segment getMissileLine(const Missile& missile, const GameTime& time) {
 bool MissileManager::_weaponInfoInitialized = false;
 std::map<String, WeaponInfo> MissileManager::_weaponInfo = std::map<String, WeaponInfo>();
 
-void MissileManager::initializeMissile(int missileIndex, Actor* actor, const Vector2& position, const Vector2& target, GameTime time) {
+void MissileManager::initializeMissile(int missileIndex, MissileOwner* owner, const Vector2& position, const Vector2& target, GameTime time) {
 	Missile& missile = _missiles[missileIndex];
-	missile.owner = actor;
+	missile.owner = owner;
 	missile.origin = position + ((target - position).normal() * Config.MissileInitialDistance);
 	missile.target = target;
 	missile.timeFired = time;
-	missile.weaponType = actor->getCurrentWeapon();
+	missile.weaponType = owner->getCurrentWeapon();
 	missile.isActive = true;
 	missile.isTargetReached = false;
 	missile.frontPosition = missile.origin;
 	missile.backPosition = missile.origin;
 }
 
-void MissileManager::shootAt(Actor* actor, const Vector2& target, GameTime time) {
-	Vector2 pos = actor->getPosition();
+void MissileManager::shootAt(MissileOwner* owner, const Vector2& target, GameTime time) {
+	Vector2 pos = owner->getPosition();
 	if (common::sqDist(pos, target) > common::sqr(Config.MissileInitialDistance)) {
-		const WeaponInfo& weaponInfo = getWeaponInfo(actor->getCurrentWeapon());
-		if (weaponInfo.missilesNumber == 1) { initializeMissile(getNextIndex(), actor, pos, target, time); }
+		const WeaponInfo& weaponInfo = getWeaponInfo(owner->getCurrentWeapon());
+		if (weaponInfo.missilesNumber == 1) { initializeMissile(getNextIndex(), owner, pos, target, time); }
 		else {
 			Vector2 missileTarget = common::rotatePoint(target, pos, -weaponInfo.fireAngle / 2);
-			initializeMissile(getNextIndex(), actor, pos, missileTarget, time);
+			initializeMissile(getNextIndex(), owner, pos, missileTarget, time);
 			float angle = weaponInfo.fireAngle / (weaponInfo.missilesNumber - 1);
 			float valCos = cosf(angle), valSin = sinf(angle);
 			for (int i = 1; i < weaponInfo.missilesNumber; ++i) {
 				missileTarget = common::rotatePoint(missileTarget, pos, valCos, valSin);
-				initializeMissile(getNextIndex(), actor, pos, missileTarget, time);
+				initializeMissile(getNextIndex(), owner, pos, missileTarget, time);
 			}
 		}
 	}
@@ -62,22 +62,16 @@ void MissileManager::shootAt(Actor* actor, const Vector2& target, GameTime time)
 void MissileManager::invokeDamage(Missile& missile, const Vector2& point) {
 	auto weaponInfo = getWeaponInfo(missile.weaponType);
 	float radius = weaponInfo.damageRadius;
-	std::vector<GameDynamicObject*> potentialTargets = _map->checkCollision(point, radius);
-	for (GameDynamicObject* entity : potentialTargets) {
-		if (entity->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-			float sqDist = common::sqDist(entity->getPosition(), point);
-			float entityRadius = entity->getRadius();
-			float maxSqDist = common::sqr(radius + entityRadius);
-			if (sqDist < maxSqDist) {
-				Actor* actor = (Actor*)entity;
-				actor->damage(sqDist > entityRadius * entityRadius ? 
-					weaponInfo.minDamage + (1 - sqDist / maxSqDist) * (weaponInfo.maxDamage - weaponInfo.minDamage)
-					: weaponInfo.maxDamage); 
-				if (actor->getHealth() <= 0) {
-					missile.owner->registerKill(actor);
-					actor->setCurrentAction(new DieAction(actor));
+	std::vector<Destructible*> potentialTargets = _map->checkCollisionDestructible(point, radius);
+	for (Destructible* entity : potentialTargets) {			
+			float sqDist = entity->getSquareDistanceTo(point);
+			float maxSqDist = radius * radius;
+			if (sqDist <= maxSqDist) {
+				entity->recieveDamage(weaponInfo.minDamage + (1 - sqDist / maxSqDist) * (weaponInfo.maxDamage - weaponInfo.minDamage)); 
+				if (entity->isDestroyed()) {
+					missile.owner->registerKill(entity);
+					entity->onDestroy();
 				}
-			}
 		}
 	}
 }
@@ -112,9 +106,9 @@ void MissileManager::update(GameTime time) {
 				Segment extendedSegment(backPositionOld, missile.frontPosition);
 				auto possibleColliders = _map->checkCollision(extendedSegment);
 				
-				for (GameDynamicObject* entity : possibleColliders) {
+				for (DynamicEntity* entity : possibleColliders) {
 					if (entity->isSolid()) {
-						auto collisionResult = common::testCircleAndSegment(entity->getCollisionArea(), extendedSegment);
+						auto collisionResult = common::testCircleAndSegment(common::Circle{ entity->getPosition(), entity->getRadius() }, extendedSegment);
 						if (collisionResult.pointsFound == 1) {
 							missileHit(missile, collisionResult.first, time);
 						}

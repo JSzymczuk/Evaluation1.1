@@ -1,8 +1,14 @@
 #pragma once
 
+#include <vector>
+#include "main/Configuration.h"
+#include "math/Vector2.h"
+
+class Actor;
 class ActorInfo;
 class TriggerInfo;
 class Notification;
+enum ActionType;
 
 class ActorKnowledge {
 public:
@@ -16,6 +22,7 @@ public:
 	Vector2 getVelocity() const;
 	Vector2 getShortDestination() const;
 	Vector2 getLongDestination() const;
+	ActionType getCurrentAction() const;
 	bool isMoving() const;
 	bool isDead() const;
 	bool hasPositionChanged() const;

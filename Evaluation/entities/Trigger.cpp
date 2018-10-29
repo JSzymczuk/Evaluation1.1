@@ -1,35 +1,34 @@
-#include "Trigger.h"
-#include "Actor.h"
-#include "Missile.h"
+#include "entities/Trigger.h"
+#include "entities/Actor.h"
+#include "entities/Missile.h"
 #include "main/Configuration.h"
 #include "engine/MissileManager.h"
 #include "engine/Rng.h"
 
 Trigger::Trigger(const Vector2& position, const String& label)
-	: _isActive(false), _label(label), GameDynamicObject(position, 0) {
+	: _isActive(false), _label(label), DynamicEntity(position, 0) {
 	_activationTime = SDL_GetPerformanceCounter()
 		+ Config.MinInitialTriggerActivationTime - Config.MinTriggerActivationTime
 		+ Rng::getInteger(Config.MinTriggerActivationTime, Config.MaxTriggerActivationTime);
 }
 
 Trigger::~Trigger() {}
-
-//bool Trigger::isStaticElement() const { return true; }
-
-bool Trigger::hasPositionChanged() const { return false; }
-
+ 
 bool Trigger::isSolid() const { return false; }
 
-Aabb Trigger::getAabb() const {
-	float r = getRadius();
-	return Aabb(_position.x - r, _position.y - r, 2 * r, 2 * r);
-}
+bool Trigger::isSpotting() const { return false; }
 
 float Trigger::getRadius() const { return Config.TriggerRadius; }
 
-GameDynamicObjectType Trigger::getGameObjectType() const { return GameDynamicObjectType::TRIGGER; }
-
 bool Trigger::isActive() const { return _isActive; }
+
+void Trigger::onCollision(CollisionInvoker* invoker, GameTime time) {
+	Actor* actor = dynamic_cast<Actor*>(invoker);
+	if (actor != nullptr && isActive()) { 
+		pick(actor, time); 
+		deactivate(time);
+	}
+}
 
 void Trigger::update(GameTime time) {
 	if (_isActive) {
@@ -42,24 +41,24 @@ void Trigger::update(GameTime time) {
 void Trigger::deactivate(GameTime time) {
 	_isActive = false;
 	setNextActivationTime(time);
-	//Logger::log("Trigger " + _label + " deactivated.");
 }
 
 void Trigger::activate(GameTime time) {
 	_isActive = true;
 	_activationTime = time;
 	_orientation = 0;
-	//Logger::log("Trigger " + _label + " activated.");
 }
-
-void Trigger::pick(Actor* actor, GameTime time) { deactivate(time); }
 
 void Trigger::setNextActivationTime(GameTime time) {
 	_activationTime = time + Rng::getInteger(Config.MinTriggerActivationTime, Config.MaxTriggerActivationTime);
 }
 
-TriggerType AmmoPack::getTriggerType() const { return TriggerType::WEAPON; }
+String AmmoPack::getName() const { return _weaponName; }
+String ArmorPack::getName() const { return Config.ArmorPackName; }
+String MedPack::getName() const { return Config.MedPackName; }
+
 String AmmoPack::getWeaponType() const { return _weaponName; }
+TriggerType AmmoPack::getTriggerType() const { return TriggerType::WEAPON; }
 TriggerType ArmorPack::getTriggerType() const { return TriggerType::ARMOR; }
 TriggerType MedPack::getTriggerType() const { return TriggerType::HEALTH; }
 
@@ -84,7 +83,6 @@ void AmmoPack::pick(Actor* actor, GameTime time) {
 		Logger::log("Aktor " + actor->getName() + " ammo for "
 			+ weaponInfo.name + ".");
 	}
-	Trigger::pick(actor, time);
 }
 
 void ArmorPack::pick(Actor* actor, GameTime time) {
@@ -107,10 +105,8 @@ void ArmorPack::pick(Actor* actor, GameTime time) {
 		actor->setRemainingArmorShots(Config.ArmorMaxShots);
 		Logger::log("Actor " + actor->getName() + "'s armor was renewed.");
 	}
-	Trigger::pick(actor, time);
 }
 
 void MedPack::pick(Actor* actor, GameTime time) {
 	actor->heal(Config.MedpackHealthBonus);
-	Trigger::pick(actor, time);
 }

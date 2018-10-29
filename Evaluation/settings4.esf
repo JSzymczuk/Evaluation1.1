@@ -1,0 +1,3 @@
+data/maps/empty.map 300
+actor1  sc:data/ai/dumb.lua  1  360 360
+actor2  sc:data/ai/dumb.lua  2  600 360

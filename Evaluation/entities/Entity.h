@@ -3,78 +3,129 @@
 #include "math/Math.h"
 #include "main/Configuration.h"
 #include <vector>
-
-enum GameDynamicObjectType {
-	ACTOR,
-	TRIGGER
-};
-
-class CollisionResolver;
-
-class GameObject {
-public:
-	virtual bool isStaticElement() const = 0;
-};
-
-class GameStaticObject : public GameObject {
-public:
-	virtual std::vector<Segment> getBounds() const = 0;
-	virtual bool checkCollision(const Segment& segment) const = 0;
-	virtual float getDistanceTo(const Vector2& point) const = 0;
-	virtual float getSqDistanceTo(const Segment& segment) const = 0;
-	bool isStaticElement() const override;
-};
-
 #include <map>
 
-class GameDynamicObject : public GameObject {
+class Actor;
+class Team;
+class CollisionResolver;
+class CollisionInvoker;
+
+class Updatable {
 public:
+	virtual void update(GameTime gameTime) = 0;
+};
 
-	static std::map<const GameDynamicObject*, String> actorLogs;
+class CollisionResponder {
+public:
+	virtual void onCollision(CollisionInvoker* actor, GameTime time) = 0;
+};
 
-	GameDynamicObject();
-	GameDynamicObject(const Vector2& position, float orientation);
-	virtual ~GameDynamicObject();
+class CollisionInvoker { 
+public:
+	virtual void invokeCollision(CollisionResponder* responder, GameTime time);
+	virtual void invokeCollision(std::vector<CollisionResponder*> responders, GameTime time);
+};
 
-	Vector2 getPosition() const;
-	Vector2 getVelocity() const;
-	float getOrientation() const;
-	common::Circle getCollisionArea() const;
-	bool hasPositionChanged() const;
-	void enableCollisions(CollisionResolver* collisionResolver);
-	void disableCollisions();
-	bool isStaticElement() const override;
+class Destructible {
+public:
+	virtual String getName() const = 0;
+	virtual Team* getTeam() const = 0;
+	virtual float recieveDamage(float damage) = 0;
+	virtual bool isDestroyed() const = 0;
+	virtual void onDestroy() = 0;
+	virtual float getSquareDistanceTo(const Vector2& point) const = 0;
+};
 
-	virtual void update(GameTime gameTime);
-
-	virtual Aabb getAabb() const = 0;
-	virtual float getRadius() const = 0;
+class Spottable {
+public:
 	virtual bool isSolid() const = 0;
-	virtual GameDynamicObjectType getGameObjectType() const = 0;
+	virtual bool isSpotting() const = 0;
+	virtual Vector2 getPosition() const = 0;
+	virtual float getRadius() const = 0;
+};
 
-	virtual bool isSpotting() const;
-	virtual void spot(GameDynamicObject* entity);
-	virtual void unspot(GameDynamicObject* entity);
+class Spotter : public virtual Updatable, 
+	public virtual Spottable {
+public:
+	virtual float getSightRadius() const = 0;
+	virtual bool hasPositionChanged() const = 0;
+
+	bool isSpotting() const override;
+	void update(GameTime gameTime) override;
+
+	void spot(Spottable* entity);
+	void unspot(Spottable* entity);
+	std::vector<Spottable*> getSpottedObjects() const;
+
+protected: 
+	virtual CollisionResolver* getCollisionResolver() const = 0;
+
+private: 
+	std::vector<Spottable*> getNearbyObjects() const;
+	std::vector<Spottable*> _spottedObjects;
+};
+
+class Entity { };
+
+//struct EntityDiagnostics {
+//	GameTime total;
+//	GameTime logic;
+//	GameTime update;
+//	GameTime broadphase;
+//	GameTime regionsCircle;
+//	GameTime regionsSegment;
+//	GameTime unitTests;
+//	GameTime mutexLock;
+//	GameTime mutexUnlock;
+//};
+
+class StaticEntity : public Entity {
+public:
+	StaticEntity(const Aabb& aabb);
+
+	virtual std::vector<Segment> getBounds() const = 0;
+	virtual size_t getBoundsSize() const = 0;
+
+	Aabb getAabb() const;
+	bool isStaticElement() const;
+
+private:
+	Aabb _aabb;
+};
+
+class DynamicEntity : public Entity, 
+	public virtual Updatable, 
+	public virtual Spottable {
+public:
+	DynamicEntity();
+	DynamicEntity(const Vector2& position, float orientation);
+	virtual ~DynamicEntity();
+
+	Vector2 getPosition() const override;
+	float getOrientation() const;
+
+	virtual bool isSolid() const = 0;
+
+	//mutable EntityDiagnostics diagnostics;
+
+	Aabb getAabb() const;
+	virtual bool isStaticElement() const;
 
 protected:
 	Vector2 _position;
-	Vector2 _velocity;
 	float _orientation;
-	float _rotation;
 
-	bool checkMovementCollisions(const Segment& segment, float margin) const;
-	std::vector<GameDynamicObject*> getDynamicObjectsInArea(const Vector2& point, float radius) const;
-	std::vector<GameStaticObject*> getStaticObjectsInArea(const Vector2& point, float radius) const;
-	std::vector<GameDynamicObject*> getDynamicObjectsOnLine(const Segment& segment) const;
-	std::vector<GameStaticObject*> getStaticObjectsOnLine(const Segment& segment) const;
+	CollisionResolver* getCollisionResolver() const;
 	
 private:
 	CollisionResolver* _collisionResolver = nullptr;
+
+	void setCollisionResolver(CollisionResolver* collisionResolver);
+	void unsetCollisionResolver();
+
+	friend class CollisionResolver;
 };
 
-struct VelocityObstacle {
-	Vector2 apex;
-	Vector2 side1;
-	Vector2 side2;
-	GameDynamicObject* obstacle;
-};
+bool checkCollision(const StaticEntity* entity, const Segment& segment);
+float getDistanceTo(const StaticEntity* entity, const Vector2& point);
+float getSqDistanceTo(const StaticEntity* entity, const Segment& segment);

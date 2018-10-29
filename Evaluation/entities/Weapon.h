@@ -3,16 +3,6 @@
 #include "main/Configuration.h"
 struct SDL_Color;
 
-/*
-enum WeaponType {
-	SHOTGUN,
-	RAILGUN,
-	CHAINGUN,
-	ROCKET_LAUNCHER,
-
-	WEAPONS_SIZE
-};*/
-
 enum WeaponLoadState {
 	WEAPON_LOADED,
 	WEAPON_SHOOTING,

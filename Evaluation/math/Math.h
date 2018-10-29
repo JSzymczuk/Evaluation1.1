@@ -114,5 +114,18 @@ namespace common {
 
 	float sqDist(const Segment& s1, const Segment& s2, Vector2& point1, Vector2& point2);
 
-	
+	// Odleg³oœæ punktu od AABB
+	inline float sqDist(const Vector2& point, float left, float right, float top, float bottom) {
+		Vector2 result;
+
+		if (point.x < left) { result.x = left; }
+		else if (point.x > right) { result.x = right; }
+		else { result.x = point.x; }
+
+		if (point.y < top) { result.y = top; }
+		else if (point.y > bottom) { result.y = bottom; }
+		else { result.y = point.y; }
+
+		return sqDist(point, result);
+	}
 }

@@ -13,14 +13,30 @@
 #include "entities/Team.h"
 #include "agents/SharedKnowledge.h"
 
-void Agent::start() {
-	_hasStarted = true;
-	initialize(ActorKnowledge(_actor), Game::getInstance()->getTime());
-	_thread = std::thread(&Agent::run, this);
+void Agent::initialize(GameTime time) {
+	initializeLogic(ActorKnowledge(_actor), time);
 	_actor->setCurrentAction(new IdleAction(_actor));
+	_totalFrames = 0;
 }
 
-void Agent::run() {
+void Agent::update(GameTime time) {
+	Actor* actor = getActor();
+	if (!actor->isDead()) {
+		updateLogic(ActorKnowledge(_actor), time);
+		actor->update(time);
+		++_totalFrames;
+	}
+}
+
+void Agent::run(GameTime time) {
+	_hasStarted = true;
+	initializeLogic(ActorKnowledge(_actor), time);
+	_thread = std::thread(&Agent::runFunc, this);
+	_actor->setCurrentAction(new IdleAction(_actor));
+	_totalFrames = 0;
+}
+
+void Agent::runFunc() {
 	if (_hasStarted) {
 		Actor* actor = getActor();
 		auto game = Game::getInstance();
@@ -29,13 +45,15 @@ void Agent::run() {
 			std::unique_lock<std::mutex> lk(game->_updateMutex);
 			game->_updateHolder.wait(lk);
 			lk.unlock();
-			GameTime time = Game::getInstance()->getTime();
+			GameTime time = game->getTime();	
 
-			update(ActorKnowledge(_actor), time);
+			updateLogic(ActorKnowledge(_actor), time);
 			actor->update(time);
+
+			++_totalFrames;
 		}
 
-		Game::getInstance()->registerAgentToDispose(this);
+		game->registerAgentToDispose(this);
 	}
 }
 
@@ -111,7 +129,6 @@ void Agent::removeNotificationSender(NotificationSender* sender) {
 	}
 }
 
-
 bool Agent::trySetAction(Action* action) {
 	if (!_actor->setCurrentAction(action)) {
 		delete action;
@@ -147,30 +164,27 @@ void Agent::wander() {
 	trySetAction(new WanderAction(_actor));
 }
 
-std::map<String, std::mutex*> luaMtx;
+size_t Agent::getTotalFrames() const {
+	return _totalFrames;
+}
 
-void LuaAgent::initialize(const ActorKnowledge& actorKnowledge, GameTime time) {
+
+void LuaAgent::initializeLogic(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luaMtx.at(_initializeScriptName)->lock();
-		luabind::call_function<void>(_luaEnv, _initializeScriptName.c_str(), this, actorKnowledge, time);
-		luaMtx.at(_initializeScriptName)->unlock();
+		luabind::call_function<void>(_luaEnv, Config.LuaInitializeFunctionName.c_str(), this, actorKnowledge, time); 
 	}
 	catch (luabind::error& e) {
-		luaMtx.at(_initializeScriptName)->unlock();
 		std::cerr << e.what() << std::endl;
 		char n;
 		std::cin >> n;
 	}
 }
 
-void LuaAgent::update(const ActorKnowledge& actorKnowledge, GameTime time) {
+void LuaAgent::updateLogic(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
-		luaMtx.at(_updateScriptName)->lock();
-		luabind::call_function<void>(_luaEnv, _updateScriptName.c_str(), this, actorKnowledge, time);
-		luaMtx.at(_updateScriptName)->unlock();
+		luabind::call_function<void>(_luaEnv, Config.LuaUpdateFunctionName.c_str(), this, actorKnowledge, time);
 	}
 	catch (luabind::error& e) {
-		luaMtx.at(_updateScriptName)->unlock();
 		std::cerr << e.what() << std::endl;
 		char n;
 		std::cin >> n;
@@ -190,15 +204,11 @@ String trimFileName(const String& filename) {
 }
 
 LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor) {
+	luaEnv = createLuaEnv();
+	this->_luaEnv = luaEnv;
 	int error = luaL_loadfile(luaEnv, filename.c_str()) || lua_pcall(luaEnv, 0, LUA_MULTRET, 0);
 	if (error) {
 		std::cerr << "[Lua] Error " << error << ": " << lua_tostring(luaEnv, -1) << " - during execution of script: " << filename << "\n";
 		lua_pop(luaEnv, 1);
 	}
-	this->_luaEnv = luaEnv;
-	String scriptName = trimFileName(filename);
-	_initializeScriptName = (scriptName + Config.LuaInitializeFunctionName);
-	_updateScriptName = (scriptName + Config.LuaUpdateFunctionName);
-	luaMtx.emplace(_initializeScriptName, new std::mutex());
-	luaMtx.emplace(_updateScriptName, new std::mutex());
 }

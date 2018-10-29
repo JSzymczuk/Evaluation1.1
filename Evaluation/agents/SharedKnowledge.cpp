@@ -21,6 +21,15 @@ std::vector<ActorInfo> SharedKnowledge::getTeamMembers() const {
 	return result;
 }
 
+std::vector<TriggerInfo> SharedKnowledge::getTriggers() const {
+	std::vector<TriggerInfo> result;
+	GameTime time = Game::getCurrentTime();
+	for (Trigger* trigger : Game::getInstance()->getMap()->getTriggers()) {
+		result.push_back(TriggerInfo(trigger, time));
+	}
+	return result;
+}
+
 String SharedKnowledge::getVariable(const String& value) const { return _team->getVariable(value); }
 
 void SharedKnowledge::setVariable(const String& key, const String& value) { _team->setVariable(key, value, Game::getCurrentTime()); }

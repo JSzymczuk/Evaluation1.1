@@ -22,16 +22,15 @@ Vector2 ActorKnowledge::getVelocity() const { return _actor->getVelocity(); }
 float ActorKnowledge::getEstimatedRemainingDistance() const { return _actor->estimateRemainingDistance(); }
 Vector2 ActorKnowledge::getShortDestination() const { return _actor->getShortGoal(); }
 Vector2 ActorKnowledge::getLongDestination() const { return _actor->getLongGoal(); }
+ActionType ActorKnowledge::getCurrentAction() const { return _actor->getCurrentActionType(); }
 bool ActorKnowledge::isDead() const { return _actor->isDead(); }
 bool ActorKnowledge::hasPositionChanged() const { return _actor->hasPositionChanged(); }
 
 std::vector<ActorInfo> ActorKnowledge::getSeenActors() const { 
 	std::vector<ActorInfo> result;
 	GameTime time = Game::getCurrentTime();
-	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
-		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-			result.push_back(ActorInfo((Actor*)seenObject, time));
-		}
+	for (Actor* other : _actor->getSeenActors()) {
+		result.push_back(ActorInfo(other, time));
 	}
 	return result;
 }
@@ -40,14 +39,11 @@ std::vector<ActorInfo> ActorKnowledge::getSeenFriends() const {
 	std::vector<ActorInfo> result;
 	GameTime time = Game::getCurrentTime();
 	Team* team = _actor->getTeam();
-	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
-		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-			Actor* other = (Actor*)seenObject;
-			if (other->getTeam() == team) {
-				result.push_back(ActorInfo(other, time));
-			}
+	for (Actor* other : _actor->getSeenActors()) {
+		if (other->getTeam() == team) {
+			result.push_back(ActorInfo(other, time));
 		}
-	}
+	}	
 	return result;
 }
 
@@ -55,12 +51,9 @@ std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const {
 	std::vector<ActorInfo> result;
 	GameTime time = Game::getCurrentTime();
 	Team* team = _actor->getTeam();
-	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
-		if (seenObject->getGameObjectType() == GameDynamicObjectType::ACTOR) {
-			Actor* other = (Actor*)seenObject;
-			if (other->getTeam() != team) {
-				result.push_back(ActorInfo(other, time));
-			}
+	for (Actor* other : _actor->getSeenActors()) {
+		if (other->getTeam() != team) {
+			result.push_back(ActorInfo(other, time));
 		}
 	}
 	return result;
@@ -69,12 +62,9 @@ std::vector<ActorInfo> ActorKnowledge::getSeenFoes() const {
 std::vector<TriggerInfo> ActorKnowledge::getSeenTriggers() const {
 	std::vector<TriggerInfo> result;
 	GameTime time = Game::getCurrentTime();
-	for (GameDynamicObject* seenObject : _actor->getSeenObjects()) {
-		if (seenObject->getGameObjectType() == GameDynamicObjectType::TRIGGER) {
-			Trigger* trigger = (Trigger*)seenObject;
-			if (trigger->isActive()) {
-				result.push_back(TriggerInfo(trigger, time));
-			}
+	for (Trigger* trigger : _actor->getSeenTriggers()) {
+		if (trigger->isActive()) {
+			result.push_back(TriggerInfo(trigger, time));
 		}
 	}
 	return result;

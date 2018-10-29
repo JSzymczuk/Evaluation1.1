@@ -3,25 +3,47 @@
 #include "math/Aabb.h"
 #include "entities/Entity.h"
 
-typedef std::pair<std::vector<GameDynamicObject*>, std::vector<GameDynamicObject*>> EntitiesInitializeResult;
+class Actor;
+class Movable;
+class Trigger;
+class Spottable;
+class Destructible;
 
 class CollisionResolver {
 public:
-	//virtual EntitiesInitializeResult initialize(const std::vector<GameDynamicObject*>& objects) = 0;
-	virtual bool isPositionValid(const GameDynamicObject* entity) const = 0;
+	virtual ~CollisionResolver();
 
-	virtual void add(GameDynamicObject* element) = 0;
-	virtual void remove(GameDynamicObject* element) = 0;
-	virtual void update(GameDynamicObject* element) = 0;
-	virtual void add(GameStaticObject* element) = 0;
+	virtual void initializeDynamic(const std::vector<DynamicEntity*>& dynamicObjects) = 0;
 
-	virtual std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point) const = 0;
-	virtual std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& point, float radius) const = 0;
-	virtual std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to) const = 0;
-	virtual std::vector<GameDynamicObject*> broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const = 0;
+	virtual void add(StaticEntity* element) = 0;
+	virtual void add(DynamicEntity* trigger) = 0;
+	virtual void remove(DynamicEntity* actor) = 0;
+	virtual void update(Movable* actor) = 0;
 
-	virtual std::vector<GameStaticObject*> broadphaseStatic(const Vector2& point) const = 0;
-	virtual std::vector<GameStaticObject*> broadphaseStatic(const Vector2& point, float radius) const = 0;
-	virtual std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to) const = 0;
-	virtual std::vector<GameStaticObject*> broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const = 0;
+	virtual std::vector<DynamicEntity*> broadphaseDynamic(const Vector2& point, float radius) const = 0;
+	virtual std::vector<DynamicEntity*> broadphaseDynamic(const Vector2& from, const Vector2& to) const = 0;
+	virtual std::vector<DynamicEntity*> broadphaseDynamic(const Vector2& from, const Vector2& to, float radius) const = 0;
+
+	virtual std::vector<StaticEntity*> broadphaseStatic(const Vector2& point, float radius) const = 0;
+	virtual std::vector<StaticEntity*> broadphaseStatic(const Vector2& from, const Vector2& to) const = 0;
+	virtual std::vector<StaticEntity*> broadphaseStatic(const Vector2& from, const Vector2& to, float radius) const = 0;
+	
+protected:
+	void addDynamicObject(DynamicEntity* entity);
+	void removeDynamicObject(DynamicEntity* entity);
+
 };
+
+std::vector<DynamicEntity*> getDynamicObjectsInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+std::vector<StaticEntity*> getStaticObjectsInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+std::vector<DynamicEntity*> getDynamicObjectsOnLine(const CollisionResolver* collisionResolver, const Segment& segment);
+std::vector<StaticEntity*> getStaticObjectsOnLine(const CollisionResolver* collisionResolver, const Segment& segment);
+std::vector<Trigger*> getTriggersInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+std::vector<Actor*> getActorsInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+std::vector<Spottable*> getSpottableInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+std::vector<Destructible*> getDestructibleInArea(const CollisionResolver* collisionResolver, const Vector2& point, float radius);
+
+std::vector<DynamicEntity*> narrowphaseDynamic(const CollisionResolver* collisionResolver, const DynamicEntity* entity);
+std::vector<StaticEntity*> narrowphaseStatic(const CollisionResolver* collisionResolver, const DynamicEntity* entity);
+bool isPositionValid(const CollisionResolver* collisionResolver, const DynamicEntity* entity, bool staticOnly = false);
+bool checkMovementCollisions(const CollisionResolver* collisionResolver, const Segment& segment, float margin);
