@@ -59,6 +59,7 @@ inline LuaEnv* createLuaEnv() {
 			.def("getObservationTime", &TriggerInfo::getObservationTime),
 			
 		luabind::class_<TriggerInfo>("TriggerInfo")
+			.def("getId", &TriggerInfo::getId)
 			.def("getName", &TriggerInfo::getName)
 			.def("getPosition", &TriggerInfo::getPosition)
 			.def("isActive", &TriggerInfo::isActive)
@@ -86,17 +87,7 @@ inline LuaEnv* createLuaEnv() {
 			.def("getTeamMember", &SharedKnowledge::getTeamMember)
 			.def("getTeamMembers", &SharedKnowledge::getTeamMembers)
 			.def("getVariable", &SharedKnowledge::getVariable)
-			.def("setVariable", &SharedKnowledge::setVariable)
-			.def("getMapWidth", &SharedKnowledge::getMapWidth)
-			.def("getMapHeight", &SharedKnowledge::getMapHeight)
-			.def("getRandom", &SharedKnowledge::getRandom)
-			.def("getActorMaxHealth", &SharedKnowledge::getActorMaxHealth)
-			.def("getActorRadius", &SharedKnowledge::getActorRadius)
-			.def("getTriggerRadius", &SharedKnowledge::getTriggerRadius)
-			.def("getActorSightRadius", &SharedKnowledge::getActorSightRadius)
-			.def("getActorSpeed", &SharedKnowledge::getActorSpeed)
-			.def("getActorRotationSpeed", &SharedKnowledge::getActorRotationSpeed)
-			.def("getTriggers", &SharedKnowledge::getTriggers),
+			.def("setVariable", &SharedKnowledge::setVariable),			
 
 		luabind::class_<LuaAgent>("LuaAgent")
 			.def("getName", &LuaAgent::getName)
@@ -110,7 +101,21 @@ inline LuaEnv* createLuaEnv() {
 			.def("notify", &LuaAgent::notify)
 			.def("notifyAll", &LuaAgent::notifyAll)
 			.def("getNotifications", &LuaAgent::getNotifications)
-			.def("getSharedKnowledge", &LuaAgent::getSharedKnowledge),
+			.def("getSharedKnowledge", &LuaAgent::getSharedKnowledge)
+			.def("getMapWidth", &LuaAgent::getMapWidth)
+			.def("getMapHeight", &LuaAgent::getMapHeight)
+			.def("getRandom", &LuaAgent::getRandom)
+			.def("getActorMaxHealth", &LuaAgent::getActorMaxHealth)
+			.def("getActorMaxArmor", &LuaAgent::getActorMaxArmor)
+			.def("getMaxAmmo", &LuaAgent::getMaxAmmo)
+			.def("getActorRadius", &LuaAgent::getActorRadius)
+			.def("getTriggerRadius", &LuaAgent::getTriggerRadius)
+			.def("getActorSightRadius", &LuaAgent::getActorSightRadius)
+			.def("getActorSpeed", &LuaAgent::getActorSpeed)
+			.def("getActorRotationSpeed", &LuaAgent::getActorRotationSpeed)
+			.def("getTriggers", &LuaAgent::getTriggers)
+			.def("raycastStatic", &LuaAgent::raycastStatic)
+			.def("checkCircleAndSegment", &LuaAgent::checkCircleAndSegment),
 
 		luabind::class_<ActorKnowledge>("ActorKnowledge")
 			.enum_("ActionType")
@@ -129,7 +134,8 @@ inline LuaEnv* createLuaEnv() {
 			.def("getTeam", &ActorKnowledge::getTeam)
 			.def("getPosition", &ActorKnowledge::getPosition)
 			.def("isMoving", &ActorKnowledge::isMoving)
-			.def("isDead", &ActorInfo::isDead)
+			.def("isDead", &ActorKnowledge::isDead)
+			.def("isWaiting", &ActorKnowledge::isWaiting)
 			.def("hasPositionChanged", &ActorKnowledge::hasPositionChanged)
 			.def("getAmmo", &ActorKnowledge::getAmmo)
 			.def("getOrientation", &ActorKnowledge::getOrientation)
@@ -146,6 +152,7 @@ inline LuaEnv* createLuaEnv() {
 			.def("getLongDestination", &ActorKnowledge::getLongDestination)
 			.def("getEstimatedRemainingDistance", &ActorKnowledge::getEstimatedRemainingDistance)
 			.def("getCurrentAction", &ActorKnowledge::getCurrentAction)
+			.def("canInterruptAction", &ActorKnowledge::canInterruptAction)
 			
 			
 	];

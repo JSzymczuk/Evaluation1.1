@@ -59,7 +59,7 @@ void Actor::clearCurrentAction() {
 
 bool Actor::setCurrentAction(Action* action) {
 	if (_currentAction != nullptr) {
-		if (_currentAction->getPriority() <= action->getPriority()) {
+		if (action->getActionType() == ActionType::DIE || !_currentAction->isTransactional()) {
 			_currentAction->finish(0);
 			delete _currentAction;
 			_currentAction = action;
@@ -205,6 +205,12 @@ std::vector<Trigger*> Actor::getSeenTriggers() const {
 
 float Actor::recieveDamage(float dmg) {
 	if (dmg < _health) {
+		float armor = getArmor();
+		if (armor > 0) {
+			float reduction = dmg / 2 > armor ? armor : dmg / 2;
+			setArmor(armor - reduction);
+			dmg -= reduction;
+		}
 		_health -= dmg;
 	}
 	else {
@@ -216,13 +222,18 @@ float Actor::recieveDamage(float dmg) {
 }
 
 bool Actor::isDestroyed() const {
-	return _health <= 0;
+	return _isDestroyed;
+}
+
+bool Actor::wasDestroyed() const {
+	return _health <= 0 && !_isDestroyed;
 }
 
 
 void Actor::onDestroy() {
 	// to do
 	setCurrentAction(new DieAction(this));
+	_isDestroyed = true;
 	//throw;
 }
 

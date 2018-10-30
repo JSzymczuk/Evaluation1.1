@@ -68,7 +68,7 @@ void MissileManager::invokeDamage(Missile& missile, const Vector2& point) {
 			float maxSqDist = radius * radius;
 			if (sqDist <= maxSqDist) {
 				entity->recieveDamage(weaponInfo.minDamage + (1 - sqDist / maxSqDist) * (weaponInfo.maxDamage - weaponInfo.minDamage)); 
-				if (entity->isDestroyed()) {
+				if (entity->wasDestroyed()) {
 					missile.owner->registerKill(entity);
 					entity->onDestroy();
 				}

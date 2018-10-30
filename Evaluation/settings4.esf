@@ -1,3 +1,8 @@
-data/maps/empty.map 300
-actor1  sc:data/ai/dumb.lua  1  360 360
-actor2  sc:data/ai/dumb.lua  2  600 360
+data/maps/six_rooms.map 300
+Actor     ms                      1  180 420
+rotator1  sc:data/ai/rotator.lua  2  345 480
+rotator2  sc:data/ai/rotator.lua  2  330 515
+rotator3  sc:data/ai/rotator.lua  2  345 550
+rotator4  sc:data/ai/rotator.lua  3  630 175
+rotator5  sc:data/ai/rotator.lua  3  615 210
+rotator6  sc:data/ai/rotator.lua  3  630 245

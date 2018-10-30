@@ -154,13 +154,22 @@ bool isPositionValid(const CollisionResolver* collisionResolver, const DynamicEn
 		&& narrowphaseStatic(collisionResolver, entity).size() == 0;
 }
 
-bool checkMovementCollisions(const CollisionResolver* collisionResolver, const Segment& segment, float margin) {
+bool checkMovementCollisions(const CollisionResolver* collisionResolver, const Movable* movable, const Segment& segment) {
+
+	float margin = movable->getRadius() + Config.MovementSafetyMargin + common::EPSILON;
+
 	float r2 = margin * margin;
 	
-	auto broadphaseResult = collisionResolver->broadphaseStatic(segment.from, segment.to, margin);
-
-	for (StaticEntity* entity : broadphaseResult) {
+	auto broadphaseStaticResult = collisionResolver->broadphaseStatic(segment.from, segment.to, margin);
+	for (StaticEntity* entity : broadphaseStaticResult) {
 		if (getSqDistanceTo(entity, segment) <= r2) {
+			return true;
+		}
+	}
+
+	auto broadphaseDynamicResult = collisionResolver->broadphaseDynamic(segment.from, segment.to, margin);
+	for (DynamicEntity* entity : broadphaseDynamicResult) {
+		if (entity != movable && entity->isSolid() && common::distance(entity->getPosition(), segment) < margin) {
 			return true;
 		}
 	}

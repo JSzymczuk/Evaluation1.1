@@ -40,8 +40,10 @@ public:
 	virtual ~Movable();
 
 	bool isMoving()   const;
+	bool isWaiting()   const;
 	bool isRotating() const;
 	bool isSpotting() const override;
+	bool isStrayingFromPath() const;
 
 	void lookAt(const Vector2& point);
 	void move(const std::queue<Vector2>& path);
@@ -57,6 +59,7 @@ public:
 	Vector2 getPreferredVelocity() const;
 	void    setPreferredVelocity(const Vector2& velocity);
 	float   estimateRemainingDistance() const;
+	std::queue<Vector2> getCurrentPath() const;
 
 	void update(GameTime time) override;
 	bool hasPositionChanged() const override;
@@ -67,7 +70,6 @@ protected:
 
 	bool isOscilating() const;
 	CollisionResolver* getCollisionResolver() const override;
-	std::queue<Vector2> getCurrentPath() const;
 
 private:
 	void updateMovement(GameTime time);
@@ -99,6 +101,7 @@ public:
 	Vector2 _nextSafeGoal;
 
 	bool _isRotating;
+	bool _isStrictlyFollowingPath = false;
 	float _desiredOrientation;
 	bool _isWaiting;
 	GameTime _waitingStarted;

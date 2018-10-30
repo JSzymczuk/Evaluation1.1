@@ -157,6 +157,17 @@ void drawTrigger(SDL_Renderer* renderer, const Trigger& trigger, const Camera& c
 			SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, ResourceManager::get()->getImage(Config.TriggerRingTextureKey));
 			drawTexture(renderer, texture, trigger.getPosition(), camera, Relative, trigger.getOrientation(), false);
 			SDL_DestroyTexture(texture);
+
+			TriggerType triggerType = trigger.getTriggerType();
+			String triggerKey = triggerType == TriggerType::HEALTH ? Config.MedPackTextureKey
+				: triggerType == TriggerType::ARMOR ? Config.ArmorPackTextureKey : Config.AmmoPackTextureKey;
+
+			texture = SDL_CreateTextureFromSurface(renderer, ResourceManager::get()->getImage(triggerKey));
+			drawTexture(renderer, texture, trigger.getPosition(), camera, Relative, 0, false);
+			SDL_DestroyTexture(texture);
+
+			Vector2 pos = trigger.getPosition();
+			drawString(renderer, trigger.getName().c_str(), pos.x, pos.y + Config.ActorNamePosition, camera, Relative, true, colors::white);
 		}
 	}
 	catch (...) {}
@@ -200,25 +211,33 @@ void drawActor(SDL_Renderer* renderer, const Actor& actor, const Camera& camera,
 				SDL_RenderFillRect(renderer, &rect);
 
 				--rect.x; --rect.y;
+				int width = rect.w;
 				rect.w += 2; rect.h += 2;
 				SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 				SDL_RenderDrawRect(renderer, &rect);
 
-				drawString(renderer, actor.getName().c_str(), actorPos.x, actorPos.y + Config.ActorNamePosition, camera, Relative, true, colors::white);
+				drawString(renderer, actor.getName().c_str(), actorPos.x, actorPos.y + Config.ActorNamePosition, camera, Relative, true, 
+					/*actor.isWaiting() ? colors::red : actor.isMoving() ? colors::cyan : */colors::white);
 
 				++rect.x; ++rect.y;
-				rect.w -= 2; rect.h -= 2;
-				float hpPerc = common::clamp((float)actor.getHealth() / Config.ActorMaxHealth, 0, 1);
-				SDL_Color color = hpPerc > 0.5f ? blendColors(
+				rect.w = width; rect.h -= 2;
+				float perc = common::clamp((float)actor.getHealth() / Config.ActorMaxHealth, 0, 1);
+				SDL_Color color = perc > 0.5f ? blendColors(
 					Config.HealthBarFullColor,
 					Config.HealthBarHalfColor,
-					(hpPerc - 0.5f) / 0.5f)
+					(perc - 0.5f) / 0.5f)
 					: blendColors(
 						Config.HealthBarHalfColor,
 						Config.HealthBarEmptyColor,
-						hpPerc / 0.5f);
+						perc / 0.5f);
 				SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-				rect.w *= hpPerc;
+				rect.w *= perc;
+				SDL_RenderFillRect(renderer, &rect);
+
+				perc = common::clamp((float)actor.getArmor() / Config.MaxArmor, 0, 1);
+				color = Config.ArmorBarColor;
+				SDL_SetRenderDrawColor(renderer, 96, 144, 208, 255);
+				rect.w = width * perc;
 				SDL_RenderFillRect(renderer, &rect);
 			}
 		}

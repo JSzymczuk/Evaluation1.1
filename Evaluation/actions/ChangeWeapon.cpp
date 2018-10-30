@@ -7,7 +7,7 @@ ChangeWeaponAction::~ChangeWeaponAction() {}
 
 ActionType ChangeWeaponAction::getActionType() const { return ActionType::CHANGE_WEAPON; }
 
-int ChangeWeaponAction::getPriority() const { return 5; }
+bool ChangeWeaponAction::isTransactional() const { return true; }
 
 void ChangeWeaponAction::finish(GameTime gameTime) {
 	getActor()->setCurrentWeapon(_weaponName);

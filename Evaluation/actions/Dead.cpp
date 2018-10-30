@@ -10,6 +10,6 @@ bool DeadAction::locksRotation() const { return true; }
 
 bool DeadAction::locksMovement() const { return true; }
 
-int DeadAction::getPriority() const { return 100; }
+bool DeadAction::isTransactional() const { return true; }
 
 ActionType DeadAction::getActionType() const { return ActionType::DEAD; }

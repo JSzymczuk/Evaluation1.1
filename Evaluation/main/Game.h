@@ -70,7 +70,6 @@ private:
 	SDL_Renderer* _renderer;
 	Camera* _camera;
 	
-	LuaEnv* _luaEnv;
 	GameMap* _gameMap;
 	MissileManager* _missileManager;
 	std::vector<Team*> _teams;

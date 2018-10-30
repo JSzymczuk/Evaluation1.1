@@ -106,37 +106,38 @@ std::vector<Spottable*> Spotter::getNearbyObjects() const {
 }
 
 void Spotter::update(GameTime time) {
+	_spottedObjects = getNearbyObjects();
 	// Podczas ruchu zaktualizuj zbiór widzianych aktorów
-	if (hasPositionChanged()) {
-		auto actorsNearby = getNearbyObjects();
+	//if (hasPositionChanged()) {
+		//auto actorsNearby = getNearbyObjects();
 
-		size_t notSpottedPreviously = _spottedObjects.size();
-		size_t notSpottedNow = actorsNearby.size();
+		//size_t notSpottedPreviously = _spottedObjects.size();
+		//size_t notSpottedNow = actorsNearby.size();
 
 		// Uaktualnij informacjê o s¹siedztwie w przypadku aktorów statycznych.
-		for (Spottable* spottable : _spottedObjects) {
-			if (spottable->isSpotting()) {
-				Spotter* spotter = dynamic_cast<Spotter*>(spottable);
-				if (spotter == nullptr) { continue; }
+		//for (Spottable* spottable : _spottedObjects) {
+		//	if (spottable->isSpotting()) {
+		//		Spotter* spotter = dynamic_cast<Spotter*>(spottable);
+		//		if (spotter == nullptr) { continue; }
 
-				// Je¿eli aktor siê przemieszcza, to i tak sam wymieni ca³y wektor.
-				if (spotter->hasPositionChanged()) { continue; }
+		//		// Je¿eli aktor siê przemieszcza, to i tak sam wymieni ca³y wektor.
+		//		if (spotter->hasPositionChanged()) { continue; }
 
-				// Je¿eli siê nie porusza, to ustal czy aktor znikn¹³ czy pojawi³ siê w pobli¿u.
-				size_t wasSpotted = common::indexOf(_spottedObjects, spottable);
-				size_t isSpotted = common::indexOf(actorsNearby, spottable);
+		//		// Je¿eli siê nie porusza, to ustal czy aktor znikn¹³ czy pojawi³ siê w pobli¿u.
+		//		size_t wasSpotted = common::indexOf(_spottedObjects, spottable);
+		//		size_t isSpotted = common::indexOf(actorsNearby, spottable);
 
-				if (wasSpotted == notSpottedPreviously && isSpotted != notSpottedNow) {
-					spotter->spot(this);
-				}
-				else if (wasSpotted != notSpottedPreviously && isSpotted == notSpottedNow) {
-					spotter->unspot(this);
-				}
-			}
-		}
+		//		if (wasSpotted == notSpottedPreviously && isSpotted != notSpottedNow) {
+		//			spotter->spot(this);
+		//		}
+		//		else if (wasSpotted != notSpottedPreviously && isSpotted == notSpottedNow) {
+		//			spotter->unspot(this);
+		//		}
+		//	}
+		//}
 
-		_spottedObjects = actorsNearby;
-	}
+		//_spottedObjects = actorsNearby;
+	//}
 }
 
 std::vector<Spottable*> Spotter::getSpottedObjects() const { return _spottedObjects; }

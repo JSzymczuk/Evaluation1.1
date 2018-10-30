@@ -11,6 +11,8 @@ Vector2 Movable::getPosition() const { return DynamicEntity::getPosition(); }
 
 Movable::~Movable() {}
 
+bool Movable::isWaiting() const { return _isWaiting; }
+
 bool Movable::isSpotting() const { return Spotter::isSpotting(); }
 
 CollisionResolver* Movable::getCollisionResolver() const { return DynamicEntity::getCollisionResolver(); }
@@ -93,7 +95,7 @@ MovementCheckResult Movable::checkMovement() const {
 		}
 	}
 
-	if (checkMovementCollisions(getCollisionResolver(), Segment(_position, futurePosition), r + Config.MovementSafetyMargin)) {
+	if (checkMovementCollisions(getCollisionResolver(), this, Segment(_position, futurePosition))) {
 		//_path.size() > 0 ? ActorRadius - MovementSafetyMargin : ActorRadius)) {
 		result.allowed = false;
 		//Logger::log("Actor " + _name + " movement wasn't allowed.");
@@ -354,6 +356,7 @@ void Movable::move(const std::queue<Vector2>& path) {
 void Movable::abortMovement(/*String loggerMessage, */bool resetCounter) {
 	_path = {};
 	_preferredVelocity = Vector2();
+	_velocity = Vector2();
 	_isWaiting = false;
 	_nextSafeGoal = _position;
 	_lastDestination = _position;
@@ -382,19 +385,20 @@ void Movable::update(GameTime time) {
 
 bool Movable::isMoving() const { return _path.size() > 0 || _preferredVelocity.lengthSquared() > common::EPSILON; }
 
+bool Movable::isStrayingFromPath() const { return !_isStrictlyFollowingPath; }
+
 bool Movable::isRotating() const { return _isRotating; }
 
 void Movable::setPreferredVelocityAndSafeGoal() {
 	if (!_path.empty()) {
 		Vector2 goal = _path.back();
-		if (!checkMovementCollisions(getCollisionResolver(),
-			Segment(_position, goal),
-			getRadius() + Config.MovementSafetyMargin + common::EPSILON)) {
+		if (!checkMovementCollisions(getCollisionResolver(), this, Segment(_position, goal))) {
 			if (common::sqDist(_position, goal) < common::sqr(Config.MovementGoalMargin)) {
 				abortMovement(/*"Actor " + _name + " reached its destination.", */true);
 			}
 			else {
 				_preferredVelocity = goal - _position;
+				_isStrictlyFollowingPath = false;
 			}
 		}
 		else {
@@ -404,6 +408,7 @@ void Movable::setPreferredVelocityAndSafeGoal() {
 			}
 			if (!_path.empty()) {
 				_preferredVelocity = _nextSafeGoal - _position;
+				_isStrictlyFollowingPath = true;
 			}
 			else {
 				abortMovement(/*"Actor " + _name + " reached its destination.", */true);
@@ -459,9 +464,9 @@ std::vector<Spottable*> Movable::getObjectsInViewAngle() const {
 }
 
 void Movable::updateMovement(GameTime time) {
+	Spotter::update(time);
 	if (isMoving()) {
 		setPreferredVelocityAndSafeGoal();
-		Spotter::update(time);
 		_velocity = selectVelocity(computeCandidates(getVelocityObstacles(getObjectsInViewAngle())));
 
 		if (_velocity.lengthSquared() > common::EPSILON) {
@@ -491,7 +496,7 @@ void Movable::updateMovement(GameTime time) {
 					if (_recalculations < Config.MaxRecalculations) {
 						++_recalculations;
 						move(Game::getInstance()->getMap()->findPath(_position, destination, this, {
-							common::Circle(_position, Config.ActorRadius * (_recalculations + 1))
+							common::Circle(_position, 50 * (_recalculations + 1))
 							}));
 					}
 				}
@@ -506,6 +511,21 @@ void Movable::updateMovement(GameTime time) {
 			_velocity.x = 0;
 			_velocity.y = 0;
 		}
+	}
+	else {
+		std::vector<CollisionResponder*> responders;
+		float r = getRadius();
+		auto potentialColliders = getDynamicObjectsInArea(getCollisionResolver(), _position, r);
+		common::Circle selfCircle = { _position, r };
+		for (DynamicEntity* t : potentialColliders) {
+			if (t != this && common::testCircles(selfCircle, { t->getPosition(), t->getRadius() })) {
+				CollisionResponder* resp = dynamic_cast<CollisionResponder*>(t);
+				if (resp != nullptr) {
+					responders.push_back(resp);
+				}
+			}
+		}
+		CollisionInvoker::invokeCollision(responders, time);
 	}
 }
 

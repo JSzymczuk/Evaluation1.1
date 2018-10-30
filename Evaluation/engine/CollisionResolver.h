@@ -46,4 +46,4 @@ std::vector<Destructible*> getDestructibleInArea(const CollisionResolver* collis
 std::vector<DynamicEntity*> narrowphaseDynamic(const CollisionResolver* collisionResolver, const DynamicEntity* entity);
 std::vector<StaticEntity*> narrowphaseStatic(const CollisionResolver* collisionResolver, const DynamicEntity* entity);
 bool isPositionValid(const CollisionResolver* collisionResolver, const DynamicEntity* entity, bool staticOnly = false);
-bool checkMovementCollisions(const CollisionResolver* collisionResolver, const Segment& segment, float margin);
+bool checkMovementCollisions(const CollisionResolver* collisionResolver, const Movable* entity, const Segment& segment);

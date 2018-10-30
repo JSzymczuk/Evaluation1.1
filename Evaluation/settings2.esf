@@ -1,5 +1,5 @@
 data/maps/empty.map 300
-a1_1  ms                   1  480 360
+a1_1  sc:data/ai/dumb.lua  1  480 360
 a2_1  sc:data/ai/dumb.lua  2  540 360
 a2_2  sc:data/ai/dumb.lua  2  420 360
 a2_3  sc:data/ai/dumb.lua  2  450 308

@@ -1,9 +1,9 @@
-isWandering = false
+isMoving = false
 
 function update(agent, actorKnowledge, time)
-	if not isWandering then 
-		agent:wander()
-		isWandering = true
+	if not isMoving then 
+		agent:move(Vector2(680, 360))
+		isMoving = true
 	end
 end
 

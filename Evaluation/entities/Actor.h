@@ -66,6 +66,7 @@ public:
 	Team* getTeam() const override;
 	float recieveDamage(float damage) override;
 	bool isDestroyed() const override;
+	bool wasDestroyed() const override;
 	void onDestroy() override;
 	float getSquareDistanceTo(const Vector2& point) const override;
 
@@ -84,6 +85,7 @@ private:
 
 	int _kills;
 	int _friendkills;
+	bool _isDestroyed = false;
 
 	Action* _currentAction;
 	Action* _nextAction;

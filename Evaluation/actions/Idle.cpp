@@ -7,7 +7,7 @@ IdleAction::~IdleAction() {}
 
 ActionType IdleAction::getActionType() const { return ActionType::IDLE; }
 
-int IdleAction::getPriority() const { return 0; }
+bool IdleAction::isTransactional() const { return false; }
 
 bool IdleAction::update(GameTime gameTime) { return false; }
 

@@ -24,6 +24,7 @@ public:
 	bool isSpotting() const override;
 	float getRadius() const override;
 	
+	int getId() const;
 	bool isActive() const;
 	void update(GameTime time) override;
 	void onCollision(CollisionInvoker* invoker, GameTime time) override;
@@ -37,6 +38,9 @@ private:
 	String _label;
 	bool _isActive;
 	GameTime _activationTime;
+	int _id;
+
+	static int _createdTriggers;
 
 	void setNextActivationTime(GameTime time);
 	void activate(GameTime time);

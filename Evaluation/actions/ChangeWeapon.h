@@ -6,10 +6,10 @@ class ChangeWeaponAction : public Action {
 public:
 	ChangeWeaponAction(Actor* actor, const String& weaponName);
 	~ChangeWeaponAction();
-	ActionType getActionType() const;
-	int getPriority() const;
-	void finish(GameTime gameTime);
-	bool update(GameTime gameTime);
+	ActionType getActionType() const override;
+	bool isTransactional() const override;
+	void finish(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
 private:
 	String _weaponName;

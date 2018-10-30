@@ -38,7 +38,6 @@ Game::~Game() {
 	if (_camera != nullptr) { delete _camera; }
 
 	GameMap::destroy(_gameMap);
-	destroyLuaEnv(_luaEnv);
 
 	if (_instance == this) { _instance = nullptr; }
 }
@@ -113,20 +112,19 @@ bool Game::initialize(const String& settingsFilename) {
 	
 	if (!ResourceManager::initialize()) { return false; }
 	TriggerFactory::initialize();
-	_luaEnv = createLuaEnv();
 	_playerAgent = nullptr;
 
-	if (Config.AreLogsVisible) {
-		Logger::startLogging();
-	}
-	else {
-		Logger::stopLogging();
-	}
+	Logger::stopLogging();
 
 	auto rm = ResourceManager::get();
 	rm->loadFont("mainfont", "content/CourierNew.ttf", 14);
 	rm->loadImage(Config.ActorRingTextureKey, Config.ActorRingTexturePath);
 	rm->loadImage(Config.TriggerRingTextureKey, Config.TriggerRingTexturePath);
+	rm->loadImage(Config.MedPackTextureKey, Config.MedPackTexture);
+	rm->loadImage(Config.AmmoPackTextureKey, Config.AmmoPackTexture);
+	rm->loadImage(Config.ArmorPackTextureKey, Config.ArmorPackTexture);
+
+	//GameMap::generateConnections(settings.map, "gen_conn.txt");
 
 	_gameMap = GameMap::create(settings.map.c_str());
 	
@@ -199,7 +197,7 @@ void Game::initializeTeams(const std::vector<ActorLoadedData>& actorsData) {
 				isValid = true;
 			}
 			else if (actorData.script.substr(0, agentScriptPrefixLength) == Config.AgentScriptPrefix) {
-				agent = new LuaAgent(actor, actorData.script.substr(agentScriptPrefixLength), _luaEnv);
+				agent = new LuaAgent(actor, actorData.script.substr(agentScriptPrefixLength));
 				isValid = true;
 			}
 		}
@@ -345,6 +343,10 @@ void Game::handleEvents() {
 				_areHealthBarsVisible = !_areHealthBarsVisible;
 			}
 
+			if (keyboardState[SDL_SCANCODE_H]) {
+				_iscurrentPathVisible = !_iscurrentPathVisible;
+			}
+
 			if (keyboardState[SDL_SCANCODE_LCTRL] && keyboardState[SDL_SCANCODE_L]) {
 				if (Logger::isLogging()) { Logger::stopLogging(); }
 				else { Logger::startLogging(); }
@@ -486,6 +488,15 @@ void Game::render() const {
 	
 #ifdef _DEBUG
 
+	if (_isNavigationMeshVisible) {
+		for (Segment arc : _gameMap->getNavigationArcs()) {
+			drawSegment(_renderer, arc, *_camera, colors::blue);
+		}
+		for (Vector2 point : _gameMap->getNavigationNodes()) {
+			drawPoint(_renderer, point, *_camera, colors::blue);
+		}
+	}
+
 	if (_areAabbsVisible) {
 		if (Config.CollisionResolver == "RegularGrid") {
 
@@ -532,42 +543,28 @@ void Game::render() const {
 		}
 	}
 	
-	if (_isNavigationMeshVisible) {
-		for (Segment arc : _gameMap->getNavigationArcs()) {
-			drawSegment(_renderer, arc, *_camera, colors::blue);
+	if (_iscurrentPathVisible && currentActor != nullptr) {
+		if (currentActor->isStrayingFromPath()) {
+			Vector2 pos = currentActor->getPosition(); 
+			Vector2 goal = currentActor->getLongGoal();
+			drawSegment(_renderer, Segment(pos, goal), *_camera, colors::yellow);
+			drawPoint(_renderer, goal, *_camera, colors::yellow);
 		}
-		for (Vector2 point : _gameMap->getNavigationNodes()) {
-			drawPoint(_renderer, point, *_camera, colors::blue);
-		}
-	}
-	
-	//drawPoint(_gameMap->getClosest(mousePos), colors::pink);
-
-	/*if (_areAabbsVisible) {
-		for (Aabb& aabb : _gameMap->getAabbs()) {
-			drawAabb(aabb, colors::white);
-		}
-	}*/
-
-	//for (Aabb& aabb : _gameMap->getRegionsContaining(common::Circle(mousePos, 20))) {
-	//	drawAabb(aabb, colors::red);
-	//}
-	//drawCircle(mousePos, 20, colors::darkRed);
-
-	/*if (_iscurrentPathVisible && currentActor != nullptr) {
-		auto pathCopy = std::queue<Vector2>(currentActor->getCurrentPath());
-		if (pathCopy.size() > 0) {
-			Vector2 prev = currentActor->getPosition();
-			drawPoint(prev, colors::yellow);
-			while (!pathCopy.empty()) {
-				Vector2 next = pathCopy.front();
-				pathCopy.pop();
-				drawSegment(Segment(prev, next), colors::yellow);
-				drawPoint(next, colors::yellow);
-				prev = next;
+		else {
+			auto pathCopy = std::queue<Vector2>(currentActor->getCurrentPath());
+			if (pathCopy.size() > 0) {
+				Vector2 prev = currentActor->getPosition();
+				drawPoint(_renderer, prev, *_camera, colors::yellow);
+				while (!pathCopy.empty()) {
+					Vector2 next = pathCopy.front();
+					pathCopy.pop();
+					drawSegment(_renderer, Segment(prev, next), *_camera, colors::yellow);
+					drawPoint(_renderer, next, *_camera, colors::yellow);
+					prev = next;
+				}
 			}
 		}
-	}*/
+	}
 
 #endif
 
@@ -637,9 +634,7 @@ void Game::render() const {
 //	}
 //
 //#endif // _DEBUG
-
-	//auto time = SDL_GetPerformanceCounter();
-
+	
 	SDL_Color missileColor;
 	for (Missile& missile : _missileManager->getMissiles()) {		
 		drawSegment(_renderer, Segment(missile.frontPosition, missile.backPosition), *_camera, getWeaponInfo(missile.weaponType).color);
@@ -649,13 +644,28 @@ void Game::render() const {
 		fillRing(_renderer, ring.center, ring.radius1, ring.radius2, *_camera, colors::red);
 	}
 	
-	size_t seconds = getRemainingTime();
-	size_t minutes = seconds / 60;
-	seconds %= 60;
-	drawString(_renderer, (toTimeString(minutes) + ":" + toTimeString(seconds)).c_str(), 
-		Config.DisplayWidth / 2, Config.TimerPosition, *_camera, Absolute, true, colors::white);
-	drawString(_renderer, ("FPS: " + std::to_string(_lastFps)).c_str(), 30 + Config.TimerPosition, 
-		Config.TimerPosition, *_camera, Absolute, false, colors::white);
+	if (Config.ShowTimer) {
+		size_t seconds = getRemainingTime();
+		size_t minutes = seconds / 60;
+		seconds %= 60;
+		drawString(_renderer, (toTimeString(minutes) + ":" + toTimeString(seconds)).c_str(),
+			Config.DisplayWidth / 2, Config.TimerPosition, *_camera, Absolute, true, colors::white);
+	}
+
+	if (Config.ShowFpsCounter) {
+		drawString(_renderer, ("FPS: " + std::to_string(_lastFps)).c_str(), 30 + Config.TimerPosition,
+			Config.TimerPosition, *_camera, Absolute, false, colors::white);
+	}
+
+	if (Config.ShowTeamsHealth) {
+		for (Team* team : _teams) {
+			float remaining = team->getTotalRemainingHelath();
+			int visibleRemaining = remaining > 1 ? (int)remaining : remaining > 0 ? 1 : 0;
+			drawString(_renderer, ("Team " + std::to_string(team->getNumber()) + ": "
+				+ std::to_string(visibleRemaining)).c_str(),
+				20 + (team->getNumber() - 1) * 150, Config.DisplayHeight - 20, *_camera, Absolute, false, colors::white);
+		}
+	}
 
 	SDL_RenderPresent(_renderer);
 }
@@ -669,8 +679,13 @@ void Game::registerAgentToDispose(Agent* agent) {
 	}
 }
 
-GameState Game::checkWinLoseConditions(std::vector<Team*>& winners) const {
-	if (getRemainingTime() > 0) {
+GameState Game::checkWinLoseConditions(std::vector<Team*>& winners) const {	
+	if(getRemainingTime() > 0) {
+
+		if (!Config.StopIfOneTeamRemaining) {
+			return GameState::IN_PROGRESS;
+		}
+
 		size_t teamsRemaining = 0;
 		size_t maxRemainingActors = 0;
 

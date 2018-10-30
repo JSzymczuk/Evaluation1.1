@@ -1,7 +1,7 @@
 data/maps/test.map 300
-team1_1  sc:data/ai/test_ai.lua  1  790 360
-team1_2  sc:data/ai/test_ai.lua  1  850 320
-team1_3  sc:data/ai/test_ai.lua  1  850 400
-team2_1  sc:data/ai/test_ai.lua  2  170 360
-team2_2  sc:data/ai/test_ai.lua  2  110 320
-team2_3  sc:data/ai/test_ai.lua  2  110 400
+Actor1  sc:data/ai/test_ai2.lua  1  790 360
+Actor2  sc:data/ai/test_ai2.lua  1  850 320
+Actor3  sc:data/ai/test_ai2.lua  1  850 400
+Actor4  sc:data/ai/test_ai2.lua  2  170 360
+Actor5  sc:data/ai/test_ai2.lua  2  110 320
+Actor6  sc:data/ai/test_ai2.lua  2  110 400

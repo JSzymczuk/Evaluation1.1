@@ -17,6 +17,10 @@ float GameMap::getHeight() const { return _height; }
 
 GameMap* GameMap::create(const char* filepath) { return Loader().load(filepath); }
 
+void GameMap::generateConnections(const String& inputFile, const String& outputFile) { 
+	Loader().generateConnections(inputFile, outputFile); 
+}
+
 void GameMap::destroy(GameMap* map) {
 	auto walls = map->_walls;
 	for (auto wallPtr : walls) {
@@ -303,19 +307,19 @@ std::vector<int> GameMap::aStar(int from, int to, const std::vector<common::Circ
 	return path;
 }
 
-std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, DynamicEntity* movable) const {
+std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, Movable* movable) const {
 	return findPath(from, to, movable, {});
 }
 
-bool isMovementValid(CollisionResolver* collisionResolver, DynamicEntity* movable, const Vector2& movementVector) {
-	float padding = movable->getRadius() + Config.MovementSafetyMargin + common::EPSILON;
+bool isMovementValid(CollisionResolver* collisionResolver, Movable* movable, const Vector2& movementVector) {
+	//float padding = movable->getRadius() + Config.MovementSafetyMargin + common::EPSILON;
 	Vector2 pos = movable->getPosition();
 	Segment segment = Segment(pos, pos + movementVector);
-	return !checkMovementCollisions(collisionResolver, segment, padding);
+	return !checkMovementCollisions(collisionResolver, movable, segment);
 }
 
 std::queue<Vector2> GameMap::findPath(const Vector2& from, const Vector2& to, 
-	DynamicEntity* movable, const std::vector<common::Circle>& ignoredAreas) const {
+	Movable* movable, const std::vector<common::Circle>& ignoredAreas) const {
 
 	int start = getClosestNavigationNode(from, ignoredAreas);
 	int end = isPositionValid(_collisionResolver, movable, true) ? getClosestNavigationNode(to, ignoredAreas) : -1;
@@ -534,42 +538,49 @@ std::vector<Segment> GameMap::getNavigationArcs() const {
 	return result;
 }
 
-/*
-void GameMap::Loader::appendIfNotContains(std::vector<GameMap::NavigationNode>& collection, const Vector2& point) const {
-	bool isDuplicate = false;
-	float epsilon = common::EPSILON;
-	for (const NavigationNode& node : collection) {
-		if (common::sqDist(point, node.position) <= epsilon) {
-			isDuplicate = true;
-			break;
-		}
-	}
-	if (!isDuplicate) {		
-		collection.push_back(NavigationNode(point.x, point.y, collection.size()));
-	}
-}
 
 void GameMap::Loader::generateConnections(const String& inputFile, const String& outputFile) {
 
-	_reader.open((MapsDirectory + inputFile).c_str());
+	_reader.open(inputFile);
 
 	if (_reader.fail()) {
-		throw "Plik '" + String(MapsDirectory + inputFile) + "' nie istnieje, jest niedostêpny lub uszkodzony.";
+		throw "Plik '" + String(inputFile) + "' nie istnieje, jest niedostêpny lub uszkodzony.";
 	}
 
-	std::vector<Wall> wallsRaw;
-	int width, height;
+	int width, height, size;
+	std::vector<NavigationNode> points;
+	std::vector<Wall> walls;
+
+	float epsilon = common::EPSILON;
 
 	String s;
 	_reader >> s >> width >> s >> height;
 
+	int idx;
+	float posX, posY;
+	_reader >> s >> size;
+
+	points.reserve(size);
+
+	for (int i = 0; i < size; i++) {
+		_reader >> s >> idx >> s >> posX >> s >> posY;
+		points.push_back(NavigationNode(posX, posY, idx));
+	}
+
 	float x1, y1, x2, y2, id, p;
 	String objectType;
+	
+	_reader >> s >> size;
+	walls.reserve(size);
 
-	while (_reader >> objectType) {
+	for (int i = 0; i < size; i++) {
+		_reader >> objectType;
 		if (objectType == "wall:") {
 			_reader >> x1 >> y1 >> x2 >> y2 >> s >> id >> s >> p;
-			wallsRaw.push_back(Wall(id, Vector2(x1, y1), Vector2(x2, y2), p));
+			Vector2 from(x1, y1), to(x2, y2);
+			if (common::sqDist(from, to) > epsilon) {
+				walls.push_back(Wall(id, Vector2(x1, y1), Vector2(x2, y2), p));
+			}
 		}
 		else {
 			throw "Nieprawid³owa struktura pliku mapy! Nie rozpoznano: '" + objectType + "'.";
@@ -578,38 +589,13 @@ void GameMap::Loader::generateConnections(const String& inputFile, const String&
 
 	_reader.close();
 	
-	std::vector<Wall> walls;
-	walls.reserve(wallsRaw.size());
-
-	std::vector<NavigationNode> points;
-	points.reserve(wallsRaw.size() * 4);
-
-	float epsilon = common::EPSILON;
-	float k = ActorRadius;// + MovementSafetyMargin;
-
-	for (Wall wall : wallsRaw) {
-		auto from = wall.getFrom();
-		auto to = wall.getTo();
-		if (common::sqDist(from, to) > epsilon) {
-			walls.push_back(wall);
-			Vector2 v1 = (to - from).normal() * k;
-			Vector2 v2 = Vector2(v1.y, -v1.x);
-
-			appendIfNotContains(points, from - v1 + v2);
-			appendIfNotContains(points, from - v1 - v2);
-			appendIfNotContains(points, to + v1 + v2);
-			appendIfNotContains(points, to + v1 - v2);
-		}
-	}
-
-	GameMap* map = new GameMap();
-	map->_walls.initialize(walls);
-
+	float k = Config.ActorRadius;
+	
 	// Je¿eli po³¹czenie przechodzi zbyt blisko œciany, to odrzucamy je.
 	auto condition1 = [&walls](const Segment& s, float distance) -> bool {
+		distance *= distance;
 		for (auto elem : walls) {
-			if (common::distance(elem.getFrom(), s) < distance
-				|| common::distance(elem.getTo(), s) < distance) { 
+			if (common::sqDist(s, elem.getSegment()) < distance) { 
 				return true; 
 			} 
 		}
@@ -654,8 +640,7 @@ void GameMap::Loader::generateConnections(const String& inputFile, const String&
 			second = &points.at(j);
 			const Segment arc = Segment(first->position, second->position);
 			if (first->index < second->index
-				&& !map->raycastStatic(arc, tempVector) 
-				&& !condition1(arc, ActorRadius)
+				&& !condition1(arc, k)
 				&& !condition2(arc)) {
 				connections.push_back("from: " + std::to_string(first->index)
 					+ " to: " + std::to_string(second->index) + " mul: 1.0 inv: 1\n");
@@ -677,9 +662,6 @@ void GameMap::Loader::generateConnections(const String& inputFile, const String&
 	}
 
 	myfile.close();
-
-	delete map;
 }
-*/
 
 #endif

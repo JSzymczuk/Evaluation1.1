@@ -10,7 +10,7 @@ MoveAction::~MoveAction() {}
 
 ActionType MoveAction::getActionType() const { return ActionType::MOVE; }
 
-int MoveAction::getPriority() const { return 0; }
+bool MoveAction::isTransactional() const { return false; }
 
 bool MoveAction::update(GameTime gameTime) {
 	return !getActor()->isMoving(); 
@@ -31,7 +31,7 @@ MoveAtAction::~MoveAtAction() {}
 
 ActionType MoveAtAction::getActionType() const { return ActionType::MOVE; }
 
-int MoveAtAction::getPriority() const { return 0; }
+bool MoveAtAction::isTransactional() const { return false; }
 
 bool MoveAtAction::update(GameTime gameTime) { return getActor()->isMoving(); }
 
@@ -49,7 +49,7 @@ WanderAction::~WanderAction() {}
 
 ActionType WanderAction::getActionType() const { return ActionType::WANDER; }
 
-int WanderAction::getPriority() const { return 0; }
+bool WanderAction::isTransactional() const { return false; }
 
 void WanderAction::start(GameTime gameTime) {
 	Actor* actor = getActor();
@@ -61,8 +61,8 @@ void WanderAction::start(GameTime gameTime) {
 
 bool WanderAction::update(GameTime gameTime) {
 	Actor* actor = getActor();
-	Vector2 velocity = actor->isMoving() ? actor->getVelocity() : -actor->getVelocity();
-	float ang = common::angle(velocity) + Rng::getFloat(-Config.ActorWanderSpread, Config.ActorWanderSpread);
+	float ang = !actor->isWaiting() ? common::angle(actor->getVelocity()) + Rng::getFloat(-Config.ActorWanderSpread, Config.ActorWanderSpread)
+		: common::PI_F + actor->getOrientation();
 	Vector2 prefVelocity = Vector2(cosf(ang), sinf(ang));
 	Vector2 returnVel = _center - actor->getPosition();
 	float lth = returnVel.lengthSquared();

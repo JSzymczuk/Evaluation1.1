@@ -20,14 +20,16 @@ private:
 
 class TriggerInfo : public ObjectInfo {
 public:
-	TriggerInfo(Trigger* trigger, GameTime time);
+	TriggerInfo(const Trigger* trigger, GameTime time);
 	~TriggerInfo();
 
+	int getId() const;
 	String getName() const;
 	Vector2 getPosition() const;
 	bool isActive() const;
 
 private:
+	int _id;
 	String _name;
 	Vector2 _position;
 	bool _isActive;
@@ -36,7 +38,7 @@ private:
 
 class ActorInfo : public ObjectInfo {
 public:
-	ActorInfo(Actor* actor, GameTime time);
+	ActorInfo(const Actor* actor, GameTime time);
 	~ActorInfo();
 
 	String getName() const;

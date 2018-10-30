@@ -7,12 +7,12 @@ public:
 	DieAction(Actor* actor);
 	~DieAction();
 
-	void finish(GameTime gameTime);
-	bool update(GameTime gameTime);
+	void finish(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
-	bool locksRotation() const;
-	bool locksMovement() const;
+	bool locksRotation() const override;
+	bool locksMovement() const override;
+	bool isTransactional() const override;
+	ActionType getActionType() const override;
 
-	int getPriority() const;
-	ActionType getActionType() const;
 };

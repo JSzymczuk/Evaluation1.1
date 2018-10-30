@@ -9,14 +9,14 @@ public:
 	ShootAction(Actor* actor, const Vector2& target);
 	~ShootAction();
 
-	void start(GameTime gameTime);
-	void finish(GameTime gameTime);
-	bool update(GameTime gameTime);
+	void start(GameTime gameTime) override;
+	void finish(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
-	ActionType getActionType() const;
-	int getPriority() const;
-	bool locksRotation() const;
-	bool locksMovement() const;
+	ActionType getActionType() const override;
+	bool locksRotation() const override;
+	bool locksMovement() const override;
+	bool isTransactional() const override;
 
 private:
 	int _shots;

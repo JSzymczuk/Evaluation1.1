@@ -168,6 +168,50 @@ size_t Agent::getTotalFrames() const {
 	return _totalFrames;
 }
 
+int Agent::getMapWidth() const { return Game::getInstance()->getMap()->getWidth(); }
+
+int Agent::getMapHeight() const { return Game::getInstance()->getMap()->getHeight(); }
+
+int Agent::getRandom(int min, int max) const { return Rng::getInteger(min, max); }
+
+float Agent::getActorMaxArmor() const { return Config.MaxArmor; }
+
+float Agent::getActorMaxHealth() const { return Config.ActorMaxHealth; }
+
+float Agent::getMaxAmmo(const String& weaponName) const { 
+	return MissileManager::getWeaponInfo(weaponName).maxAmmo; 
+}
+
+float Agent::getActorRadius() const { return Config.ActorRadius; }
+
+float Agent::getTriggerRadius() const { return Config.TriggerRadius; }
+
+float Agent::getActorSightRadius() const { return Config.ActorSightRadius; }
+
+float Agent::getActorSpeed() const { return Config.ActorSpeed; }
+
+float Agent::getActorRotationSpeed() const { return Config.ActorRotationSpeed; }
+
+std::vector<TriggerInfo> Agent::getTriggers() const {
+	std::vector<TriggerInfo> result;
+	GameTime time = Game::getCurrentTime();
+	for (Trigger* trigger : Game::getInstance()->getMap()->getTriggers()) {
+		result.push_back(TriggerInfo(trigger, time));
+	}
+	return result;
+}
+
+Vector2 Agent::raycastStatic(const Vector2& origin, const Vector2& direction, float length) {
+	Vector2 point;
+	if (Game::getInstance()->getMap()->raycastStatic(Segment(origin, origin + direction.normal() * length), point)) {
+		return point;
+	}
+	return Vector2(-1, -1);
+}
+
+bool Agent::checkCircleAndSegment(const Vector2& center, float radius, const Vector2& origin, const Vector2& end) {
+	return common::testCircleAndSegment({ center, radius }, Segment(origin, end)).pointsFound > 0;
+}
 
 void LuaAgent::initializeLogic(const ActorKnowledge& actorKnowledge, GameTime time) {
 	try {
@@ -203,12 +247,11 @@ String trimFileName(const String& filename) {
 	std::cerr << "Script name '" << filename << "' is invalid.\n";
 }
 
-LuaAgent::LuaAgent(Actor* actor, String filename, LuaEnv* luaEnv) : Agent(actor) {
-	luaEnv = createLuaEnv();
-	this->_luaEnv = luaEnv;
-	int error = luaL_loadfile(luaEnv, filename.c_str()) || lua_pcall(luaEnv, 0, LUA_MULTRET, 0);
+LuaAgent::LuaAgent(Actor* actor, String filename) : Agent(actor) {
+	this->_luaEnv = createLuaEnv();
+	int error = luaL_loadfile(_luaEnv, filename.c_str()) || lua_pcall(_luaEnv, 0, LUA_MULTRET, 0);
 	if (error) {
-		std::cerr << "[Lua] Error " << error << ": " << lua_tostring(luaEnv, -1) << " - during execution of script: " << filename << "\n";
-		lua_pop(luaEnv, 1);
+		std::cerr << "[Lua] Error " << error << ": " << lua_tostring(_luaEnv, -1) << " - during execution of script: " << filename << "\n";
+		lua_pop(_luaEnv, 1);
 	}
 }

@@ -13,7 +13,7 @@ ObjectInfo::~ObjectInfo() {}
 GameTime ObjectInfo::getObservationTime() const { return _time; }
 
 
-ActorInfo::ActorInfo(Actor* actor, GameTime time) : ObjectInfo(time) {
+ActorInfo::ActorInfo(const Actor* actor, GameTime time) : ObjectInfo(time) {
 	_name = actor->getName();
 	_team = actor->getTeam()->getNumber();
 	_position = actor->getPosition();
@@ -42,7 +42,7 @@ String ActorInfo::getWeaponType() const { return _weapon; }
 bool ActorInfo::isDead() const { return _health <= 0; }
 
 
-TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
+TriggerInfo::TriggerInfo(const Trigger* trigger, GameTime time) : ObjectInfo(time) {
 	if (trigger != nullptr) {
 		_name = trigger->getName();
 		/*if (type == TriggerType::HEALTH) {
@@ -54,12 +54,15 @@ TriggerInfo::TriggerInfo(Trigger* trigger, GameTime time) : ObjectInfo(time) {
 		else {
 			_name = ((AmmoPack*)trigger)->getWeaponType();
 		}*/
+		_id = trigger->getId();
 		_isActive = trigger->isActive();
 		_position = trigger->getPosition();
 	}
 }
 
 TriggerInfo::~TriggerInfo() {}
+
+int TriggerInfo::getId() const { return _id; }
 
 String TriggerInfo::getName() const { return _name; }
 

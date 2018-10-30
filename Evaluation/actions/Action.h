@@ -27,8 +27,8 @@ public:
 
 	virtual bool locksRotation() const;
 	virtual bool locksMovement() const;
+	virtual bool isTransactional() const = 0;
 
-	virtual int getPriority() const = 0;
 	virtual ActionType getActionType() const = 0;
 
 	bool hasStarted() const;

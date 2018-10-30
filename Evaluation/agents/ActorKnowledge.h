@@ -23,7 +23,9 @@ public:
 	Vector2 getShortDestination() const;
 	Vector2 getLongDestination() const;
 	ActionType getCurrentAction() const;
+	bool canInterruptAction() const;
 	bool isMoving() const;
+	bool isWaiting() const;
 	bool isDead() const;
 	bool hasPositionChanged() const;
 	float getOrientation() const;

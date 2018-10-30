@@ -7,10 +7,10 @@ public:
 	MoveAction(Actor* actor);
 	MoveAction(Actor* actor, const Vector2& position);
 	~MoveAction();
-	ActionType getActionType() const;
-	int getPriority() const;
-	void start(GameTime gameTime);
-	bool update(GameTime gameTime);
+	ActionType getActionType() const override;
+	bool isTransactional() const override;
+	void start(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
 private:
 	Vector2 _position;
@@ -21,10 +21,10 @@ class MoveAtAction : public Action {
 public:
 	MoveAtAction(Actor* actor, const Vector2& velocity);
 	~MoveAtAction();
-	ActionType getActionType() const;
-	int getPriority() const;
-	void start(GameTime gameTime);
-	bool update(GameTime gameTime);
+	ActionType getActionType() const override;
+	bool isTransactional() const override;
+	void start(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
 private:
 	Vector2 _velocity;
@@ -34,10 +34,10 @@ class WanderAction : public Action {
 public:
 	WanderAction(Actor* actor);
 	~WanderAction();
-	ActionType getActionType() const;
-	int getPriority() const;
-	void start(GameTime gameTime);
-	bool update(GameTime gameTime);
+	ActionType getActionType() const override;
+	bool isTransactional() const override;
+	void start(GameTime gameTime) override;
+	bool update(GameTime gameTime) override;
 
 private:
 	Vector2 _center;

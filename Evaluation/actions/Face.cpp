@@ -7,7 +7,7 @@ FaceAction::~FaceAction() {}
 
 ActionType FaceAction::getActionType() const { return ActionType::FACE; }
 
-int FaceAction::getPriority() const { return 0; }
+bool FaceAction::isTransactional() const { return false; }
 
 bool FaceAction::locksRotation() const { return true; }
 
@@ -16,8 +16,6 @@ void FaceAction::start(GameTime gameTime) {
 	Action::start(gameTime);
 }
 
-bool FaceAction::update(GameTime gameTime) { 
-	Actor* actor = getActor();
-	actor->lookAt(_target);
-	return true; 
+bool FaceAction::update(GameTime gameTime) {
+	return !getActor()->isRotating();
 }

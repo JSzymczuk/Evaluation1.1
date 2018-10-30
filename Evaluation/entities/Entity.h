@@ -31,6 +31,7 @@ public:
 	virtual String getName() const = 0;
 	virtual Team* getTeam() const = 0;
 	virtual float recieveDamage(float damage) = 0;
+	virtual bool wasDestroyed() const = 0;
 	virtual bool isDestroyed() const = 0;
 	virtual void onDestroy() = 0;
 	virtual float getSquareDistanceTo(const Vector2& point) const = 0;

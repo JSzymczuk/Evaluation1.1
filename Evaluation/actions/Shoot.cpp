@@ -67,6 +67,6 @@ bool ShootAction::update(GameTime gameTime) {
 }
 
 ActionType ShootAction::getActionType() const { return ActionType::SHOOT; }
-int ShootAction::getPriority() const { return 0; }
+bool ShootAction::isTransactional() const { return true; }
 bool ShootAction::locksRotation() const { return true; }
 bool ShootAction::locksMovement() const { return true; }

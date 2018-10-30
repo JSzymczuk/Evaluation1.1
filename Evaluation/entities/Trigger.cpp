@@ -5,15 +5,20 @@
 #include "engine/MissileManager.h"
 #include "engine/Rng.h"
 
+int Trigger::_createdTriggers = 0;
+
 Trigger::Trigger(const Vector2& position, const String& label)
 	: _isActive(false), _label(label), DynamicEntity(position, 0) {
 	_activationTime = SDL_GetPerformanceCounter()
 		+ Config.MinInitialTriggerActivationTime - Config.MinTriggerActivationTime
 		+ Rng::getInteger(Config.MinTriggerActivationTime, Config.MaxTriggerActivationTime);
+	_id = ++_createdTriggers;
 }
 
 Trigger::~Trigger() {}
  
+int Trigger::getId() const { return _id; }
+
 bool Trigger::isSolid() const { return false; }
 
 bool Trigger::isSpotting() const { return false; }

@@ -21,6 +21,7 @@ class Wall;
 class GameMap {
 public:
 	static GameMap* create(const char* filepath);
+	static void generateConnections(const String& inputFile, const String& outputFile);
 	static void destroy(GameMap* game);
 
 	float getWidth() const;
@@ -30,8 +31,8 @@ public:
 	std::vector<Trigger*> getTriggers() const;
 	std::vector<StaticEntity*> getWalls() const;
 
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, DynamicEntity* movable) const;
-	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, DynamicEntity* movable, const std::vector<common::Circle>& ignoredAreas) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, Movable* movable) const;
+	std::queue<Vector2> findPath(const Vector2& from, const Vector2& to, Movable* movable, const std::vector<common::Circle>& ignoredAreas) const;
 	bool raycastStatic(const Segment& ray, Vector2& result) const;
 
 	bool canPlace(const DynamicEntity* object) const;
@@ -46,6 +47,7 @@ public:
 	const CollisionResolver* getCollisionResolver() const;
 
 	void initializeDynamic(const std::vector<DynamicEntity*>& dynamicObjects);
+
 
 #ifdef _DEBUG
 	Vector2 getClosest(const Vector2& point) const;
@@ -79,12 +81,11 @@ private:
 
 	static const int NULL_IDX;
 
+
 	class Loader {
 	public:
 		GameMap* load(const char* mapFilename);
-#ifdef _DEBUG
-		//void generateConnections(const String& inputFile, const String& outputFile);
-#endif
+		void generateConnections(const String& inputFile, const String& outputFile); 
 
 	private:
 		void loadMapSize();

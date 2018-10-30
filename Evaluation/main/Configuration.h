@@ -14,8 +14,11 @@ struct ConfigurationParameters {
 	const int DisplayHeight;
 	const int CameraSpeed;
 	const int FPS;
-	const bool AreLogsVisible;
+	const bool StopIfOneTeamRemaining;
 	const bool MultithreadingEnabled;
+	const bool ShowFpsCounter;
+	const bool ShowTimer;
+	const bool ShowTeamsHealth;
 	const long long ActorUpdateFrequency;
 	const int RegularGridSize;
 	const float AabbTreeMargin;
@@ -74,7 +77,14 @@ struct ConfigurationParameters {
 	const String TriggerRingTextureKey;
 	const String TriggerRingTexturePath;
 	const String CollisionResolver;
+	const String MedPackTextureKey;
+	const String MedPackTexture;
+	const String AmmoPackTextureKey;
+	const String AmmoPackTexture;
+	const String ArmorPackTextureKey;
+	const String ArmorPackTexture;
 
+	const SDL_Color ArmorBarColor = { 143, 191, 215 };
 	const SDL_Color HealthBarBackColor = { 63, 63, 63 };
 	const SDL_Color HealthBarFullColor = { 0, 215, 80 };
 	const SDL_Color HealthBarHalfColor = { 215, 215, 0 };

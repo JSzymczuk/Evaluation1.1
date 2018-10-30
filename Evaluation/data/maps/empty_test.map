@@ -796,11 +796,4 @@ wall: 590 595 620 595 id: 93 priority: 0
 wall: 590 625 620 625 id: 94 priority: 0
 wall: 620 595 620 625 id: 95 priority: 0
 
-triggers: 7
-Chaingun 100 100
-Railgun 860 100
-Shotgun 100 620
-RocketLauncher 860 620
-Medpack 480 140
-Medpack 480 580
-Armor 480 360
+triggers: 0

@@ -12,6 +12,7 @@ String ActorKnowledge::getName() const { return _actor->getName(); }
 unsigned short ActorKnowledge::getTeam() const { return _actor->getTeam()->getNumber(); }
 Vector2 ActorKnowledge::getPosition() const { return _actor->getPosition(); }
 bool ActorKnowledge::isMoving() const { return _actor->isMoving(); }
+bool ActorKnowledge::isWaiting() const { return _actor->isWaiting(); }
 float ActorKnowledge::getOrientation() const { return _actor->getOrientation(); }
 int ActorKnowledge::getHealth() const { return _actor->getHealth(); }
 int ActorKnowledge::getArmor() const { return _actor->getArmor(); }
@@ -25,6 +26,7 @@ Vector2 ActorKnowledge::getLongDestination() const { return _actor->getLongGoal(
 ActionType ActorKnowledge::getCurrentAction() const { return _actor->getCurrentActionType(); }
 bool ActorKnowledge::isDead() const { return _actor->isDead(); }
 bool ActorKnowledge::hasPositionChanged() const { return _actor->hasPositionChanged(); }
+bool ActorKnowledge::canInterruptAction() const { return !_actor->getCurrentAction()->isTransactional(); }
 
 std::vector<ActorInfo> ActorKnowledge::getSeenActors() const { 
 	std::vector<ActorInfo> result;

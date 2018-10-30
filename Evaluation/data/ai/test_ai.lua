@@ -6,7 +6,7 @@ function initialize(agent, actorKnowledge, time) end
 
 function update(agent, actorKnowledge, time)
 
-	io.write(agent:getName(), ": ", actorKnowledge:getCurrentAction(), "\n")
+	--io.write(agent:getName(), ": ", actorKnowledge:getCurrentAction(), "\n")
 		
 	-- Znajdź najdalszego widzianego sojusznika
 	-- i wyślij mu powiadomienie

@@ -1,0 +1,424 @@
+width: 960 height: 720
+
+navigation_points: 52
+id:  0 x:  80 y:  80
+id:  1 x:  80 y: 335
+id:  2 x: 140 y: 335 
+id:  3 x: 140 y: 390 
+id:  4 x:  80 y: 390 
+id:  5 x:  80 y: 640 
+id:  6 x: 310 y: 640
+id:  7 x: 310 y: 550
+id:  8 x: 365 y: 550
+id:  9 x: 365 y: 640
+id: 10 x: 595 y: 640
+id: 11 x: 595 y: 550
+id: 12 x: 650 y: 550
+id: 13 x: 650 y: 640
+id: 14 x: 880 y: 640
+id: 15 x: 880 y: 390
+id: 16 x: 820 y: 390
+id: 17 x: 820 y: 335
+id: 18 x: 880 y: 335
+id: 19 x: 880 y:  80 
+id: 20 x: 650 y:  80 
+id: 21 x: 650 y: 170
+id: 22 x: 595 y: 170
+id: 23 x: 595 y:  80 
+id: 24 x: 365 y:  80 
+id: 25 x: 365 y: 170
+id: 26 x: 310 y: 170
+id: 27 x: 310 y:  80 
+id: 28 x: 310 y: 335
+id: 29 x: 220 y: 335
+id: 30 x: 220 y: 390
+id: 31 x: 310 y: 390
+id: 32 x: 310 y: 480
+id: 33 x: 365 y: 480
+id: 34 x: 365 y: 390
+id: 35 x: 440 y: 390
+id: 36 x: 440 y: 335
+id: 37 x: 365 y: 335
+id: 38 x: 365 y: 245
+id: 39 x: 310 y: 245
+id: 40 x: 595 y: 335
+id: 41 x: 510 y: 335
+id: 42 x: 510 y: 390
+id: 43 x: 595 y: 390
+id: 44 x: 595 y: 480
+id: 45 x: 650 y: 480
+id: 46 x: 650 y: 390
+id: 47 x: 750 y: 390
+id: 48 x: 750 y: 335
+id: 49 x: 650 y: 335
+id: 50 x: 650 y: 245
+id: 51 x: 595 y: 245
+
+connections: 311
+from: 0 to: 1 mul: 1.0 inv: 1
+from: 0 to: 2 mul: 1.0 inv: 1
+from: 0 to: 6 mul: 1.0 inv: 1
+from: 0 to: 7 mul: 1.0 inv: 1
+from: 0 to: 26 mul: 1.0 inv: 1
+from: 0 to: 27 mul: 1.0 inv: 1
+from: 0 to: 28 mul: 1.0 inv: 1
+from: 0 to: 29 mul: 1.0 inv: 1
+from: 0 to: 30 mul: 1.0 inv: 1
+from: 0 to: 38 mul: 1.0 inv: 1
+from: 0 to: 39 mul: 1.0 inv: 1
+from: 0 to: 40 mul: 1.0 inv: 1
+from: 0 to: 41 mul: 1.0 inv: 1
+from: 1 to: 2 mul: 1.0 inv: 1
+from: 1 to: 23 mul: 1.0 inv: 1
+from: 1 to: 25 mul: 1.0 inv: 1
+from: 1 to: 26 mul: 1.0 inv: 1
+from: 1 to: 27 mul: 1.0 inv: 1
+from: 1 to: 39 mul: 1.0 inv: 1
+from: 2 to: 3 mul: 1.0 inv: 1
+from: 2 to: 6 mul: 1.0 inv: 1
+from: 2 to: 7 mul: 1.0 inv: 1
+from: 2 to: 8 mul: 1.0 inv: 1
+from: 2 to: 23 mul: 1.0 inv: 1
+from: 2 to: 25 mul: 1.0 inv: 1
+from: 2 to: 26 mul: 1.0 inv: 1
+from: 2 to: 27 mul: 1.0 inv: 1
+from: 2 to: 29 mul: 1.0 inv: 1
+from: 2 to: 30 mul: 1.0 inv: 1
+from: 2 to: 32 mul: 1.0 inv: 1
+from: 2 to: 39 mul: 1.0 inv: 1
+from: 3 to: 4 mul: 1.0 inv: 1
+from: 3 to: 5 mul: 1.0 inv: 1
+from: 3 to: 6 mul: 1.0 inv: 1
+from: 3 to: 7 mul: 1.0 inv: 1
+from: 3 to: 8 mul: 1.0 inv: 1
+from: 3 to: 10 mul: 1.0 inv: 1
+from: 3 to: 25 mul: 1.0 inv: 1
+from: 3 to: 26 mul: 1.0 inv: 1
+from: 3 to: 27 mul: 1.0 inv: 1
+from: 3 to: 29 mul: 1.0 inv: 1
+from: 3 to: 30 mul: 1.0 inv: 1
+from: 3 to: 32 mul: 1.0 inv: 1
+from: 3 to: 39 mul: 1.0 inv: 1
+from: 4 to: 5 mul: 1.0 inv: 1
+from: 4 to: 6 mul: 1.0 inv: 1
+from: 4 to: 7 mul: 1.0 inv: 1
+from: 4 to: 8 mul: 1.0 inv: 1
+from: 4 to: 10 mul: 1.0 inv: 1
+from: 4 to: 32 mul: 1.0 inv: 1
+from: 5 to: 6 mul: 1.0 inv: 1
+from: 5 to: 7 mul: 1.0 inv: 1
+from: 5 to: 26 mul: 1.0 inv: 1
+from: 5 to: 27 mul: 1.0 inv: 1
+from: 5 to: 29 mul: 1.0 inv: 1
+from: 5 to: 30 mul: 1.0 inv: 1
+from: 5 to: 31 mul: 1.0 inv: 1
+from: 5 to: 32 mul: 1.0 inv: 1
+from: 5 to: 33 mul: 1.0 inv: 1
+from: 5 to: 42 mul: 1.0 inv: 1
+from: 5 to: 43 mul: 1.0 inv: 1
+from: 6 to: 7 mul: 1.0 inv: 1
+from: 6 to: 30 mul: 1.0 inv: 1
+from: 7 to: 8 mul: 1.0 inv: 1
+from: 7 to: 21 mul: 1.0 inv: 1
+from: 7 to: 22 mul: 1.0 inv: 1
+from: 7 to: 30 mul: 1.0 inv: 1
+from: 7 to: 32 mul: 1.0 inv: 1
+from: 7 to: 33 mul: 1.0 inv: 1
+from: 7 to: 35 mul: 1.0 inv: 1
+from: 7 to: 41 mul: 1.0 inv: 1
+from: 7 to: 42 mul: 1.0 inv: 1
+from: 7 to: 43 mul: 1.0 inv: 1
+from: 7 to: 44 mul: 1.0 inv: 1
+from: 7 to: 45 mul: 1.0 inv: 1
+from: 7 to: 51 mul: 1.0 inv: 1
+from: 8 to: 9 mul: 1.0 inv: 1
+from: 8 to: 10 mul: 1.0 inv: 1
+from: 8 to: 11 mul: 1.0 inv: 1
+from: 8 to: 21 mul: 1.0 inv: 1
+from: 8 to: 22 mul: 1.0 inv: 1
+from: 8 to: 23 mul: 1.0 inv: 1
+from: 8 to: 30 mul: 1.0 inv: 1
+from: 8 to: 32 mul: 1.0 inv: 1
+from: 8 to: 33 mul: 1.0 inv: 1
+from: 8 to: 35 mul: 1.0 inv: 1
+from: 8 to: 41 mul: 1.0 inv: 1
+from: 8 to: 42 mul: 1.0 inv: 1
+from: 8 to: 43 mul: 1.0 inv: 1
+from: 8 to: 44 mul: 1.0 inv: 1
+from: 8 to: 45 mul: 1.0 inv: 1
+from: 9 to: 10 mul: 1.0 inv: 1
+from: 9 to: 11 mul: 1.0 inv: 1
+from: 9 to: 15 mul: 1.0 inv: 1
+from: 9 to: 16 mul: 1.0 inv: 1
+from: 9 to: 22 mul: 1.0 inv: 1
+from: 9 to: 23 mul: 1.0 inv: 1
+from: 9 to: 35 mul: 1.0 inv: 1
+from: 9 to: 41 mul: 1.0 inv: 1
+from: 9 to: 42 mul: 1.0 inv: 1
+from: 9 to: 43 mul: 1.0 inv: 1
+from: 9 to: 44 mul: 1.0 inv: 1
+from: 9 to: 45 mul: 1.0 inv: 1
+from: 10 to: 11 mul: 1.0 inv: 1
+from: 10 to: 24 mul: 1.0 inv: 1
+from: 10 to: 25 mul: 1.0 inv: 1
+from: 10 to: 32 mul: 1.0 inv: 1
+from: 10 to: 33 mul: 1.0 inv: 1
+from: 10 to: 34 mul: 1.0 inv: 1
+from: 10 to: 35 mul: 1.0 inv: 1
+from: 10 to: 36 mul: 1.0 inv: 1
+from: 10 to: 42 mul: 1.0 inv: 1
+from: 11 to: 12 mul: 1.0 inv: 1
+from: 11 to: 15 mul: 1.0 inv: 1
+from: 11 to: 16 mul: 1.0 inv: 1
+from: 11 to: 17 mul: 1.0 inv: 1
+from: 11 to: 24 mul: 1.0 inv: 1
+from: 11 to: 25 mul: 1.0 inv: 1
+from: 11 to: 26 mul: 1.0 inv: 1
+from: 11 to: 32 mul: 1.0 inv: 1
+from: 11 to: 33 mul: 1.0 inv: 1
+from: 11 to: 34 mul: 1.0 inv: 1
+from: 11 to: 35 mul: 1.0 inv: 1
+from: 11 to: 36 mul: 1.0 inv: 1
+from: 11 to: 38 mul: 1.0 inv: 1
+from: 11 to: 42 mul: 1.0 inv: 1
+from: 11 to: 44 mul: 1.0 inv: 1
+from: 11 to: 45 mul: 1.0 inv: 1
+from: 11 to: 47 mul: 1.0 inv: 1
+from: 12 to: 13 mul: 1.0 inv: 1
+from: 12 to: 14 mul: 1.0 inv: 1
+from: 12 to: 15 mul: 1.0 inv: 1
+from: 12 to: 16 mul: 1.0 inv: 1
+from: 12 to: 17 mul: 1.0 inv: 1
+from: 12 to: 26 mul: 1.0 inv: 1
+from: 12 to: 32 mul: 1.0 inv: 1
+from: 12 to: 33 mul: 1.0 inv: 1
+from: 12 to: 34 mul: 1.0 inv: 1
+from: 12 to: 35 mul: 1.0 inv: 1
+from: 12 to: 36 mul: 1.0 inv: 1
+from: 12 to: 38 mul: 1.0 inv: 1
+from: 12 to: 42 mul: 1.0 inv: 1
+from: 12 to: 44 mul: 1.0 inv: 1
+from: 12 to: 45 mul: 1.0 inv: 1
+from: 12 to: 47 mul: 1.0 inv: 1
+from: 13 to: 14 mul: 1.0 inv: 1
+from: 13 to: 15 mul: 1.0 inv: 1
+from: 13 to: 16 mul: 1.0 inv: 1
+from: 13 to: 17 mul: 1.0 inv: 1
+from: 13 to: 19 mul: 1.0 inv: 1
+from: 13 to: 47 mul: 1.0 inv: 1
+from: 14 to: 15 mul: 1.0 inv: 1
+from: 14 to: 16 mul: 1.0 inv: 1
+from: 14 to: 20 mul: 1.0 inv: 1
+from: 14 to: 34 mul: 1.0 inv: 1
+from: 14 to: 35 mul: 1.0 inv: 1
+from: 14 to: 44 mul: 1.0 inv: 1
+from: 14 to: 45 mul: 1.0 inv: 1
+from: 14 to: 46 mul: 1.0 inv: 1
+from: 14 to: 47 mul: 1.0 inv: 1
+from: 14 to: 48 mul: 1.0 inv: 1
+from: 15 to: 16 mul: 1.0 inv: 1
+from: 15 to: 45 mul: 1.0 inv: 1
+from: 16 to: 17 mul: 1.0 inv: 1
+from: 16 to: 20 mul: 1.0 inv: 1
+from: 16 to: 21 mul: 1.0 inv: 1
+from: 16 to: 22 mul: 1.0 inv: 1
+from: 16 to: 45 mul: 1.0 inv: 1
+from: 16 to: 47 mul: 1.0 inv: 1
+from: 16 to: 48 mul: 1.0 inv: 1
+from: 16 to: 50 mul: 1.0 inv: 1
+from: 17 to: 18 mul: 1.0 inv: 1
+from: 17 to: 19 mul: 1.0 inv: 1
+from: 17 to: 20 mul: 1.0 inv: 1
+from: 17 to: 21 mul: 1.0 inv: 1
+from: 17 to: 22 mul: 1.0 inv: 1
+from: 17 to: 24 mul: 1.0 inv: 1
+from: 17 to: 45 mul: 1.0 inv: 1
+from: 17 to: 47 mul: 1.0 inv: 1
+from: 17 to: 48 mul: 1.0 inv: 1
+from: 17 to: 50 mul: 1.0 inv: 1
+from: 18 to: 19 mul: 1.0 inv: 1
+from: 18 to: 20 mul: 1.0 inv: 1
+from: 18 to: 21 mul: 1.0 inv: 1
+from: 18 to: 22 mul: 1.0 inv: 1
+from: 18 to: 24 mul: 1.0 inv: 1
+from: 18 to: 50 mul: 1.0 inv: 1
+from: 19 to: 20 mul: 1.0 inv: 1
+from: 19 to: 21 mul: 1.0 inv: 1
+from: 19 to: 36 mul: 1.0 inv: 1
+from: 19 to: 37 mul: 1.0 inv: 1
+from: 19 to: 47 mul: 1.0 inv: 1
+from: 19 to: 48 mul: 1.0 inv: 1
+from: 19 to: 49 mul: 1.0 inv: 1
+from: 19 to: 50 mul: 1.0 inv: 1
+from: 19 to: 51 mul: 1.0 inv: 1
+from: 20 to: 21 mul: 1.0 inv: 1
+from: 20 to: 48 mul: 1.0 inv: 1
+from: 21 to: 22 mul: 1.0 inv: 1
+from: 21 to: 33 mul: 1.0 inv: 1
+from: 21 to: 35 mul: 1.0 inv: 1
+from: 21 to: 36 mul: 1.0 inv: 1
+from: 21 to: 37 mul: 1.0 inv: 1
+from: 21 to: 38 mul: 1.0 inv: 1
+from: 21 to: 39 mul: 1.0 inv: 1
+from: 21 to: 41 mul: 1.0 inv: 1
+from: 21 to: 48 mul: 1.0 inv: 1
+from: 21 to: 50 mul: 1.0 inv: 1
+from: 21 to: 51 mul: 1.0 inv: 1
+from: 22 to: 23 mul: 1.0 inv: 1
+from: 22 to: 24 mul: 1.0 inv: 1
+from: 22 to: 25 mul: 1.0 inv: 1
+from: 22 to: 33 mul: 1.0 inv: 1
+from: 22 to: 35 mul: 1.0 inv: 1
+from: 22 to: 36 mul: 1.0 inv: 1
+from: 22 to: 37 mul: 1.0 inv: 1
+from: 22 to: 38 mul: 1.0 inv: 1
+from: 22 to: 39 mul: 1.0 inv: 1
+from: 22 to: 41 mul: 1.0 inv: 1
+from: 22 to: 48 mul: 1.0 inv: 1
+from: 22 to: 50 mul: 1.0 inv: 1
+from: 22 to: 51 mul: 1.0 inv: 1
+from: 23 to: 24 mul: 1.0 inv: 1
+from: 23 to: 25 mul: 1.0 inv: 1
+from: 23 to: 35 mul: 1.0 inv: 1
+from: 23 to: 36 mul: 1.0 inv: 1
+from: 23 to: 37 mul: 1.0 inv: 1
+from: 23 to: 38 mul: 1.0 inv: 1
+from: 23 to: 39 mul: 1.0 inv: 1
+from: 23 to: 41 mul: 1.0 inv: 1
+from: 24 to: 25 mul: 1.0 inv: 1
+from: 24 to: 36 mul: 1.0 inv: 1
+from: 24 to: 40 mul: 1.0 inv: 1
+from: 24 to: 41 mul: 1.0 inv: 1
+from: 24 to: 42 mul: 1.0 inv: 1
+from: 24 to: 50 mul: 1.0 inv: 1
+from: 24 to: 51 mul: 1.0 inv: 1
+from: 25 to: 26 mul: 1.0 inv: 1
+from: 25 to: 29 mul: 1.0 inv: 1
+from: 25 to: 36 mul: 1.0 inv: 1
+from: 25 to: 38 mul: 1.0 inv: 1
+from: 25 to: 39 mul: 1.0 inv: 1
+from: 25 to: 40 mul: 1.0 inv: 1
+from: 25 to: 41 mul: 1.0 inv: 1
+from: 25 to: 42 mul: 1.0 inv: 1
+from: 25 to: 50 mul: 1.0 inv: 1
+from: 25 to: 51 mul: 1.0 inv: 1
+from: 26 to: 27 mul: 1.0 inv: 1
+from: 26 to: 29 mul: 1.0 inv: 1
+from: 26 to: 36 mul: 1.0 inv: 1
+from: 26 to: 38 mul: 1.0 inv: 1
+from: 26 to: 39 mul: 1.0 inv: 1
+from: 26 to: 40 mul: 1.0 inv: 1
+from: 26 to: 41 mul: 1.0 inv: 1
+from: 26 to: 42 mul: 1.0 inv: 1
+from: 26 to: 44 mul: 1.0 inv: 1
+from: 26 to: 50 mul: 1.0 inv: 1
+from: 26 to: 51 mul: 1.0 inv: 1
+from: 27 to: 29 mul: 1.0 inv: 1
+from: 28 to: 29 mul: 1.0 inv: 1
+from: 28 to: 39 mul: 1.0 inv: 1
+from: 29 to: 30 mul: 1.0 inv: 1
+from: 29 to: 39 mul: 1.0 inv: 1
+from: 30 to: 31 mul: 1.0 inv: 1
+from: 30 to: 32 mul: 1.0 inv: 1
+from: 31 to: 32 mul: 1.0 inv: 1
+from: 32 to: 33 mul: 1.0 inv: 1
+from: 33 to: 34 mul: 1.0 inv: 1
+from: 33 to: 35 mul: 1.0 inv: 1
+from: 33 to: 41 mul: 1.0 inv: 1
+from: 33 to: 42 mul: 1.0 inv: 1
+from: 33 to: 43 mul: 1.0 inv: 1
+from: 33 to: 44 mul: 1.0 inv: 1
+from: 33 to: 51 mul: 1.0 inv: 1
+from: 34 to: 35 mul: 1.0 inv: 1
+from: 34 to: 44 mul: 1.0 inv: 1
+from: 35 to: 36 mul: 1.0 inv: 1
+from: 35 to: 41 mul: 1.0 inv: 1
+from: 35 to: 42 mul: 1.0 inv: 1
+from: 35 to: 44 mul: 1.0 inv: 1
+from: 35 to: 51 mul: 1.0 inv: 1
+from: 36 to: 37 mul: 1.0 inv: 1
+from: 36 to: 38 mul: 1.0 inv: 1
+from: 36 to: 41 mul: 1.0 inv: 1
+from: 36 to: 42 mul: 1.0 inv: 1
+from: 36 to: 44 mul: 1.0 inv: 1
+from: 36 to: 51 mul: 1.0 inv: 1
+from: 37 to: 38 mul: 1.0 inv: 1
+from: 37 to: 51 mul: 1.0 inv: 1
+from: 38 to: 39 mul: 1.0 inv: 1
+from: 38 to: 40 mul: 1.0 inv: 1
+from: 38 to: 41 mul: 1.0 inv: 1
+from: 38 to: 42 mul: 1.0 inv: 1
+from: 38 to: 44 mul: 1.0 inv: 1
+from: 38 to: 51 mul: 1.0 inv: 1
+from: 40 to: 41 mul: 1.0 inv: 1
+from: 40 to: 51 mul: 1.0 inv: 1
+from: 41 to: 42 mul: 1.0 inv: 1
+from: 41 to: 51 mul: 1.0 inv: 1
+from: 42 to: 43 mul: 1.0 inv: 1
+from: 42 to: 44 mul: 1.0 inv: 1
+from: 43 to: 44 mul: 1.0 inv: 1
+from: 44 to: 45 mul: 1.0 inv: 1
+from: 45 to: 46 mul: 1.0 inv: 1
+from: 45 to: 47 mul: 1.0 inv: 1
+from: 46 to: 47 mul: 1.0 inv: 1
+from: 47 to: 48 mul: 1.0 inv: 1
+from: 48 to: 49 mul: 1.0 inv: 1
+from: 48 to: 50 mul: 1.0 inv: 1
+from: 49 to: 50 mul: 1.0 inv: 1
+from: 50 to: 51 mul: 1.0 inv: 1
+
+walls: 52
+wall: 60 60 60 355 id: 0 priority: 0
+wall: 60 355 120 355 id: 0 priority: 0
+wall: 120 355 120 370 id: 0 priority: 0
+wall: 120 370 60 370 id: 0 priority: 0
+wall: 60 370 60 660 id: 0 priority: 0
+wall: 60 660 330 660 id: 0 priority: 0
+wall: 330 660 330 570 id: 0 priority: 0
+wall: 330 570 345 570 id: 0 priority: 0
+wall: 345 570 345 660 id: 0 priority: 0
+wall: 345 660 615 660 id: 0 priority: 0
+wall: 615 660 615 570 id: 0 priority: 0
+wall: 615 570 630 570 id: 0 priority: 0
+wall: 630 570 630 660 id: 0 priority: 0
+wall: 630 660 900 660 id: 0 priority: 0
+wall: 900 660 900 370 id: 0 priority: 0
+wall: 900 370 840 370 id: 0 priority: 0
+wall: 840 370 840 355 id: 0 priority: 0
+wall: 840 355 900 355 id: 0 priority: 0
+wall: 900 355 900 60 id: 0 priority: 0
+wall: 900 60 630 60 id: 0 priority: 0
+wall: 630 60 630 150 id: 0 priority: 0
+wall: 630 150 615 150 id: 0 priority: 0
+wall: 615 150 615 60 id: 0 priority: 0
+wall: 615 60 345 60 id: 0 priority: 0
+wall: 345 60 345 150 id: 0 priority: 0
+wall: 345 150 330 150 id: 0 priority: 0
+wall: 330 150 330 60 id: 0 priority: 0
+wall: 330 60 60 60 id: 0 priority: 0
+wall: 330 355 240 355 id: 0 priority: 0
+wall: 240 355 240 370 id: 0 priority: 0
+wall: 240 370 330 370 id: 0 priority: 0
+wall: 330 370 330 460 id: 0 priority: 0
+wall: 330 460 345 460 id: 0 priority: 0
+wall: 345 460 345 370 id: 0 priority: 0
+wall: 345 370 420 370 id: 0 priority: 0
+wall: 420 370 420 355 id: 0 priority: 0
+wall: 420 355 345 355 id: 0 priority: 0
+wall: 345 355 345 265 id: 0 priority: 0
+wall: 345 265 330 265 id: 0 priority: 0
+wall: 330 265 330 355 id: 0 priority: 0
+wall: 615 355 530 355 id: 0 priority: 0
+wall: 530 355 530 370 id: 0 priority: 0
+wall: 530 370 615 370 id: 0 priority: 0
+wall: 615 370 615 460 id: 0 priority: 0
+wall: 615 460 630 460 id: 0 priority: 0
+wall: 630 460 630 370 id: 0 priority: 0
+wall: 630 370 730 370 id: 0 priority: 0
+wall: 730 370 730 355 id: 0 priority: 0
+wall: 730 355 630 355 id: 0 priority: 0
+wall: 630 355 630 265 id: 0 priority: 0
+wall: 630 265 615 265 id: 0 priority: 0
+wall: 615 265 615 355 id: 0 priority: 0
+
+triggers: 0
